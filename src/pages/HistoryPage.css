@@ -1,0 +1,385 @@
+.history-page {
+  width: min(1280px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 44px 0 90px;
+}
+
+.history-header {
+  margin-bottom: 28px;
+}
+
+.history-back-button {
+  margin-bottom: 22px;
+  padding: 9px 13px;
+  color: var(--primary);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.history-header .page-label {
+  margin-top: 0;
+}
+
+.history-header h1 {
+  margin: 8px 0;
+  color: var(--primary-dark);
+  font-size: clamp(38px, 5vw, 58px);
+  letter-spacing: -0.05em;
+}
+
+.history-header p:last-child {
+  color: var(--muted);
+}
+
+.history-statistics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.history-statistics article {
+  padding: 19px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.history-statistics span,
+.history-statistics strong {
+  display: block;
+}
+
+.history-statistics > article > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.history-statistics strong {
+  margin-top: 7px;
+  color: var(--primary-dark);
+  font-size: 28px;
+}
+
+.history-statistics small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.history-success {
+  margin-bottom: 18px;
+  padding: 14px;
+  color: #116235;
+  background: #effbf4;
+  border: 1px solid #a7dbbc;
+  border-radius: 10px;
+}
+
+.history-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.history-controls input {
+  min-width: 260px;
+  margin-right: auto;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  outline: none;
+}
+
+.history-controls button {
+  padding: 9px 13px;
+  color: var(--muted);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.history-controls .selected-history-filter {
+  color: white;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-record {
+  display: grid;
+  grid-template-columns:
+    minmax(210px, 1fr)
+    auto
+    minmax(210px, 1fr)
+    170px
+    190px;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.revoked-history-record {
+  opacity: 0.72;
+  background: #fafbfc;
+}
+
+.history-player,
+.history-team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-player img,
+.history-player > span,
+.history-team img,
+.history-team > span {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+}
+
+.history-player img,
+.history-team img {
+  object-fit: cover;
+}
+
+.history-player > span {
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  background: #eaf0ff;
+  font-weight: 900;
+}
+
+.history-team > span {
+  display: grid;
+  place-items: center;
+  border: 2px solid;
+  font-weight: 900;
+}
+
+.history-player small,
+.history-team small,
+.history-value small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.history-player strong,
+.history-team strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--primary-dark);
+}
+
+.history-player p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.history-arrow {
+  color: var(--primary);
+  font-size: 22px;
+}
+
+.history-value strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--primary);
+  font-size: 21px;
+}
+
+.history-value strong span {
+  font-size: 10px;
+}
+
+.history-value p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.history-status {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.active-sale-status,
+.revoked-status {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.active-sale-status {
+  color: #116235;
+  background: #e6f8ed;
+}
+
+.revoked-status {
+  color: #8d1d28;
+  background: #fff0f1;
+}
+
+.history-status button {
+  padding: 7px 10px;
+  color: var(--danger);
+  background: white;
+  border: 1px solid #efb8bd;
+  border-radius: 7px;
+}
+
+.history-status p {
+  margin: 0;
+  color: var(--danger);
+  font-size: 11px;
+}
+
+.history-status > small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.history-empty {
+  padding: 55px;
+  text-align: center;
+  color: var(--muted);
+  background: white;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+}
+
+.revocation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 29, 61, 0.62);
+}
+
+.revocation-dialog {
+  width: min(500px, 100%);
+  padding: 28px;
+  background: white;
+  border-radius: 18px;
+  box-shadow:
+    0 30px 90px rgba(10, 29, 61, 0.3);
+}
+
+.revocation-dialog h2 {
+  margin-top: 0;
+  color: var(--primary-dark);
+}
+
+.revocation-dialog p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.revocation-refund {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px;
+  margin: 20px 0;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.revocation-refund span {
+  color: var(--muted);
+}
+
+.revocation-refund strong {
+  color: var(--primary);
+}
+
+.revocation-dialog label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.revocation-dialog textarea {
+  min-height: 110px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  resize: vertical;
+}
+
+.revocation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.revocation-actions button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 750;
+}
+
+.revocation-actions button:first-child {
+  color: var(--muted);
+  background: white;
+  border: 1px solid var(--border);
+}
+
+.revocation-actions button:last-child {
+  color: white;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+@media (max-width: 1050px) {
+  .history-record {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .history-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .history-page {
+    width: min(100% - 24px, 1280px);
+  }
+
+  .history-statistics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .history-controls {
+    flex-wrap: wrap;
+  }
+
+  .history-controls input {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .history-record {
+    grid-template-columns: 1fr;
+  }
+}

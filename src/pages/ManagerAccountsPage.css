@@ -1,0 +1,271 @@
+.manager-accounts-page {
+  width: min(
+    1180px,
+    calc(100% - 40px)
+  );
+  margin: 0 auto;
+  padding: 42px 0 90px;
+}
+
+.manager-accounts-header {
+  margin-bottom: 27px;
+}
+
+.manager-accounts-header .page-label {
+  margin-top: 0;
+}
+
+.manager-accounts-header h1 {
+  margin: 8px 0;
+  color: var(--primary-dark);
+  font-size: clamp(
+    38px,
+    5vw,
+    58px
+  );
+  letter-spacing: -0.05em;
+}
+
+.manager-accounts-header > p:last-child {
+  color: var(--muted);
+}
+
+.manager-account-success {
+  margin: 15px 0;
+  padding: 14px;
+  color: #116235;
+  background: #effbf4;
+  border: 1px solid #a7dbbc;
+  border-radius: 10px;
+}
+
+.manager-invitation-panel,
+.manager-account-list-panel {
+  padding: 25px;
+  margin-bottom: 18px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.manager-invitation-panel h2,
+.manager-invitation-panel p,
+.manager-account-list-heading h2,
+.manager-account-list-heading p {
+  margin: 0;
+}
+
+.manager-invitation-panel p,
+.manager-account-list-heading p {
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.manager-invitation-panel form {
+  display: grid;
+  grid-template-columns:
+    1fr 1fr 1fr auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.manager-invitation-panel label,
+.manager-account-team label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.manager-invitation-panel input,
+.manager-invitation-panel select,
+.manager-account-team select,
+.manager-account-list-heading input {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--text);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.manager-invitation-panel button {
+  min-height: 42px;
+  padding: 10px 15px;
+  color: white;
+  background: var(--primary);
+  border: 0;
+  border-radius: 8px;
+  font-weight: 850;
+}
+
+.manager-account-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.manager-account-list-heading input {
+  width: min(320px, 100%);
+  border-radius: 999px;
+}
+
+.manager-account-list {
+  display: grid;
+  gap: 10px;
+}
+
+.manager-account-record {
+  display: grid;
+  grid-template-columns:
+    minmax(230px, 1fr)
+    minmax(200px, 0.8fr)
+    100px
+    auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+
+.disabled-manager-account {
+  opacity: 0.72;
+  background: #f3f4f6;
+}
+
+.manager-account-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.manager-account-identity > span {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: white;
+  background: var(--primary);
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.manager-account-identity strong,
+.manager-account-identity small {
+  display: block;
+}
+
+.manager-account-identity strong {
+  color: var(--primary-dark);
+}
+
+.manager-account-identity small,
+.manager-account-team > small {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.manager-account-state span {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.manager-enabled {
+  color: #116235;
+  background: #e6f8ed;
+}
+
+.manager-disabled {
+  color: #8d1d28;
+  background: #fff0f1;
+}
+
+.manager-account-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.manager-account-actions button {
+  padding: 8px 10px;
+  color: var(--primary);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.manager-account-actions
+.disable-manager-button {
+  color: var(--danger);
+  border-color: #efb8bd;
+}
+
+.manager-account-actions
+.enable-manager-button {
+  color: var(--success);
+  border-color: #a7dbbc;
+}
+
+.manager-accounts-empty {
+  padding: 45px;
+  color: var(--muted);
+  text-align: center;
+  background: white;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+}
+
+@media (max-width: 950px) {
+  .manager-invitation-panel form {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .manager-account-record {
+    grid-template-columns:
+      1fr 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .manager-accounts-page {
+    width: min(
+      100% - 24px,
+      1180px
+    );
+  }
+
+  .manager-invitation-panel form,
+  .manager-account-record {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-account-list-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .manager-account-list-heading input {
+    width: 100%;
+  }
+
+  .manager-account-actions {
+    justify-content: stretch;
+  }
+
+  .manager-account-actions button {
+    flex: 1;
+  }
+}
