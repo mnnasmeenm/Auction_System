@@ -1,0 +1,170 @@
+.manager-owner-showcase {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.manager-owner-card {
+  --team-color: #2f72ff;
+  position: relative;
+  width: min(100%, 1080px);
+  aspect-ratio: 1.91 / 1;
+  min-height: 460px;
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  align-items: center;
+  gap: 30px;
+  overflow: hidden;
+  padding: 58px;
+  color: white;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 20% 75%, color-mix(in srgb, var(--team-color) 58%, transparent), transparent 34%),
+    radial-gradient(circle at 92% 5%, rgba(92, 154, 255, .35), transparent 28%),
+    linear-gradient(135deg, #06132d 0%, #101f46 58%, #07132b 100%);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 30px;
+  box-shadow: 0 35px 90px rgba(7, 20, 47, .3);
+  animation: owner-card-arrival 850ms cubic-bezier(.18, .8, .24, 1) both;
+}
+
+.manager-owner-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: .15;
+  background-image:
+    linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to right, black, transparent 70%);
+}
+
+.owner-card-orbit {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(255, 255, 255, .17);
+  border-radius: 50%;
+  animation: owner-orbit 12s linear infinite;
+}
+.owner-orbit-one { width: 480px; height: 480px; left: -160px; bottom: -260px; }
+.owner-orbit-two { width: 320px; height: 320px; right: -90px; top: -160px; animation-direction: reverse; }
+
+.owner-card-branding {
+  position: absolute;
+  top: 34px;
+  left: 42px;
+  display: grid;
+  gap: 3px;
+  text-transform: uppercase;
+}
+.owner-card-branding small { color: #aebddd; font-size: 10px; letter-spacing: .16em; }
+.owner-card-branding strong { font-size: 14px; letter-spacing: .06em; }
+
+.owner-card-photo-frame {
+  width: min(330px, 100%);
+  aspect-ratio: 4 / 5;
+  align-self: end;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  overflow: hidden;
+  color: white;
+  background: linear-gradient(145deg, var(--team-color), #172c59);
+  border: 5px solid rgba(255, 255, 255, .8);
+  border-radius: 160px 160px 28px 28px;
+  box-shadow:
+    0 0 0 10px color-mix(in srgb, var(--team-color) 28%, transparent),
+    0 30px 60px rgba(0, 0, 0, .35);
+  animation: owner-photo-rise 900ms 120ms cubic-bezier(.18, .8, .24, 1) both;
+}
+.owner-card-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+.owner-card-photo-frame span { font-size: 72px; font-weight: 950; }
+
+.owner-card-copy { position: relative; z-index: 2; }
+.owner-card-copy > p {
+  margin: 0;
+  color: color-mix(in srgb, var(--team-color) 55%, white);
+  font-size: clamp(12px, 1.6vw, 18px);
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+.owner-card-copy > h1 {
+  margin: 15px 0 24px;
+  color: white;
+  font-size: clamp(40px, 6vw, 78px);
+  line-height: .94;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.owner-card-team { display: flex; align-items: center; gap: 14px; }
+.owner-card-team img,
+.owner-card-team span {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  object-fit: contain;
+  color: white;
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 17px;
+  font-weight: 950;
+}
+.owner-card-team strong { font-size: clamp(18px, 2.5vw, 30px); text-transform: uppercase; }
+
+.owner-card-season {
+  position: absolute;
+  right: 38px;
+  bottom: 29px;
+  padding: 7px 11px;
+  color: #aebddd;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.owner-card-download {
+  padding: 10px 15px;
+  color: white;
+  background: #0b1b3d;
+  border: 1px solid #27416f;
+  border-radius: 9px;
+  font-weight: 800;
+}
+
+@keyframes owner-card-arrival {
+  from { opacity: 0; transform: translateY(26px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes owner-photo-rise {
+  from { opacity: 0; transform: translateY(55px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes owner-orbit { to { transform: rotate(360deg); } }
+
+@media (max-width: 760px) {
+  .manager-owner-card {
+    aspect-ratio: auto;
+    min-height: 720px;
+    grid-template-columns: 1fr;
+    align-content: end;
+    padding: 85px 28px 55px;
+  }
+  .owner-card-photo-frame { width: min(250px, 80%); }
+  .owner-card-copy { text-align: center; }
+  .owner-card-team { justify-content: center; }
+  .owner-card-season { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manager-owner-card,
+  .owner-card-photo-frame,
+  .owner-card-orbit { animation: none; }
+}

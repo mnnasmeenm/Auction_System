@@ -452,24 +452,18 @@ ManagerPlayersPage() {
 
                     <div className="strategy-stat-row">
                       <span>
-                        {
-                          player.previous_matches
-                        }{" "}
-                        matches
+                        {player.batting_style ??
+                          "Batting not specified"}
                       </span>
 
                       <span>
-                        {
-                          player.previous_runs
-                        }{" "}
-                        runs
+                        {player.bowling_style ??
+                          "Bowling not specified"}
                       </span>
 
                       <span>
-                        {
-                          player.previous_wickets
-                        }{" "}
-                        wickets
+                        {player.preferred_position ??
+                          "Utility player"}
                       </span>
 
                       <span>

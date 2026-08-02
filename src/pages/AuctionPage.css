@@ -137,7 +137,8 @@
 
 .active-player-stats strong {
   color: var(--primary-dark);
-  font-size: 21px;
+  font-size: 12px;
+  line-height: 1.3;
 }
 
 .active-player-stats span {
@@ -387,4 +388,61 @@
   .auction-result-buttons {
     grid-template-columns: 1fr;
   }
+}
+
+/* Event-day player reveal */
+.active-player-panel {
+  position: relative;
+  color: white;
+  background:
+    radial-gradient(circle at 85% 12%, rgba(63, 132, 255, .5), transparent 27%),
+    radial-gradient(circle at 8% 75%, rgba(21, 209, 167, .22), transparent 30%),
+    linear-gradient(150deg, #06132d, #11234d 65%, #07142e);
+  border-color: rgba(48, 103, 205, .35);
+  animation: auction-player-reveal 650ms cubic-bezier(.18, .8, .24, 1) both;
+}
+
+.active-player-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .13;
+  background-image:
+    linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.active-player-panel .active-player-photo {
+  margin: 18px 18px 0;
+  background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(54,119,239,.2));
+  border-radius: 160px 160px 24px 24px;
+}
+
+.active-player-panel .active-player-photo img {
+  animation: auction-photo-focus 800ms ease both;
+}
+
+.active-player-panel .active-player-details { position: relative; }
+.active-player-panel .active-player-details h2 { color: white; }
+.active-player-panel .active-player-stats { border-color: rgba(255,255,255,.14); }
+.active-player-panel .active-player-stats strong { color: #eaf1ff; }
+.active-player-panel .active-player-stats span { color: #89a7dd; }
+.active-player-panel .base-value span { color: #9cb0d3; }
+.active-player-panel .base-value strong { color: #ffd66b; }
+
+@keyframes auction-player-reveal {
+  from { opacity: 0; transform: translateX(-28px) scale(.975); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes auction-photo-focus {
+  from { opacity: .4; transform: scale(1.12); filter: saturate(.5); }
+  to { opacity: 1; transform: scale(1); filter: saturate(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .active-player-panel,
+  .active-player-panel .active-player-photo img { animation: none; }
 }

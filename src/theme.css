@@ -1,0 +1,258 @@
+:root {
+  color-scheme: dark;
+  --background: #050a14;
+  --surface: #0c1628;
+  --surface-secondary: #13223a;
+  --primary: #75a3ff;
+  --primary-hover: #94b8ff;
+  --primary-dark: #f4f7ff;
+  --accent: #c8f04b;
+  --text: #e7edf8;
+  --muted: #98a7bd;
+  --border: #263956;
+  --danger: #ff6f7d;
+  --success: #43d193;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-width: 320px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(63, 112, 238, 0.2), transparent 30rem),
+    radial-gradient(circle at 92% 18%, rgba(200, 240, 75, 0.08), transparent 26rem),
+    var(--background);
+}
+
+::selection {
+  color: #07101e;
+  background: var(--accent);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition: transform 160ms ease, border-color 160ms ease,
+    background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+input,
+select,
+textarea {
+  color: var(--text) !important;
+  background: #091426 !important;
+  border-color: var(--border) !important;
+  color-scheme: dark;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6f809a;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(117, 163, 255, 0.13) !important;
+}
+
+.admin-header {
+  background: rgba(6, 13, 26, 0.9) !important;
+  border-bottom-color: var(--border) !important;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.header-menu-button,
+.header-signout-button,
+.history-back-button,
+.settings-back-button,
+.back-to-tournaments,
+.cancel-edit-button,
+.history-controls button,
+.settings-section-heading button,
+.manager-section-heading button,
+.team-card-actions button,
+.settings-remove-button {
+  color: var(--text) !important;
+  background: var(--surface-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+.admin-header a,
+.admin-header button,
+.admin-header strong {
+  color: var(--text);
+}
+
+.admin-header a[aria-current="page"],
+.admin-header .active,
+.manager-topbar .selected {
+  color: #07101e !important;
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+:where(
+  .login-panel,
+  .setup-panel,
+  .selection-account,
+  .tournament-card,
+  .tournament-empty,
+  .dashboard-summary,
+  .dashboard-section-card,
+  .team-count,
+  .team-form-panel,
+  .team-card,
+  .teams-message,
+  .player-count,
+  .player-form-panel,
+  .player-card-shell,
+  .players-message,
+  .history-statistics article,
+  .history-record,
+  .history-empty,
+  .revocation-dialog,
+  .settings-panel,
+  .settings-message,
+  .safety-panel,
+  .safety-message,
+  .manager-create-panel,
+  .manager-account-list-panel,
+  .manager-account-record,
+  .manager-accounts-empty,
+  .manager-topbar,
+  .manager-team-heading,
+  .manager-stat-grid article,
+  .manager-player-card,
+  .manager-empty,
+  .strategy-player-card,
+  .auction-message,
+  .auction-player-queue button,
+  .live-bid-panel
+) {
+  color: var(--text);
+  background: linear-gradient(145deg, rgba(18, 34, 58, 0.98), rgba(10, 21, 39, 0.98)) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+}
+
+:where(
+  .tournament-summary div,
+  .team-information > div,
+  .settings-category-row,
+  .manager-account-record,
+  .revoked-history-record,
+  .revocation-refund,
+  .category-entry
+) {
+  background: var(--surface-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+:where(
+  h1,
+  h2,
+  h3,
+  .selection-header h1,
+  .dashboard-title-area h1,
+  .teams-header h1,
+  .players-header h1,
+  .history-header h1,
+  .settings-header h1,
+  .strategy-header h1
+) {
+  color: var(--primary-dark);
+}
+
+:where(
+  p,
+  small,
+  dt,
+  label,
+  .selection-header p:last-child,
+  .dashboard-title-area p:last-child,
+  .teams-header > div > p:last-child,
+  .strategy-header > p:last-child
+) {
+  border-color: var(--border);
+}
+
+.page-label,
+.manager-topbar small,
+.social-player-category {
+  color: var(--accent) !important;
+}
+
+.dashboard-section-card:not(:disabled):hover,
+.tournament-card:hover,
+.team-card:hover,
+.strategy-player-card:hover {
+  border-color: rgba(117, 163, 255, 0.72) !important;
+  box-shadow: 0 22px 60px rgba(23, 69, 150, 0.22);
+}
+
+.dashboard-section-card:disabled {
+  opacity: 0.52;
+}
+
+.status-live,
+.active-status,
+.active-sale-status,
+.manager-success,
+.settings-success,
+.team-success {
+  color: #6de8af !important;
+  background: rgba(40, 174, 111, 0.13) !important;
+  border-color: rgba(67, 209, 147, 0.36) !important;
+}
+
+.status-paused,
+.disabled-status,
+.revoked-status,
+.form-error {
+  color: #ff9aa5 !important;
+  background: rgba(213, 52, 76, 0.13) !important;
+  border-color: rgba(255, 111, 125, 0.34) !important;
+}
+
+.remaining-points-card {
+  background: linear-gradient(145deg, #183b87, #102b66) !important;
+  border-color: rgba(117, 163, 255, 0.48) !important;
+}
+
+.login-page {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(62, 111, 237, 0.32), transparent 26rem),
+    radial-gradient(circle at 85% 80%, rgba(200, 240, 75, 0.1), transparent 25rem),
+    #050a14 !important;
+}
+
+.login-panel,
+.setup-panel {
+  backdrop-filter: blur(18px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

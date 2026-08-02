@@ -26,6 +26,12 @@ export interface ManagerPortalData {
   team: Team;
   players: Player[];
   strategies: ManagerStrategy[];
+  manager: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    manager_photo_path: string | null;
+  };
 }
 
 export interface ManagerStrategyInput {
@@ -39,23 +45,61 @@ export async function
 getManagerPortalData():
 Promise<ManagerPortalData> {
   const {
-    data,
-    error
-  } = await supabase.rpc(
-    "get_my_manager_portal"
-  );
+    data: {
+      user
+    },
+    error: userError
+  } = await supabase.auth.getUser();
 
-  if (error) {
-    throw error;
+  if (userError || !user) {
+    throw userError ?? new Error(
+      "Manager authentication required."
+    );
   }
 
-  if (!data) {
+  const [
+    portalResponse,
+    managerResponse
+  ] = await Promise.all([
+    supabase.rpc(
+      "get_my_manager_portal"
+    ),
+
+    supabase
+      .from("user_profiles")
+      .select(`
+        id,
+        full_name,
+        email,
+        manager_photo_path
+      `)
+      .eq("id", user.id)
+      .single()
+  ]);
+
+  if (portalResponse.error) {
+    throw portalResponse.error;
+  }
+
+  if (managerResponse.error) {
+    throw managerResponse.error;
+  }
+
+  if (!portalResponse.data) {
     throw new Error(
       "Manager information was not returned."
     );
   }
 
-  return data as ManagerPortalData;
+  return {
+    ...(portalResponse.data as Omit<
+      ManagerPortalData,
+      "manager"
+    >),
+
+    manager:
+      managerResponse.data
+  } as ManagerPortalData;
 }
 
 export async function

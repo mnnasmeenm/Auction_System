@@ -389,7 +389,10 @@ export default function AuctionPage() {
       )}
 
       <section className="auction-control-grid">
-        <article className="active-player-panel">
+        <article
+          className="active-player-panel"
+          key={activePlayer?.id ?? "no-player"}
+        >
           {activePlayer ? (
             <>
               <div className="active-player-photo">
@@ -432,23 +435,23 @@ export default function AuctionPage() {
                 <div className="active-player-stats">
                   <div>
                     <strong>
-                      {activePlayer.previous_matches}
+                      {activePlayer.batting_style ?? "—"}
                     </strong>
-                    <span>Matches</span>
+                    <span>Batting</span>
                   </div>
 
                   <div>
                     <strong>
-                      {activePlayer.previous_runs}
+                      {activePlayer.bowling_style ?? "—"}
                     </strong>
-                    <span>Runs</span>
+                    <span>Bowling</span>
                   </div>
 
                   <div>
                     <strong>
-                      {activePlayer.previous_wickets}
+                      {activePlayer.preferred_position ?? "—"}
                     </strong>
-                    <span>Wickets</span>
+                    <span>Position</span>
                   </div>
                 </div>
 

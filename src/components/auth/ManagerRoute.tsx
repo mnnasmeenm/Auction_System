@@ -1,66 +1,49 @@
-import type {
-  ReactNode
-} from "react";
-
-import {
-  Navigate
-} from "react-router-dom";
-
-import {
-  useAuth
-} from "../../context/AuthContext";
+import type { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 interface ManagerRouteProps {
   children: ReactNode;
+  passwordChangePage?: boolean;
 }
 
 export default function ManagerRoute({
-  children
+  children,
+  passwordChangePage = false
 }: ManagerRouteProps) {
   const {
     user,
     isManager,
     teamId,
+    mustChangePassword,
     loading
   } = useAuth();
 
   if (loading) {
-    return (
-      <div className="screen-message">
-        Loading manager account…
-      </div>
-    );
+    return <div className="screen-message">Loading manager account…</div>;
   }
 
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+    return <Navigate to="/login" replace />;
   }
 
   if (!isManager) {
-    return (
-      <Navigate
-        to="/"
-        replace
-      />
-    );
+    return <Navigate to="/" replace />;
   }
 
-  if (!teamId) {
+  if (mustChangePassword && !passwordChangePage) {
+    return <Navigate to="/manager/change-password" replace />;
+  }
+
+  if (!mustChangePassword && passwordChangePage) {
+    return <Navigate to="/manager" replace />;
+  }
+
+  if (!passwordChangePage && !teamId) {
     return (
       <main className="access-denied">
-        <h1>
-          Team assignment required
-        </h1>
-
-        <p>
-          This manager account has not
-          been assigned to a team.
-        </p>
+        <h1>Team assignment required</h1>
+        <p>This manager account has not been assigned to a team.</p>
       </main>
     );
   }

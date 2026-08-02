@@ -1,12 +1,15 @@
+import { supabase } from "./supabase";
 import {
-  supabase
-} from "./supabase";
+  deleteManagerPhoto,
+  uploadManagerPhoto
+} from "./managerPhotos";
 
 export interface ManagerAccountTeam {
   id: string;
   name: string;
   short_name: string;
   team_color: string;
+  logo_path: string | null;
   is_active: boolean;
 }
 
@@ -18,6 +21,9 @@ export interface ManagerAccount {
   is_active: boolean;
   team_id: string | null;
   managed_tournament_id: string;
+  manager_photo_path: string | null;
+  must_change_password: boolean;
+  temporary_password_created_at: string | null;
 }
 
 export interface ManagerAccountData {
@@ -25,9 +31,16 @@ export interface ManagerAccountData {
     id: string;
     tournament_name: string;
   };
-
   teams: ManagerAccountTeam[];
   managers: ManagerAccount[];
+}
+
+export interface TemporaryCredentials {
+  success: boolean;
+  message: string;
+  managerId: string;
+  email: string;
+  temporaryPassword: string;
 }
 
 interface FunctionResponse {
@@ -36,136 +49,140 @@ interface FunctionResponse {
   error?: string;
 }
 
-async function invokeManagerFunction<
-  TResult
->(
+async function invokeManagerFunction<TResult>(
   body: Record<string, unknown>
 ): Promise<TResult> {
-  const {
-    data,
-    error
-  } =
-    await supabase.functions.invoke(
-      "manager-accounts",
-      {
-        body
-      }
-    );
+  const { data, error } = await supabase.functions.invoke(
+    "manager-accounts",
+    { body }
+  );
 
   if (error) {
-    throw error;
+    let message = error.message;
+
+    try {
+      const details = await error.context.json();
+      message = details?.error ?? message;
+    } catch {
+      // The function did not return a JSON error body.
+    }
+
+    throw new Error(message);
   }
 
-  if (
-    data &&
-    typeof data === "object" &&
-    "error" in data &&
-    data.error
-  ) {
-    throw new Error(
-      String(data.error)
-    );
+  if (data?.error) {
+    throw new Error(String(data.error));
   }
 
   return data as TResult;
 }
 
-export async function
-getManagerAccounts(
-  tournamentId: string
-): Promise<ManagerAccountData> {
-  return invokeManagerFunction<
-    ManagerAccountData
-  >({
+export function getManagerAccounts(tournamentId: string) {
+  return invokeManagerFunction<ManagerAccountData>({
     action: "list",
     tournamentId
   });
 }
 
-export async function
-inviteManager(input: {
+export async function createManagerAccount(input: {
   tournamentId: string;
   fullName: string;
   email: string;
   teamId: string;
-}): Promise<FunctionResponse> {
-  return invokeManagerFunction<
-    FunctionResponse
-  >({
-    action: "invite",
+  photoFile: File;
+}): Promise<TemporaryCredentials> {
+  const photoPath = await uploadManagerPhoto(
+    input.tournamentId,
+    input.photoFile
+  );
 
-    tournamentId:
-      input.tournamentId,
+  try {
+    return await invokeManagerFunction<TemporaryCredentials>({
+      action: "create",
+      tournamentId: input.tournamentId,
+      fullName: input.fullName,
+      email: input.email,
+      teamId: input.teamId,
+      photoPath
+    });
+  } catch (error) {
+    try {
+      await deleteManagerPhoto(photoPath);
+    } catch (cleanupError) {
+      console.error("Manager photo cleanup error:", cleanupError);
+    }
 
-    fullName:
-      input.fullName,
-
-    email:
-      input.email,
-
-    teamId:
-      input.teamId
-  });
+    throw error;
+  }
 }
 
-export async function
-assignManagerTeam(input: {
+export function assignManagerTeam(input: {
   tournamentId: string;
   managerId: string;
   teamId: string | null;
-}): Promise<FunctionResponse> {
-  return invokeManagerFunction<
-    FunctionResponse
-  >({
+}) {
+  return invokeManagerFunction<FunctionResponse>({
     action: "assign",
-
-    tournamentId:
-      input.tournamentId,
-
-    managerId:
-      input.managerId,
-
-    teamId:
-      input.teamId
+    ...input
   });
 }
 
-export async function
-setManagerActive(input: {
+export function setManagerActive(input: {
   tournamentId: string;
   managerId: string;
   active: boolean;
-}): Promise<FunctionResponse> {
-  return invokeManagerFunction<
-    FunctionResponse
-  >({
+}) {
+  return invokeManagerFunction<FunctionResponse>({
     action: "set-active",
-
-    tournamentId:
-      input.tournamentId,
-
-    managerId:
-      input.managerId,
-
-    active:
-      input.active
+    ...input
   });
 }
 
-export async function
-sendManagerRecovery(input: {
+export function resetManagerTemporaryPassword(input: {
   tournamentId: string;
   managerId: string;
-}): Promise<FunctionResponse> {
-  return invokeManagerFunction<
-    FunctionResponse
-  >({
-    action: "send-recovery",
-
-    tournamentId:
-      input.tournamentId,
-
-    managerId:
-      input.managerId
+}) {
+  return invokeManagerFunction<TemporaryCredentials>({
+    action: "reset-password",
+    ...input
   });
+}
+
+export async function updateManagerPhoto(input: {
+  tournamentId: string;
+  managerId: string;
+  existingPhotoPath: string | null;
+  photoFile: File;
+}) {
+  const photoPath = await uploadManagerPhoto(
+    input.tournamentId,
+    input.photoFile
+  );
+
+  try {
+    const response = await invokeManagerFunction<FunctionResponse>({
+      action: "set-photo",
+      tournamentId: input.tournamentId,
+      managerId: input.managerId,
+      photoPath
+    });
+
+    if (input.existingPhotoPath) {
+      try {
+        await deleteManagerPhoto(input.existingPhotoPath);
+      } catch (cleanupError) {
+        console.error("Old manager photo cleanup error:", cleanupError);
+      }
+    }
+
+    return response;
+  } catch (error) {
+    try {
+      await deleteManagerPhoto(photoPath);
+    } catch (cleanupError) {
+      console.error("Manager photo cleanup error:", cleanupError);
+    }
+
+    throw error;
+  }
 }

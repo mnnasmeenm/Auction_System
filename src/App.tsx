@@ -37,6 +37,9 @@ import ManagerAccountsPage from
 import ManagerDashboardPage from
   "./pages/ManagerDashboardPage";
 
+import ManagerChangePasswordPage from
+  "./pages/ManagerChangePasswordPage";
+
 import ManagerPlayersPage from
   "./pages/ManagerPlayersPage";
 
@@ -204,6 +207,15 @@ export default function App() {
               <AdminRoute>
                 <ProjectorPage />
               </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/manager/change-password"
+            element={
+              <ManagerRoute passwordChangePage>
+                <ManagerChangePasswordPage />
+              </ManagerRoute>
             }
           />
 

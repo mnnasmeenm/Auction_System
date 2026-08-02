@@ -4,9 +4,9 @@ import {
 
 declare const Deno: {
   env: {
-    get(key: string): string | undefined;
+    get(name: string): string | undefined;
   };
-  serve(handler: (request: Request) => Promise<Response>): void;
+  serve(handler: (request: Request) => Promise<Response> | Response): void;
 };
 
 const corsHeaders = {
@@ -21,10 +21,11 @@ const corsHeaders = {
 
 type ManagerAction =
   | "list"
-  | "invite"
+  | "create"
   | "assign"
   | "set-active"
-  | "send-recovery";
+  | "reset-password"
+  | "set-photo";
 
 interface ManagerRequestBody {
   action: ManagerAction;
@@ -34,10 +35,7 @@ interface ManagerRequestBody {
   email?: string;
   fullName?: string;
   active?: boolean;
-}
-
-interface AuditDetails {
-  [key: string]: unknown;
+  photoPath?: string | null;
 }
 
 function createJsonResponse(
@@ -51,7 +49,9 @@ function createJsonResponse(
 
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/json"
+
+        "Content-Type":
+          "application/json"
       }
     }
   );
@@ -67,21 +67,97 @@ function normalizeEmail(
   );
 }
 
-function normalizeSiteUrl(
-  value?: string | null
-) {
-  return (
-    value
-      ?.trim()
-      .replace(/\/+$/, "") ?? ""
-  );
-}
-
 function isValidEmail(
   email: string
 ) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     .test(email);
+}
+
+function randomCharacter(
+  characters: string
+) {
+  const random =
+    new Uint32Array(1);
+
+  crypto.getRandomValues(
+    random
+  );
+
+  return characters[
+    random[0] %
+    characters.length
+  ];
+}
+
+function generateTemporaryPassword() {
+  const uppercase =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+  const lowercase =
+    "abcdefghijkmnopqrstuvwxyz";
+
+  const numbers =
+    "23456789";
+
+  const symbols =
+    "!@#$%*-_";
+
+  const allCharacters =
+    uppercase +
+    lowercase +
+    numbers +
+    symbols;
+
+  const characters = [
+    randomCharacter(uppercase),
+    randomCharacter(lowercase),
+    randomCharacter(numbers),
+    randomCharacter(symbols)
+  ];
+
+  while (
+    characters.length < 16
+  ) {
+    characters.push(
+      randomCharacter(
+        allCharacters
+      )
+    );
+  }
+
+  /*
+   * Securely shuffle the generated password.
+   */
+  for (
+    let index =
+      characters.length - 1;
+
+    index > 0;
+
+    index -= 1
+  ) {
+    const random =
+      new Uint32Array(1);
+
+    crypto.getRandomValues(
+      random
+    );
+
+    const target =
+      random[0] %
+      (index + 1);
+
+    [
+      characters[index],
+      characters[target]
+    ] = [
+      characters[target],
+      characters[index]
+    ];
+  }
+
+  return characters.join("");
 }
 
 Deno.serve(
@@ -94,7 +170,8 @@ Deno.serve(
       return new Response(
         "ok",
         {
-          headers: corsHeaders
+          headers:
+            corsHeaders
         }
       );
     }
@@ -126,34 +203,6 @@ Deno.serve(
         "SUPABASE_SERVICE_ROLE_KEY"
       );
 
-    const configuredSiteUrl =
-      normalizeSiteUrl(
-        Deno.env.get(
-          "SITE_URL"
-        )
-      );
-
-    const requestOrigin =
-      normalizeSiteUrl(
-        request.headers.get(
-          "origin"
-        )
-      );
-
-    /*
-     * SITE_URL should contain the deployed
-     * Vercel URL.
-     *
-     * Example:
-     * https://auction-system.vercel.app
-     *
-     * requestOrigin is used only as a fallback
-     * for local development.
-     */
-    const siteUrl =
-      configuredSiteUrl ||
-      requestOrigin;
-
     if (
       !supabaseUrl ||
       !supabaseAnonKey ||
@@ -167,20 +216,6 @@ Deno.serve(
         {
           error:
             "The manager service is not configured correctly."
-        },
-        500
-      );
-    }
-
-    if (!siteUrl) {
-      console.error(
-        "SITE_URL is not configured."
-      );
-
-      return createJsonResponse(
-        {
-          error:
-            "The application URL is not configured."
         },
         500
       );
@@ -203,6 +238,10 @@ Deno.serve(
       );
     }
 
+    /*
+     * Client representing the currently
+     * logged-in administrator.
+     */
     const authenticatedClient =
       createClient(
         supabaseUrl,
@@ -216,32 +255,51 @@ Deno.serve(
           },
 
           auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-            detectSessionInUrl: false
+            autoRefreshToken:
+              false,
+
+            persistSession:
+              false,
+
+            detectSessionInUrl:
+              false
           }
         }
       );
 
+    /*
+     * Protected server-side administrator
+     * client.
+     */
     const administratorClient =
       createClient(
         supabaseUrl,
         serviceRoleKey,
         {
           auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-            detectSessionInUrl: false
+            autoRefreshToken:
+              false,
+
+            persistSession:
+              false,
+
+            detectSessionInUrl:
+              false
           }
         }
       );
 
     try {
+      /*
+       * Validate the calling user's token.
+       */
       const {
         data: {
           user
         },
-        error: userError
+
+        error:
+          userError
       } =
         await authenticatedClient
           .auth
@@ -260,6 +318,10 @@ Deno.serve(
         );
       }
 
+      /*
+       * Confirm that the user is an active
+       * administrator.
+       */
       const {
         data:
           administratorProfile,
@@ -268,7 +330,9 @@ Deno.serve(
           administratorProfileError
       } =
         await administratorClient
-          .from("user_profiles")
+          .from(
+            "user_profiles"
+          )
           .select(`
             id,
             role,
@@ -314,23 +378,19 @@ Deno.serve(
         );
       }
 
-      const {
-        action,
-        tournamentId
-      } = body;
-
       const allowedActions:
         ManagerAction[] = [
           "list",
-          "invite",
+          "create",
           "assign",
           "set-active",
-          "send-recovery"
+          "reset-password",
+          "set-photo"
         ];
 
       if (
         !allowedActions.includes(
-          action
+          body.action
         )
       ) {
         return createJsonResponse(
@@ -341,6 +401,10 @@ Deno.serve(
           400
         );
       }
+
+      const tournamentId =
+        body.tournamentId
+          ?.trim() ?? "";
 
       if (
         !tournamentId
@@ -354,17 +418,23 @@ Deno.serve(
         );
       }
 
+      /*
+       * Validate the tournament.
+       */
       const {
-        data: tournament,
-        error: tournamentError
+        data:
+          tournament,
+
+        error:
+          tournamentError
       } =
         await administratorClient
-          .from("tournaments")
+          .from(
+            "tournaments"
+          )
           .select(`
             id,
-            tournament_name,
-            society_name,
-            status
+            tournament_name
           `)
           .eq(
             "id",
@@ -385,6 +455,10 @@ Deno.serve(
         );
       }
 
+      /*
+       * Validate that a selected team belongs
+       * to the current tournament.
+       */
       async function validateTeam(
         teamId: string
       ) {
@@ -393,10 +467,11 @@ Deno.serve(
           error
         } =
           await administratorClient
-            .from("teams")
+            .from(
+              "teams"
+            )
             .select(`
               id,
-              tournament_id,
               name,
               short_name,
               is_active
@@ -423,6 +498,10 @@ Deno.serve(
         return team;
       }
 
+      /*
+       * Load a manager assigned to the
+       * current tournament.
+       */
       async function getManager(
         managerId: string
       ) {
@@ -431,7 +510,9 @@ Deno.serve(
           error
         } =
           await administratorClient
-            .from("user_profiles")
+            .from(
+              "user_profiles"
+            )
             .select(`
               id,
               full_name,
@@ -439,7 +520,9 @@ Deno.serve(
               role,
               is_active,
               team_id,
-              managed_tournament_id
+              managed_tournament_id,
+              manager_photo_path,
+              must_change_password
             `)
             .eq(
               "id",
@@ -467,21 +550,15 @@ Deno.serve(
         return manager;
       }
 
+      /*
+       * Save protected manager operations
+       * in the operator audit table.
+       */
       async function recordAudit(
         auditAction: string,
-        details: AuditDetails
+        details:
+          Record<string, unknown>
       ) {
-        const actorId =
-          user?.id;
-
-        if (!actorId) {
-          console.error(
-            "Manager audit recording skipped because the authenticated user is unavailable."
-          );
-
-          return;
-        }
-
         const {
           error
         } =
@@ -494,7 +571,7 @@ Deno.serve(
                 tournamentId,
 
               user_id:
-                actorId,
+                user!.id,
 
               action:
                 auditAction,
@@ -502,6 +579,11 @@ Deno.serve(
               details
             });
 
+        /*
+         * Audit failure should be logged,
+         * but it should not reverse an
+         * already-completed manager action.
+         */
         if (error) {
           console.error(
             "Manager audit recording error:",
@@ -511,10 +593,12 @@ Deno.serve(
       }
 
       /*
+       * =====================================
        * LIST MANAGERS AND TEAMS
+       * =====================================
        */
       if (
-        action === "list"
+        body.action === "list"
       ) {
         const [
           teamsResponse,
@@ -522,12 +606,15 @@ Deno.serve(
         ] =
           await Promise.all([
             administratorClient
-              .from("teams")
+              .from(
+                "teams"
+              )
               .select(`
                 id,
                 name,
                 short_name,
                 team_color,
+                logo_path,
                 is_active
               `)
               .eq(
@@ -535,10 +622,7 @@ Deno.serve(
                 tournamentId
               )
               .order(
-                "name",
-                {
-                  ascending: true
-                }
+                "name"
               ),
 
             administratorClient
@@ -552,7 +636,10 @@ Deno.serve(
                 role,
                 is_active,
                 team_id,
-                managed_tournament_id
+                managed_tournament_id,
+                manager_photo_path,
+                must_change_password,
+                temporary_password_created_at
               `)
               .eq(
                 "role",
@@ -565,8 +652,8 @@ Deno.serve(
               .order(
                 "full_name",
                 {
-                  ascending: true,
-                  nullsFirst: false
+                  nullsFirst:
+                    false
                 }
               )
           ]);
@@ -584,14 +671,7 @@ Deno.serve(
         }
 
         return createJsonResponse({
-          tournament: {
-            id:
-              tournament.id,
-
-            tournament_name:
-              tournament
-                .tournament_name
-          },
+          tournament,
 
           teams:
             teamsResponse.data ??
@@ -604,10 +684,12 @@ Deno.serve(
       }
 
       /*
-       * INVITE MANAGER
+       * =====================================
+       * CREATE MANAGER
+       * =====================================
        */
       if (
-        action === "invite"
+        body.action === "create"
       ) {
         const email =
           normalizeEmail(
@@ -620,6 +702,10 @@ Deno.serve(
 
         const teamId =
           body.teamId
+            ?.trim() ?? "";
+
+        const photoPath =
+          body.photoPath
             ?.trim() ?? "";
 
         if (
@@ -648,7 +734,9 @@ Deno.serve(
 
         if (
           !email ||
-          !isValidEmail(email)
+          !isValidEmail(
+            email
+          )
         ) {
           return createJsonResponse(
             {
@@ -671,65 +759,107 @@ Deno.serve(
           );
         }
 
+        /*
+         * The photo path must belong to the
+         * selected tournament folder.
+         */
+        if (
+          !photoPath ||
+          !photoPath.startsWith(
+            `${tournamentId}/`
+          )
+        ) {
+          return createJsonResponse(
+            {
+              error:
+                "A valid manager photograph is required."
+            },
+            400
+          );
+        }
+
         const team =
           await validateTeam(
             teamId
           );
 
-        const invitationRedirectUrl =
-          `${siteUrl}/manager/set-password`;
+        if (
+          !team.is_active
+        ) {
+          return createJsonResponse(
+            {
+              error:
+                "A manager cannot be assigned to an inactive team."
+            },
+            400
+          );
+        }
 
+        const temporaryPassword =
+          generateTemporaryPassword();
+
+        /*
+         * Create a confirmed email/password
+         * account without sending an email.
+         */
         const {
           data:
-            invitedUserData,
+            createdUserData,
 
           error:
-            invitationError
+            createUserError
         } =
           await administratorClient
             .auth
             .admin
-            .inviteUserByEmail(
+            .createUser({
               email,
-              {
-                redirectTo:
-                  invitationRedirectUrl,
 
-                data: {
-                  full_name:
-                    fullName,
+              password:
+                temporaryPassword,
 
-                  account_role:
-                    "manager",
+              email_confirm:
+                true,
 
-                  tournament_id:
-                    tournamentId,
+              user_metadata: {
+                full_name:
+                  fullName,
 
-                  team_id:
-                    teamId
-                }
+                account_role:
+                  "manager",
+
+                tournament_id:
+                  tournamentId,
+
+                team_id:
+                  teamId
               }
-            );
+            });
 
         if (
-          invitationError
+          createUserError
         ) {
           throw new Error(
-            invitationError.message
+            createUserError.message
           );
         }
 
-        const invitedUser =
-          invitedUserData.user;
+        const createdUser =
+          createdUserData.user;
 
         if (
-          !invitedUser
+          !createdUser
         ) {
           throw new Error(
-            "Supabase did not return the invited user."
+            "Supabase did not return the created manager."
           );
         }
 
+        /*
+         * The Auth trigger may already have
+         * created a profile. Upsert safely
+         * converts it into a manager.
+         */
         const {
           error:
             managerProfileError
@@ -741,7 +871,7 @@ Deno.serve(
             .upsert(
               {
                 id:
-                  invitedUser.id,
+                  createdUser.id,
 
                 role:
                   "manager",
@@ -757,6 +887,16 @@ Deno.serve(
                 managed_tournament_id:
                   tournamentId,
 
+                manager_photo_path:
+                  photoPath,
+
+                must_change_password:
+                  true,
+
+                temporary_password_created_at:
+                  new Date()
+                    .toISOString(),
+
                 is_active:
                   true
               },
@@ -769,21 +909,25 @@ Deno.serve(
         if (
           managerProfileError
         ) {
+          /*
+           * Remove the incomplete Auth user
+           * if profile creation fails.
+           */
           await administratorClient
             .auth
             .admin
             .deleteUser(
-              invitedUser.id
+              createdUser.id
             );
 
           throw managerProfileError;
         }
 
         await recordAudit(
-          "manager_invited",
+          "manager_created",
           {
             manager_user_id:
-              invitedUser.id,
+              createdUser.id,
 
             full_name:
               fullName,
@@ -794,21 +938,34 @@ Deno.serve(
               teamId,
 
             team_name:
-              team.name,
-
-            redirect_url:
-              invitationRedirectUrl
+              team.name
           }
         );
 
+        /*
+         * The temporary password is returned
+         * once. It is never stored as readable
+         * text in the database.
+         */
         return createJsonResponse({
           success: true,
 
           message:
-            `Invitation sent to ${email}.`
+            "Manager account created successfully.",
+
+          managerId:
+            createdUser.id,
+
+          email,
+
+          temporaryPassword
         });
       }
 
+      /*
+       * All remaining actions require a
+       * manager ID.
+       */
       const managerId =
         body.managerId
           ?.trim() ?? "";
@@ -831,17 +988,21 @@ Deno.serve(
         );
 
       /*
+       * =====================================
        * ASSIGN OR REMOVE TEAM
+       * =====================================
        */
       if (
-        action === "assign"
+        body.action === "assign"
       ) {
         const teamId =
           body.teamId
-            ?.trim() || null;
+            ?.trim() ||
+          null;
 
         let teamName:
-          string | null = null;
+          string | null =
+            null;
 
         if (
           teamId
@@ -850,6 +1011,18 @@ Deno.serve(
             await validateTeam(
               teamId
             );
+
+          if (
+            !team.is_active
+          ) {
+            return createJsonResponse(
+              {
+                error:
+                  "An inactive team cannot be assigned."
+              },
+              400
+            );
+          }
 
           teamName =
             team.name;
@@ -901,17 +1074,18 @@ Deno.serve(
           success: true,
 
           message:
-            teamId
-              ? "Manager assignment updated."
-              : "Manager team access removed."
+            "Manager assignment updated."
         });
       }
 
       /*
+       * =====================================
        * ENABLE OR DISABLE MANAGER
+       * =====================================
        */
       if (
-        action === "set-active"
+        body.action ===
+        "set-active"
       ) {
         if (
           typeof body.active !==
@@ -929,9 +1103,13 @@ Deno.serve(
         const active =
           body.active;
 
+        /*
+         * Disable the account at Supabase
+         * Auth level.
+         */
         const {
           error:
-            authenticationUpdateError
+            authenticationError
         } =
           await administratorClient
             .auth
@@ -947,9 +1125,9 @@ Deno.serve(
             );
 
         if (
-          authenticationUpdateError
+          authenticationError
         ) {
-          throw authenticationUpdateError;
+          throw authenticationError;
         }
 
         const {
@@ -999,64 +1177,73 @@ Deno.serve(
       }
 
       /*
-       * SEND PASSWORD RECOVERY
+       * =====================================
+       * GENERATE NEW TEMPORARY PASSWORD
+       * =====================================
        */
       if (
-        action ===
-        "send-recovery"
+        body.action ===
+        "reset-password"
       ) {
-        const email =
-          normalizeEmail(
-            manager.email ??
-            undefined
-          );
-
-        if (
-          !email
-        ) {
-          return createJsonResponse(
-            {
-              error:
-                "This manager does not have an email address."
-            },
-            400
-          );
-        }
-
-        const recoveryRedirectUrl =
-          `${siteUrl}/manager/set-password`;
+        const temporaryPassword =
+          generateTemporaryPassword();
 
         const {
           error:
-            recoveryError
+            authenticationError
         } =
           await administratorClient
             .auth
-            .resetPasswordForEmail(
-              email,
+            .admin
+            .updateUserById(
+              managerId,
               {
-                redirectTo:
-                  recoveryRedirectUrl
+                password:
+                  temporaryPassword
               }
             );
 
         if (
-          recoveryError
+          authenticationError
         ) {
-          throw recoveryError;
+          throw authenticationError;
+        }
+
+        const {
+          error:
+            profileUpdateError
+        } =
+          await administratorClient
+            .from(
+              "user_profiles"
+            )
+            .update({
+              must_change_password:
+                true,
+
+              temporary_password_created_at:
+                new Date()
+                  .toISOString()
+            })
+            .eq(
+              "id",
+              managerId
+            );
+
+        if (
+          profileUpdateError
+        ) {
+          throw profileUpdateError;
         }
 
         await recordAudit(
-          "manager_recovery_sent",
+          "manager_temporary_password_reset",
           {
             manager_user_id:
               managerId,
 
             manager_email:
-              email,
-
-            redirect_url:
-              recoveryRedirectUrl
+              manager.email
           }
         );
 
@@ -1064,7 +1251,84 @@ Deno.serve(
           success: true,
 
           message:
-            `Password recovery email sent to ${email}.`
+            "A new temporary password was generated.",
+
+          managerId,
+
+          email:
+            manager.email,
+
+          temporaryPassword
+        });
+      }
+
+      /*
+       * =====================================
+       * UPDATE MANAGER PHOTOGRAPH
+       * =====================================
+       */
+      if (
+        body.action ===
+        "set-photo"
+      ) {
+        const photoPath =
+          body.photoPath
+            ?.trim() ?? "";
+
+        if (
+          !photoPath ||
+          !photoPath.startsWith(
+            `${tournamentId}/`
+          )
+        ) {
+          return createJsonResponse(
+            {
+              error:
+                "A valid manager photograph is required."
+            },
+            400
+          );
+        }
+
+        const {
+          error
+        } =
+          await administratorClient
+            .from(
+              "user_profiles"
+            )
+            .update({
+              manager_photo_path:
+                photoPath
+            })
+            .eq(
+              "id",
+              managerId
+            );
+
+        if (error) {
+          throw error;
+        }
+
+        await recordAudit(
+          "manager_photo_updated",
+          {
+            manager_user_id:
+              managerId,
+
+            previous_photo_path:
+              manager.manager_photo_path,
+
+            new_photo_path:
+              photoPath
+          }
+        );
+
+        return createJsonResponse({
+          success: true,
+
+          message:
+            "Manager photograph updated."
         });
       }
 

@@ -22,6 +22,9 @@ import {
   getTeamLogoUrl
 } from "../services/teams";
 
+import ManagerOwnerCard from
+  "../components/managers/ManagerOwnerCard";
+
 import {
   useAuth
 } from "../context/AuthContext";
@@ -226,6 +229,8 @@ ManagerDashboardPage() {
           </button>
         </nav>
       </header>
+
+      <ManagerOwnerCard portal={portal} />
 
       <section className="manager-team-heading">
         {logoUrl ? (

@@ -19,10 +19,6 @@ export interface PlayerInput {
   bowlingStyle: string;
   preferredPosition: string;
   basePrice: number;
-  previousMatches: number;
-  previousRuns: number;
-  previousWickets: number;
-  catches: number;
   achievements: string;
   availabilityNotes: string;
   photoFile?: File | null;
@@ -89,10 +85,10 @@ export async function createPlayer(
       preferred_position:
         input.preferredPosition.trim() || null,
       base_price: input.basePrice,
-      previous_matches: input.previousMatches,
-      previous_runs: input.previousRuns,
-      previous_wickets: input.previousWickets,
-      catches: input.catches,
+      previous_matches: 0,
+      previous_runs: 0,
+      previous_wickets: 0,
+      catches: 0,
       achievements: input.achievements.trim() || null,
       availability_notes:
         input.availabilityNotes.trim() || null,
@@ -168,10 +164,6 @@ export async function updatePlayer(
       preferred_position:
         input.preferredPosition.trim() || null,
       base_price: input.basePrice,
-      previous_matches: input.previousMatches,
-      previous_runs: input.previousRuns,
-      previous_wickets: input.previousWickets,
-      catches: input.catches,
       achievements: input.achievements.trim() || null,
       availability_notes:
         input.availabilityNotes.trim() || null,

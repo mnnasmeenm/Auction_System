@@ -411,26 +411,26 @@ export default function ProjectorPage() {
               <div className="projector-statistics">
                 <div>
                   <strong>
-                    {activePlayer.previous_matches}
+                    {activePlayer.batting_style ?? "—"}
                   </strong>
 
-                  <span>MATCHES</span>
+                  <span>BATTING</span>
                 </div>
 
                 <div>
                   <strong>
-                    {activePlayer.previous_runs}
+                    {activePlayer.bowling_style ?? "—"}
                   </strong>
 
-                  <span>RUNS</span>
+                  <span>BOWLING</span>
                 </div>
 
                 <div>
                   <strong>
-                    {activePlayer.previous_wickets}
+                    {activePlayer.preferred_position ?? "—"}
                   </strong>
 
-                  <span>WICKETS</span>
+                  <span>POSITION</span>
                 </div>
               </div>
             </div>

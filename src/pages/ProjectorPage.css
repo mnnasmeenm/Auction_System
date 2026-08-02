@@ -15,14 +15,15 @@
   gap: 16px;
   padding: 20px 28px;
   overflow: hidden;
-  color: var(--projector-dark);
+  color: white;
   background:
     radial-gradient(
       circle at 70% 25%,
-      rgba(22, 70, 184, 0.13),
+      color-mix(in srgb, var(--projector-blue) 42%, transparent),
       transparent 34%
     ),
-    #f7f8fa;
+    radial-gradient(circle at 10% 85%, rgba(39, 229, 184, .2), transparent 27%),
+    linear-gradient(145deg, #050f25, #0d2047 62%, #07142e);
 }
 
 .projector-header {
@@ -116,6 +117,7 @@
 .projector-bid-panel {
   min-height: 0;
   background: white;
+  color: var(--projector-dark);
   border: 2px solid #ccd7e3;
   border-radius: 22px;
   box-shadow:
@@ -227,7 +229,8 @@
 }
 
 .projector-statistics strong {
-  font-size: clamp(23px, 2.5vw, 38px);
+  font-size: clamp(11px, 1.25vw, 18px);
+  line-height: 1.25;
 }
 
 .projector-statistics span {

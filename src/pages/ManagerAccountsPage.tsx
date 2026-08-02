@@ -1,207 +1,143 @@
 import {
+  type ChangeEvent,
   type FormEvent,
   useCallback,
   useEffect,
   useMemo,
   useState
 } from "react";
-
-import {
-  useNavigate,
-  useSearchParams
-} from "react-router-dom";
-
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   assignManagerTeam,
+  createManagerAccount,
   getManagerAccounts,
-  inviteManager,
-  sendManagerRecovery,
+  resetManagerTemporaryPassword,
   setManagerActive,
-  type ManagerAccountData
+  updateManagerPhoto,
+  type ManagerAccountData,
+  type TemporaryCredentials
 } from "../services/managerAccounts";
-
+import { getManagerPhotoUrl } from "../services/managerPhotos";
 import "./ManagerAccountsPage.css";
 
-interface InvitationForm {
+interface ManagerForm {
   fullName: string;
   email: string;
   teamId: string;
+  photoFile: File | null;
 }
 
-const emptyForm: InvitationForm = {
+const emptyForm: ManagerForm = {
   fullName: "",
   email: "",
-  teamId: ""
+  teamId: "",
+  photoFile: null
 };
 
-export default function
-ManagerAccountsPage() {
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+export default function ManagerAccountsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tournamentId = searchParams.get("tournament") ?? "";
 
-  const [searchParams] =
-    useSearchParams();
+  const [data, setData] = useState<ManagerAccountData | null>(null);
+  const [form, setForm] = useState<ManagerForm>(emptyForm);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [credentials, setCredentials] =
+    useState<TemporaryCredentials | null>(null);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [workingId, setWorkingId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const tournamentId =
-    searchParams.get("tournament") ?? "";
+  const loadAccounts = useCallback(async () => {
+    if (!tournamentId) {
+      setLoading(false);
+      return;
+    }
 
-  const [data, setData] =
-    useState<
-      ManagerAccountData | null
-    >(null);
+    setLoading(true);
 
-  const [form, setForm] =
-    useState<InvitationForm>(
-      emptyForm
-    );
-
-  const [search, setSearch] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [submitting, setSubmitting] =
-    useState(false);
-
-  const [workingId, setWorkingId] =
-    useState<string | null>(null);
-
-  const [
-    errorMessage,
-    setErrorMessage
-  ] = useState("");
-
-  const [
-    successMessage,
-    setSuccessMessage
-  ] = useState("");
-
-  const loadAccounts =
-    useCallback(async () => {
-      if (!tournamentId) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        const managerData =
-          await getManagerAccounts(
-            tournamentId
-          );
-
-        setData(managerData);
-        setErrorMessage("");
-      } catch (error) {
-        console.error(
-          "Manager account loading error:",
-          error
-        );
-
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Manager accounts could not be loaded."
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [tournamentId]);
+    try {
+      setData(await getManagerAccounts(tournamentId));
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Manager accounts could not be loaded."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [tournamentId]);
 
   useEffect(() => {
     loadAccounts();
   }, [loadAccounts]);
 
-  const filteredManagers =
-    useMemo(() => {
-      if (!data) {
-        return [];
-      }
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+    };
+  }, [photoPreview]);
 
-      const query =
-        search
-          .trim()
-          .toLowerCase();
+  const filteredManagers = useMemo(() => {
+    if (!data) return [];
+    const query = search.trim().toLowerCase();
+    if (!query) return data.managers;
 
-      if (!query) {
-        return data.managers;
-      }
+    return data.managers.filter((manager) => {
+      const team = data.teams.find((item) => item.id === manager.team_id);
 
-      return data.managers.filter(
-        (manager) => {
-          const team =
-            data.teams.find(
-              (record) =>
-                record.id ===
-                manager.team_id
-            );
+      return [manager.full_name, manager.email, team?.name]
+        .some((value) => value?.toLowerCase().includes(query));
+    });
+  }, [data, search]);
 
-          return (
-            (
-              manager.full_name ??
-              ""
-            )
-              .toLowerCase()
-              .includes(query) ||
-
-            (
-              manager.email ??
-              ""
-            )
-              .toLowerCase()
-              .includes(query) ||
-
-            (
-              team?.name ??
-              ""
-            )
-              .toLowerCase()
-              .includes(query)
-          );
-        }
-      );
-    }, [
-      data,
-      search
-    ]);
-
-  function updateForm(
-    field: keyof InvitationForm,
-    value: string
-  ) {
-    setForm(
-      (current) => ({
-        ...current,
-        [field]: value
-      })
-    );
+  function updateForm(field: keyof ManagerForm, value: string | File | null) {
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
-  async function handleInvite(
-    event:
-      FormEvent<HTMLFormElement>
-  ) {
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    updateForm("photoFile", file);
+
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(file ? URL.createObjectURL(file) : "");
+  }
+
+  async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!form.fullName.trim()) {
-      setErrorMessage(
-        "Enter the manager name."
-      );
+      setErrorMessage("Enter the manager name.");
       return;
     }
 
     if (!form.email.trim()) {
-      setErrorMessage(
-        "Enter the manager email."
-      );
+      setErrorMessage("Enter the manager email.");
       return;
     }
 
     if (!form.teamId) {
-      setErrorMessage(
-        "Select a team."
-      );
+      setErrorMessage("Select a team.");
+      return;
+    }
+
+    if (!form.photoFile) {
+      setErrorMessage("Select a manager photograph.");
       return;
     }
 
@@ -210,184 +146,157 @@ ManagerAccountsPage() {
     setSuccessMessage("");
 
     try {
-      const response =
-        await inviteManager({
-          tournamentId,
+      const result = await createManagerAccount({
+        tournamentId,
+        fullName: form.fullName.trim(),
+        email: form.email.trim().toLowerCase(),
+        teamId: form.teamId,
+        photoFile: form.photoFile
+      });
 
-          fullName:
-            form.fullName.trim(),
-
-          email:
-            form.email
-              .trim()
-              .toLowerCase(),
-
-          teamId:
-            form.teamId
-        });
-
-      setSuccessMessage(
-        response.message ??
-        "Manager invitation sent."
-      );
-
+      setCredentials(result);
+      setSuccessMessage(result.message);
       setForm(emptyForm);
 
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+      setPhotoPreview("");
       await loadAccounts();
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Manager invitation failed."
+          : "Manager account could not be created."
       );
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleAssignment(
-    managerId: string,
-    teamId: string
-  ) {
+  async function handleAssignment(managerId: string, teamId: string) {
     setWorkingId(managerId);
     setErrorMessage("");
-    setSuccessMessage("");
 
     try {
-      const response =
-        await assignManagerTeam({
-          tournamentId,
-          managerId,
-          teamId:
-            teamId || null
-        });
+      const result = await assignManagerTeam({
+        tournamentId,
+        managerId,
+        teamId: teamId || null
+      });
 
-      setSuccessMessage(
-        response.message ??
-        "Manager assignment updated."
-      );
-
+      setSuccessMessage(result.message ?? "Manager assignment updated.");
       await loadAccounts();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Assignment could not be updated."
+        error instanceof Error ? error.message : "Assignment failed."
       );
     } finally {
       setWorkingId(null);
     }
   }
 
-  async function handleStatus(
-    managerId: string,
-    currentlyActive: boolean
-  ) {
-    const nextActive =
-      !currentlyActive;
+  async function handleStatus(managerId: string, isActive: boolean) {
+    const active = !isActive;
+    const confirmed = window.confirm(
+      active
+        ? "Enable this manager account?"
+        : "Disable this manager account? The manager will lose portal access."
+    );
 
-    const confirmed =
-      window.confirm(
-        nextActive
-          ? "Enable this manager account?"
-          : "Disable this manager account? The manager will lose portal access."
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
+    if (!confirmed) return;
     setWorkingId(managerId);
     setErrorMessage("");
-    setSuccessMessage("");
 
     try {
-      const response =
-        await setManagerActive({
-          tournamentId,
-          managerId,
-          active: nextActive
-        });
+      const result = await setManagerActive({
+        tournamentId,
+        managerId,
+        active
+      });
 
-      setSuccessMessage(
-        response.message ??
-        "Manager status updated."
-      );
-
+      setSuccessMessage(result.message ?? "Manager status updated.");
       await loadAccounts();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Manager status could not be updated."
+        error instanceof Error ? error.message : "Status update failed."
       );
     } finally {
       setWorkingId(null);
     }
   }
 
-  async function handleRecovery(
-    managerId: string,
-    managerEmail: string | null
-  ) {
-    if (!managerEmail) {
-      setErrorMessage(
-        "This manager has no email address."
-      );
-      return;
-    }
-
-    const confirmed =
-      window.confirm(
-        `Send a password recovery email to ${managerEmail}?`
-      );
-
-    if (!confirmed) {
+  async function handlePasswordReset(managerId: string) {
+    if (!window.confirm("Generate a new temporary password for this manager?")) {
       return;
     }
 
     setWorkingId(managerId);
     setErrorMessage("");
-    setSuccessMessage("");
 
     try {
-      const response =
-        await sendManagerRecovery({
-          tournamentId,
-          managerId
-        });
+      const result = await resetManagerTemporaryPassword({
+        tournamentId,
+        managerId
+      });
 
-      setSuccessMessage(
-        response.message ??
-        "Recovery email sent."
-      );
+      setCredentials(result);
+      setSuccessMessage(result.message);
+      await loadAccounts();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Recovery email could not be sent."
+        error instanceof Error ? error.message : "Password reset failed."
       );
     } finally {
       setWorkingId(null);
     }
+  }
+
+  async function handleExistingPhoto(
+    event: ChangeEvent<HTMLInputElement>,
+    managerId: string,
+    existingPhotoPath: string | null
+  ) {
+    const photoFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!photoFile) return;
+
+    setWorkingId(managerId);
+    setErrorMessage("");
+
+    try {
+      const result = await updateManagerPhoto({
+        tournamentId,
+        managerId,
+        existingPhotoPath,
+        photoFile
+      });
+
+      setSuccessMessage(result.message ?? "Manager photograph updated.");
+      await loadAccounts();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Photo update failed."
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function copyCredentials() {
+    if (!credentials) return;
+
+    await navigator.clipboard.writeText(
+      `Ath-Thariq Auction Manager Login\nEmail: ${credentials.email}\nTemporary password: ${credentials.temporaryPassword}\nLogin: ${window.location.origin}/login`
+    );
+
+    setSuccessMessage("Temporary login details copied.");
   }
 
   if (!tournamentId) {
     return (
       <main className="manager-accounts-page">
         <section className="manager-accounts-empty">
-          <h1>
-            Tournament not selected
-          </h1>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                "/admin/tournaments"
-              )
-            }
-          >
+          <h1>Tournament not selected</h1>
+          <button type="button" onClick={() => navigate("/admin/tournaments")}>
             Choose tournament
           </button>
         </section>
@@ -408,116 +317,82 @@ ManagerAccountsPage() {
   return (
     <main className="manager-accounts-page">
       <header className="manager-accounts-header">
-        <p className="page-label">
-          ACCESS MANAGEMENT
-        </p>
-
-        <h1>
-          Team managers
-        </h1>
-
-        <p>
-          Invite managers and control
-          access to this tournament.
-        </p>
+        <p className="page-label">ACCESS MANAGEMENT</p>
+        <h1>Team managers</h1>
+        <p>Create manager logins without invitation emails.</p>
       </header>
 
-      {errorMessage && (
-        <div className="form-error">
-          {errorMessage}
-        </div>
-      )}
-
+      {errorMessage && <div className="form-error">{errorMessage}</div>}
       {successMessage && (
-        <div className="manager-account-success">
-          {successMessage}
-        </div>
+        <div className="manager-account-success">{successMessage}</div>
       )}
 
-      <section className="manager-invitation-panel">
-        <div>
-          <h2>
-            Invite a manager
-          </h2>
+      <section className="manager-create-panel">
+        <div className="manager-create-heading">
+          <div>
+            <h2>Create manager account</h2>
+            <p>A temporary password will be shown once after creation.</p>
+          </div>
 
-          <p>
-            The manager receives an email
-            for setting up their account.
-          </p>
+          <div className="manager-photo-preview">
+            {photoPreview ? (
+              <img src={photoPreview} alt="Manager preview" />
+            ) : (
+              <span>PHOTO</span>
+            )}
+          </div>
         </div>
 
-        <form onSubmit={handleInvite}>
+        <form onSubmit={handleCreate}>
           <label>
             Manager name
-
             <input
               value={form.fullName}
-              onChange={(event) =>
-                updateForm(
-                  "fullName",
-                  event.target.value
-                )
-              }
+              onChange={(event) => updateForm("fullName", event.target.value)}
               required
             />
           </label>
 
           <label>
             Email address
-
             <input
               type="email"
               value={form.email}
-              onChange={(event) =>
-                updateForm(
-                  "email",
-                  event.target.value
-                )
-              }
+              onChange={(event) => updateForm("email", event.target.value)}
+              autoComplete="off"
               required
             />
           </label>
 
           <label>
             Assigned team
-
             <select
               value={form.teamId}
-              onChange={(event) =>
-                updateForm(
-                  "teamId",
-                  event.target.value
-                )
-              }
+              onChange={(event) => updateForm("teamId", event.target.value)}
               required
             >
-              <option value="">
-                Select team
-              </option>
-
-              {data?.teams.map(
-                (team) => (
-                  <option
-                    key={team.id}
-                    value={team.id}
-                  >
-                    {team.name}
-                    {!team.is_active
-                      ? " (inactive)"
-                      : ""}
-                  </option>
-                )
-              )}
+              <option value="">Select team</option>
+              {data?.teams.map((team) => (
+                <option key={team.id} value={team.id} disabled={!team.is_active}>
+                  {team.name}{!team.is_active ? " (inactive)" : ""}
+                </option>
+              ))}
             </select>
           </label>
 
-          <button
-            type="submit"
-            disabled={submitting}
-          >
-            {submitting
-              ? "Sending invitation…"
-              : "Invite manager"}
+          <label>
+            Manager photograph
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              required
+            />
+            <small>JPG, PNG or WebP. Maximum 2 MB.</small>
+          </label>
+
+          <button type="submit" disabled={submitting}>
+            {submitting ? "Creating manager…" : "Create manager"}
           </button>
         </form>
       </section>
@@ -525,188 +400,165 @@ ManagerAccountsPage() {
       <section className="manager-account-list-panel">
         <div className="manager-account-list-heading">
           <div>
-            <h2>
-              Manager accounts
-            </h2>
-
-            <p>
-              {data?.managers.length ??
-                0}{" "}
-              account(s)
-            </p>
+            <h2>Manager accounts</h2>
+            <p>{data?.managers.length ?? 0} account(s)</p>
           </div>
 
           <input
             type="search"
             value={search}
-            placeholder={
-              "Search managers or teams…"
-            }
-            onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
-            }
+            placeholder="Search managers or teams…"
+            onChange={(event) => setSearch(event.target.value)}
           />
         </div>
 
-        {filteredManagers.length ===
-        0 ? (
-          <div className="manager-accounts-empty">
-            No manager accounts found.
-          </div>
+        {filteredManagers.length === 0 ? (
+          <div className="manager-accounts-empty">No manager accounts found.</div>
         ) : (
           <div className="manager-account-list">
-            {filteredManagers.map(
-              (manager) => {
-                const assignedTeam =
-                  data?.teams.find(
-                    (team) =>
-                      team.id ===
-                      manager.team_id
-                  );
+            {filteredManagers.map((manager) => {
+              const assignedTeam = data?.teams.find(
+                (team) => team.id === manager.team_id
+              );
+              const photoUrl = getManagerPhotoUrl(manager.manager_photo_path);
+              const working = workingId === manager.id;
 
-                const working =
-                  workingId ===
-                  manager.id;
-
-                return (
-                  <article
-                    key={manager.id}
-                    className={
-                      manager.is_active
-                        ? "manager-account-record"
-                        : "manager-account-record disabled-manager-account"
-                    }
-                  >
-                    <div className="manager-account-identity">
-                      <span>
-                        {(manager.full_name ??
-                          manager.email ??
-                          "M")
-                          .charAt(0)
-                          .toUpperCase()}
-                      </span>
-
-                      <div>
-                        <strong>
-                          {manager.full_name ??
-                            "Unnamed manager"}
-                        </strong>
-
-                        <small>
-                          {manager.email ??
-                            "No email"}
-                        </small>
-                      </div>
+              return (
+                <article
+                  key={manager.id}
+                  className={
+                    manager.is_active
+                      ? "manager-account-record"
+                      : "manager-account-record disabled-manager-account"
+                  }
+                >
+                  <div className="manager-account-identity">
+                    <div className="manager-list-photo">
+                      {photoUrl ? (
+                        <img src={photoUrl} alt={manager.full_name ?? "Manager"} />
+                      ) : (
+                        <span>{initials(manager.full_name ?? "Manager")}</span>
+                      )}
                     </div>
 
-                    <div className="manager-account-team">
-                      <label>
-                        Assigned team
-
-                        <select
-                          value={
-                            manager.team_id ??
-                            ""
-                          }
+                    <div>
+                      <strong>{manager.full_name ?? "Unnamed manager"}</strong>
+                      <small>{manager.email ?? "No email"}</small>
+                      <label className="manager-photo-update">
+                        Change photo
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
                           disabled={working}
-                          onChange={(
-                            event
-                          ) =>
-                            handleAssignment(
+                          onChange={(event) =>
+                            handleExistingPhoto(
+                              event,
                               manager.id,
-                              event.target
-                                .value
+                              manager.manager_photo_path
                             )
                           }
-                        >
-                          <option value="">
-                            No team access
-                          </option>
-
-                          {data?.teams.map(
-                            (team) => (
-                              <option
-                                key={
-                                  team.id
-                                }
-                                value={
-                                  team.id
-                                }
-                              >
-                                {team.name}
-                              </option>
-                            )
-                          )}
-                        </select>
+                        />
                       </label>
-
-                      <small>
-                        {assignedTeam
-                          ? assignedTeam
-                              .short_name
-                          : "Unassigned"}
-                      </small>
                     </div>
+                  </div>
 
-                    <div className="manager-account-state">
-                      <span
-                        className={
-                          manager.is_active
-                            ? "manager-enabled"
-                            : "manager-disabled"
-                        }
-                      >
-                        {manager.is_active
-                          ? "Enabled"
-                          : "Disabled"}
-                      </span>
-                    </div>
-
-                    <div className="manager-account-actions">
-                      <button
-                        type="button"
+                  <div className="manager-account-team">
+                    <label>
+                      Assigned team
+                      <select
+                        value={manager.team_id ?? ""}
                         disabled={working}
-                        onClick={() =>
-                          handleRecovery(
-                            manager.id,
-                            manager.email
-                          )
+                        onChange={(event) =>
+                          handleAssignment(manager.id, event.target.value)
                         }
                       >
-                        Send recovery
-                      </button>
+                        <option value="">No team access</option>
+                        {data?.teams.map((team) => (
+                          <option
+                            key={team.id}
+                            value={team.id}
+                            disabled={!team.is_active}
+                          >
+                            {team.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <small>{assignedTeam?.short_name ?? "Unassigned"}</small>
+                  </div>
 
-                      <button
-                        type="button"
-                        disabled={working}
-                        className={
-                          manager.is_active
-                            ? "disable-manager-button"
-                            : "enable-manager-button"
-                        }
-                        onClick={() =>
-                          handleStatus(
-                            manager.id,
-                            manager.is_active
-                          )
-                        }
-                      >
-                        {working
-                          ? "Updating…"
-                          : manager.is_active
-                            ? "Disable"
-                            : "Enable"}
-                      </button>
-                    </div>
-                  </article>
-                );
-              }
-            )}
+                  <div className="manager-account-state">
+                    <span className={manager.is_active ? "manager-enabled" : "manager-disabled"}>
+                      {manager.is_active ? "Enabled" : "Disabled"}
+                    </span>
+                    {manager.must_change_password && (
+                      <span className="manager-password-pending">Password change pending</span>
+                    )}
+                  </div>
+
+                  <div className="manager-account-actions">
+                    <button
+                      type="button"
+                      disabled={working}
+                      onClick={() => handlePasswordReset(manager.id)}
+                    >
+                      New temporary password
+                    </button>
+                    <button
+                      type="button"
+                      disabled={working}
+                      className={manager.is_active ? "disable-manager-button" : "enable-manager-button"}
+                      onClick={() => handleStatus(manager.id, manager.is_active)}
+                    >
+                      {working ? "Updating…" : manager.is_active ? "Disable" : "Enable"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
+
+      {credentials && (
+        <div className="credentials-overlay" role="presentation">
+          <section
+            className="credentials-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="credentials-title"
+          >
+            <span className="credentials-lock">ONE-TIME LOGIN</span>
+            <h2 id="credentials-title">Temporary manager credentials</h2>
+            <p>
+              Copy these details now. The password cannot be displayed again.
+            </p>
+
+            <div className="credential-row">
+              <span>Email</span>
+              <strong>{credentials.email}</strong>
+            </div>
+
+            <div className="credential-row temporary-password-row">
+              <span>Temporary password</span>
+              <strong>{credentials.temporaryPassword}</strong>
+            </div>
+
+            <small>
+              The manager must create a new password immediately after signing in.
+            </small>
+
+            <div className="credentials-actions">
+              <button type="button" onClick={copyCredentials}>
+                Copy login details
+              </button>
+              <button type="button" onClick={() => setCredentials(null)}>
+                I saved the details
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
