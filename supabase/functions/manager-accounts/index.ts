@@ -1,17 +1,12 @@
 import {
   createClient
-} from "../../../node_modules/@supabase/supabase-js";
+} from "@supabase/supabase-js";
 
 declare const Deno: {
-  serve(
-    handler: (
-      request: Request
-    ) => Promise<Response> | Response
-  ): void;
-
   env: {
-    get(name: string): string | undefined;
+    get(key: string): string | undefined;
   };
+  serve(handler: (request: Request) => Promise<Response>): void;
 };
 
 const corsHeaders = {
@@ -56,9 +51,7 @@ function createJsonResponse(
 
       headers: {
         ...corsHeaders,
-
-        "Content-Type":
-          "application/json"
+        "Content-Type": "application/json"
       }
     }
   );
@@ -95,9 +88,6 @@ Deno.serve(
   async (
     request: Request
   ): Promise<Response> => {
-    /*
-     * Browser preflight request.
-     */
     if (
       request.method === "OPTIONS"
     ) {
@@ -109,9 +99,6 @@ Deno.serve(
       );
     }
 
-    /*
-     * Only POST is supported.
-     */
     if (
       request.method !== "POST"
     ) {
@@ -153,6 +140,16 @@ Deno.serve(
         )
       );
 
+    /*
+     * SITE_URL should contain the deployed
+     * Vercel URL.
+     *
+     * Example:
+     * https://auction-system.vercel.app
+     *
+     * requestOrigin is used only as a fallback
+     * for local development.
+     */
     const siteUrl =
       configuredSiteUrl ||
       requestOrigin;
@@ -175,6 +172,20 @@ Deno.serve(
       );
     }
 
+    if (!siteUrl) {
+      console.error(
+        "SITE_URL is not configured."
+      );
+
+      return createJsonResponse(
+        {
+          error:
+            "The application URL is not configured."
+        },
+        500
+      );
+    }
+
     const authorizationHeader =
       request.headers.get(
         "Authorization"
@@ -192,10 +203,6 @@ Deno.serve(
       );
     }
 
-    /*
-     * This client represents the logged-in
-     * person making the request.
-     */
     const authenticatedClient =
       createClient(
         supabaseUrl,
@@ -210,16 +217,12 @@ Deno.serve(
 
           auth: {
             autoRefreshToken: false,
-            persistSession: false
+            persistSession: false,
+            detectSessionInUrl: false
           }
         }
       );
 
-    /*
-     * This client performs protected server-side
-     * operations. The service-role key never reaches
-     * the React application.
-     */
     const administratorClient =
       createClient(
         supabaseUrl,
@@ -227,15 +230,13 @@ Deno.serve(
         {
           auth: {
             autoRefreshToken: false,
-            persistSession: false
+            persistSession: false,
+            detectSessionInUrl: false
           }
         }
       );
 
     try {
-      /*
-       * Validate the caller's access token.
-       */
       const {
         data: {
           user
@@ -259,10 +260,6 @@ Deno.serve(
         );
       }
 
-      /*
-       * Verify that the caller is an active
-       * administrator.
-       */
       const {
         data:
           administratorProfile,
@@ -357,9 +354,6 @@ Deno.serve(
         );
       }
 
-      /*
-       * Verify the selected tournament.
-       */
       const {
         data: tournament,
         error: tournamentError
@@ -391,10 +385,6 @@ Deno.serve(
         );
       }
 
-      /*
-       * Verify that a team belongs to the
-       * selected tournament.
-       */
       async function validateTeam(
         teamId: string
       ) {
@@ -433,10 +423,6 @@ Deno.serve(
         return team;
       }
 
-      /*
-       * Verify that a manager belongs to
-       * the selected tournament.
-       */
       async function getManager(
         managerId: string
       ) {
@@ -481,14 +467,9 @@ Deno.serve(
         return manager;
       }
 
-      /*
-       * Save protected actions to the
-       * operator audit table.
-       */
       async function recordAudit(
         auditAction: string,
-        details:
-          AuditDetails
+        details: AuditDetails
       ) {
         const actorId =
           user?.id;
@@ -497,6 +478,7 @@ Deno.serve(
           console.error(
             "Manager audit recording skipped because the authenticated user is unavailable."
           );
+
           return;
         }
 
@@ -520,11 +502,6 @@ Deno.serve(
               details
             });
 
-        /*
-         * An audit error should be logged,
-         * but should not undo a manager
-         * operation that already succeeded.
-         */
         if (error) {
           console.error(
             "Manager audit recording error:",
@@ -534,9 +511,7 @@ Deno.serve(
       }
 
       /*
-       * =====================================================
        * LIST MANAGERS AND TEAMS
-       * =====================================================
        */
       if (
         action === "list"
@@ -629,9 +604,7 @@ Deno.serve(
       }
 
       /*
-       * =====================================================
        * INVITE MANAGER
-       * =====================================================
        */
       if (
         action === "invite"
@@ -703,6 +676,9 @@ Deno.serve(
             teamId
           );
 
+        const invitationRedirectUrl =
+          `${siteUrl}/manager/set-password`;
+
         const {
           data:
             invitedUserData,
@@ -717,9 +693,7 @@ Deno.serve(
               email,
               {
                 redirectTo:
-                  siteUrl
-                    ? `${siteUrl}/login`
-                    : undefined,
+                  invitationRedirectUrl,
 
                 data: {
                   full_name:
@@ -756,11 +730,6 @@ Deno.serve(
           );
         }
 
-        /*
-         * The authentication trigger may have
-         * already created a user_profiles row.
-         * Upsert safely converts it into a manager.
-         */
         const {
           error:
             managerProfileError
@@ -792,17 +761,14 @@ Deno.serve(
                   true
               },
               {
-                onConflict: "id"
+                onConflict:
+                  "id"
               }
             );
 
         if (
           managerProfileError
         ) {
-          /*
-           * Prevent an incomplete Auth account
-           * if profile creation fails.
-           */
           await administratorClient
             .auth
             .admin
@@ -828,7 +794,10 @@ Deno.serve(
               teamId,
 
             team_name:
-              team.name
+              team.name,
+
+            redirect_url:
+              invitationRedirectUrl
           }
         );
 
@@ -840,10 +809,6 @@ Deno.serve(
         });
       }
 
-      /*
-       * All remaining operations require
-       * a manager ID.
-       */
       const managerId =
         body.managerId
           ?.trim() ?? "";
@@ -866,9 +831,7 @@ Deno.serve(
         );
 
       /*
-       * =====================================================
        * ASSIGN OR REMOVE TEAM
-       * =====================================================
        */
       if (
         action === "assign"
@@ -945,9 +908,7 @@ Deno.serve(
       }
 
       /*
-       * =====================================================
        * ENABLE OR DISABLE MANAGER
-       * =====================================================
        */
       if (
         action === "set-active"
@@ -968,10 +929,6 @@ Deno.serve(
         const active =
           body.active;
 
-        /*
-         * Banning blocks authentication at
-         * Supabase Auth level.
-         */
         const {
           error:
             authenticationUpdateError
@@ -1042,9 +999,7 @@ Deno.serve(
       }
 
       /*
-       * =====================================================
        * SEND PASSWORD RECOVERY
-       * =====================================================
        */
       if (
         action ===
@@ -1068,6 +1023,9 @@ Deno.serve(
           );
         }
 
+        const recoveryRedirectUrl =
+          `${siteUrl}/manager/set-password`;
+
         const {
           error:
             recoveryError
@@ -1078,9 +1036,7 @@ Deno.serve(
               email,
               {
                 redirectTo:
-                  siteUrl
-                    ? `${siteUrl}/login`
-                    : undefined
+                  recoveryRedirectUrl
               }
             );
 
@@ -1097,7 +1053,10 @@ Deno.serve(
               managerId,
 
             manager_email:
-              email
+              email,
+
+            redirect_url:
+              recoveryRedirectUrl
           }
         );
 
