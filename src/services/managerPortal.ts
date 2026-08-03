@@ -91,11 +91,25 @@ Promise<ManagerPortalData> {
     );
   }
 
+  const portalData = portalResponse.data as Omit<
+    ManagerPortalData,
+    "manager"
+  >;
+
+  const { data: freshTournament, error: tournamentError } =
+    await supabase
+      .from("tournaments")
+      .select("*")
+      .eq("id", portalData.tournament.id)
+      .single();
+
+  if (tournamentError) {
+    throw tournamentError;
+  }
+
   return {
-    ...(portalResponse.data as Omit<
-      ManagerPortalData,
-      "manager"
-    >),
+    ...portalData,
+    tournament: freshTournament as Tournament,
 
     manager:
       managerResponse.data

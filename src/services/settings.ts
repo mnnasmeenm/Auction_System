@@ -22,6 +22,8 @@ export interface TournamentConfigurationInput {
   tournamentId: string;
   societyName: string;
   tournamentName: string;
+  societyLogoPath: string | null;
+  tournamentLogoPath: string | null;
   startingBudget: number;
   maximumSquadSize: number;
   allowSaleRevocation: boolean;
@@ -113,6 +115,18 @@ export async function updateTournamentConfiguration(
 
   if (error) {
     throw error;
+  }
+
+  const { error: brandingError } = await supabase
+    .from("tournaments")
+    .update({
+      society_logo_path: input.societyLogoPath,
+      tournament_logo_path: input.tournamentLogoPath
+    })
+    .eq("id", input.tournamentId);
+
+  if (brandingError) {
+    throw brandingError;
   }
 }
 

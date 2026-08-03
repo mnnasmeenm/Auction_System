@@ -445,7 +445,7 @@ export default function ProjectorPage() {
               {formatPoints(
                 activePlayer.base_price
               )}{" "}
-              PTS
+              LKR
             </strong>
 
             <div
@@ -457,7 +457,7 @@ export default function ProjectorPage() {
                   {formatPoints(currentBid)}
                 </strong>
 
-                <span>PTS</span>
+                <span>LKR</span>
               </div>
             </div>
 
@@ -591,7 +591,7 @@ export default function ProjectorPage() {
                   />
                 </div>
 
-                <small>POINTS REMAINING</small>
+                <small>LKR REMAINING</small>
               </div>
             </article>
           );

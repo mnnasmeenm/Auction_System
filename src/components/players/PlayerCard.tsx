@@ -2,11 +2,14 @@ import { useRef } from "react";
 import { toPng } from "html-to-image";
 import type { Player } from "../../types/database";
 import { getPlayerPhotoUrl } from "../../services/playerPhotos";
+import { getTournamentBrandingUrl } from "../../services/tournamentBranding";
 
 interface PlayerCardProps {
   player: Player;
   societyName: string;
   tournamentName: string;
+  societyLogoPath: string | null;
+  tournamentLogoPath: string | null;
   onEdit: (player: Player) => void;
   onDelete: (player: Player) => void;
 }
@@ -26,11 +29,15 @@ export default function PlayerCard({
   player,
   societyName,
   tournamentName,
+  societyLogoPath,
+  tournamentLogoPath,
   onEdit,
   onDelete
 }: PlayerCardProps) {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const photoUrl = getPlayerPhotoUrl(player.photo_path);
+  const societyLogoUrl = getTournamentBrandingUrl(societyLogoPath);
+  const tournamentLogoUrl = getTournamentBrandingUrl(tournamentLogoPath);
 
   async function downloadCard() {
     if (!cardRef.current) return;
@@ -53,8 +60,19 @@ export default function PlayerCard({
         <div className="player-card-glow" />
 
         <header className="social-player-brand">
-          <span>{societyName}</span>
-          <strong>{tournamentName}</strong>
+          <div className="social-player-brand-copy">
+            <span>{societyName}</span>
+            <strong>{tournamentName}</strong>
+          </div>
+
+          <div className="social-player-brand-logos">
+            {societyLogoUrl && (
+              <img src={societyLogoUrl} alt={`${societyName} logo`} />
+            )}
+            {tournamentLogoUrl && (
+              <img src={tournamentLogoUrl} alt={`${tournamentName} logo`} />
+            )}
+          </div>
         </header>
 
         <div className="social-player-photo">
@@ -91,7 +109,7 @@ export default function PlayerCard({
 
           <div className="social-player-value">
             <span>BASE VALUE</span>
-            <strong>{player.base_price.toLocaleString()} PTS</strong>
+            <strong>{player.base_price.toLocaleString()} LKR</strong>
           </div>
         </div>
       </div>

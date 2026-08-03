@@ -364,3 +364,9 @@
     justify-self: start;
   }
 }
+
+.team-card-actions .team-poster-button {
+  color: #07101e;
+  background: var(--accent);
+  border-color: var(--accent);
+}

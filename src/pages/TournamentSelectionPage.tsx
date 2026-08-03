@@ -224,7 +224,7 @@ export default function TournamentSelectionPage() {
 
               <dl className="tournament-summary">
                 <div>
-                  <dt>Team points</dt>
+                  <dt>Team budget</dt>
 
                   <dd>
                     {tournament.starting_budget

@@ -55,6 +55,8 @@ export interface Team {
   team_color: string;
   logo_path: string | null;
   manager_name: string | null;
+  captain_player_id: string | null;
+  vice_captain_player_id: string | null;
   starting_budget: number;
   amount_spent: number;
   squad_limit: number | null;
@@ -67,6 +69,8 @@ export interface Tournament {
   id: string;
   society_name: string;
   tournament_name: string;
+  society_logo_path: string | null;
+  tournament_logo_path: string | null;
   starting_budget: number;
   maximum_squad_size: number;
   allow_sale_revocation: boolean;

@@ -235,7 +235,7 @@ export default function TournamentDashboardPage() {
 
         <div className="dashboard-summary">
           <div>
-            <span>Starting points</span>
+            <span>Starting budget</span>
 
             <strong>
               {tournament.starting_budget

@@ -415,7 +415,7 @@ export default function TeamsPage() {
           </label>
 
           <label>
-            Starting points
+            Starting budget (LKR)
 
             <input
               type="number"
@@ -591,7 +591,7 @@ export default function TeamsPage() {
                     </div>
 
                     <div>
-                      <dt>Starting points</dt>
+                      <dt>Starting budget</dt>
                       <dd>
                         {team.starting_budget.toLocaleString()}
                       </dd>
@@ -620,6 +620,18 @@ export default function TeamsPage() {
                   </dl>
 
                   <div className="team-card-actions">
+                    <button
+                      type="button"
+                      className="team-poster-button"
+                      onClick={() =>
+                        navigate(
+                          `/admin/team-poster?tournament=${tournamentId}&team=${team.id}`
+                        )
+                      }
+                    >
+                      Squad poster
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => beginEditing(team)}

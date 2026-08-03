@@ -1,0 +1,82 @@
+.team-poster-page {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 44px 0 90px;
+}
+.team-poster-page-header { margin-bottom: 26px; }
+.team-poster-page-header > button {
+  margin-bottom: 20px;
+  padding: 9px 13px;
+  color: var(--text);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.team-poster-page-header .page-label { margin: 0; }
+.team-poster-page-header h1 {
+  margin: 8px 0;
+  color: var(--primary-dark);
+  font-size: clamp(38px, 5vw, 60px);
+  letter-spacing: -.05em;
+}
+.team-poster-page-header > p:last-child { color: var(--muted); }
+.team-leadership-panel {
+  display: grid;
+  grid-template-columns: 1fr 220px 220px auto;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 22px;
+  background: linear-gradient(145deg, #12223a, #0a1527);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.team-leadership-panel h2,
+.team-leadership-panel p { margin: 0; }
+.team-leadership-panel h2 { color: var(--primary-dark); }
+.team-leadership-panel p { margin-top: 5px; color: var(--muted); }
+.team-leadership-panel label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.team-leadership-panel select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.team-leadership-panel button {
+  padding: 12px 16px;
+  color: #07101e;
+  background: var(--accent);
+  border: 0;
+  border-radius: 9px;
+  font-weight: 900;
+}
+.team-poster-success {
+  margin-bottom: 18px;
+  padding: 14px;
+  color: #6de8af;
+  background: rgba(40, 174, 111, .13);
+  border: 1px solid rgba(67, 209, 147, .36);
+  border-radius: 10px;
+}
+.team-poster-message {
+  padding: 60px;
+  color: var(--muted);
+  text-align: center;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+}
+@media (max-width: 900px) {
+  .team-leadership-panel { grid-template-columns: 1fr 1fr; }
+  .team-leadership-panel > div { grid-column: 1 / -1; }
+}
+@media (max-width: 650px) {
+  .team-poster-page { width: min(100% - 20px, 1180px); padding-top: 28px; }
+  .team-leadership-panel { grid-template-columns: 1fr; }
+  .team-leadership-panel > div { grid-column: auto; }
+}

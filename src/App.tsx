@@ -58,6 +58,9 @@ import SettingsPage from
 import TeamsPage from
   "./pages/TeamsPage";
 
+import TeamPosterPage from
+  "./pages/TeamPosterPage";
+
 import TournamentDashboardPage from
   "./pages/TournamentDashboardPage";
 
@@ -169,6 +172,11 @@ export default function App() {
             />
 
             <Route
+              path="/admin/team-poster"
+              element={<TeamPosterPage mode="admin" />}
+            />
+
+            <Route
               path="/admin/players"
               element={<PlayersPage />}
             />
@@ -233,6 +241,15 @@ export default function App() {
             element={
               <ManagerRoute>
                 <ManagerPlayersPage />
+              </ManagerRoute>
+            }
+          />
+
+          <Route
+            path="/manager/team-poster"
+            element={
+              <ManagerRoute>
+                <TeamPosterPage mode="manager" />
               </ManagerRoute>
             }
           />

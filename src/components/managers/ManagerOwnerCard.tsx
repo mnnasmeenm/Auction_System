@@ -3,6 +3,7 @@ import { toPng } from "html-to-image";
 import type { ManagerPortalData } from "../../services/managerPortal";
 import { getManagerPhotoUrl } from "../../services/managerPhotos";
 import { getTeamLogoUrl } from "../../services/teams";
+import { getTournamentBrandingUrl } from "../../services/tournamentBranding";
 import "./ManagerOwnerCard.css";
 
 function initials(name: string) {
@@ -24,6 +25,12 @@ export default function ManagerOwnerCard({
   const { manager, team, tournament } = portal;
   const managerPhotoUrl = getManagerPhotoUrl(manager.manager_photo_path);
   const logoUrl = getTeamLogoUrl(team.logo_path);
+  const societyLogoUrl = getTournamentBrandingUrl(
+    tournament.society_logo_path
+  );
+  const tournamentLogoUrl = getTournamentBrandingUrl(
+    tournament.tournament_logo_path
+  );
 
   async function downloadCard() {
     if (!cardRef.current) return;
@@ -51,8 +58,26 @@ export default function ManagerOwnerCard({
         <div className="owner-card-orbit owner-orbit-two" />
 
         <div className="owner-card-branding">
-          <small>{tournament.society_name}</small>
-          <strong>{tournament.tournament_name}</strong>
+          <div className="owner-card-brand-logos">
+            {societyLogoUrl && (
+              <img
+                src={societyLogoUrl}
+                alt={`${tournament.society_name} logo`}
+              />
+            )}
+
+            {tournamentLogoUrl && (
+              <img
+                src={tournamentLogoUrl}
+                alt={`${tournament.tournament_name} logo`}
+              />
+            )}
+          </div>
+
+          <div>
+            <small>{tournament.society_name}</small>
+            <strong>{tournament.tournament_name}</strong>
+          </div>
         </div>
 
         <div className="owner-card-photo-frame">

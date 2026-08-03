@@ -153,7 +153,7 @@ export default function PlayersPage() {
     if (!form.battingStyle) return "Select a batting style.";
     if (!form.bowlingStyle) return "Select a bowling style.";
     if (!form.preferredPosition) return "Select a preferred position.";
-    if (Number(form.basePrice) < 0) return "Base points cannot be negative.";
+    if (Number(form.basePrice) < 0) return "Base price cannot be negative.";
     if (form.playerNumber && Number(form.playerNumber) <= 0) {
       return "Player number must be greater than zero.";
     }
@@ -395,7 +395,7 @@ export default function PlayersPage() {
           </label>
 
           <label>
-            Base points
+            Base price (LKR)
             <input
               type="number"
               min="0"
@@ -499,6 +499,8 @@ export default function PlayersPage() {
                 player={player}
                 societyName={tournament?.society_name ?? "Ath-Thariq Welfare Society"}
                 tournamentName={tournament?.tournament_name ?? "Player Auction"}
+                societyLogoPath={tournament?.society_logo_path ?? null}
+                tournamentLogoPath={tournament?.tournament_logo_path ?? null}
                 onEdit={beginEditing}
                 onDelete={handleDelete}
               />

@@ -207,9 +207,9 @@ export default function HistoryPage() {
     const confirmed = window.confirm(
       `Release ${selectedSale.player.full_name} ` +
       `from ${selectedSale.team.name} and refund ` +
-      `${formatPoints(
+      `Refund LKR ${formatPoints(
         selectedSale.sold_price
-      )} points?`
+      )}?`
     );
 
     if (!confirmed) {
@@ -229,9 +229,9 @@ export default function HistoryPage() {
 
       setSuccessMessage(
         `${selectedSale.player.full_name} was released. ` +
-        `${formatPoints(
+        `LKR ${formatPoints(
           selectedSale.sold_price
-        )} points were refunded to ` +
+        )} was refunded to ` +
         `${selectedSale.team.name}.`
       );
 
@@ -338,7 +338,7 @@ export default function HistoryPage() {
 
           <strong>
             {formatPoints(totalActiveValue)}
-            <small> PTS</small>
+            <small> LKR</small>
           </strong>
         </article>
       </section>
@@ -503,7 +503,7 @@ export default function HistoryPage() {
                     {formatPoints(
                       sale.sold_price
                     )}
-                    <span> PTS</span>
+                    <span> LKR</span>
                   </strong>
 
                   <p>{formatDate(sale.sold_at)}</p>
@@ -572,13 +572,13 @@ export default function HistoryPage() {
             </p>
 
             <div className="revocation-refund">
-              <span>Points to refund</span>
+              <span>Amount to refund</span>
 
               <strong>
                 {formatPoints(
                   selectedSale.sold_price
                 )}{" "}
-                PTS
+                LKR
               </strong>
             </div>
 

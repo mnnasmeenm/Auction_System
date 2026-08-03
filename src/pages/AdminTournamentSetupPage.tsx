@@ -131,7 +131,7 @@ export default function AdminTournamentSetupPage() {
     }
 
     if (Number(startingBudget) <= 0) {
-      return "Starting points must be greater than zero.";
+      return "Starting budget must be greater than zero.";
     }
 
     if (Number(maximumSquadSize) <= 0) {
@@ -336,14 +336,14 @@ export default function AdminTournamentSetupPage() {
               <h2>Budget and squad</h2>
 
               <span>
-                Configure team points and squad limitations.
+                Configure team budgets and squad limitations.
               </span>
             </div>
           </div>
 
           <div className="form-grid">
             <label>
-              Starting points per team
+              Starting budget per team (LKR)
 
               <input
                 type="number"
@@ -534,7 +534,7 @@ export default function AdminTournamentSetupPage() {
 
               <small>
                 Administrators can return a sold player for
-                re-auction and refund the team’s points.
+                re-auction and refund the team’s balance.
               </small>
             </span>
           </label>

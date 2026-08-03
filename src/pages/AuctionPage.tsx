@@ -279,9 +279,9 @@ export default function AuctionPage() {
     const confirmed = window.confirm(
       `Sell ${activePlayer.full_name} to ` +
       `${leadingTeam.name} for ` +
-      `${formatPoints(
+      `Confirm sale for LKR ${formatPoints(
         auctionData.auctionState?.current_bid ?? 0
-      )} points?`
+      )}?`
     );
 
     if (!confirmed) {
@@ -358,7 +358,7 @@ export default function AuctionPage() {
           <h1>Player allocation</h1>
 
           <p>
-            All values use tournament points. Confirm every
+            All values are displayed in LKR. Confirm every
             accepted bid before recording it.
           </p>
         </div>
@@ -462,7 +462,7 @@ export default function AuctionPage() {
                     {formatPoints(
                       activePlayer.base_price
                     )}{" "}
-                    PTS
+                    LKR
                   </strong>
                 </div>
               </div>
@@ -484,7 +484,7 @@ export default function AuctionPage() {
 
           <div className="current-bid">
             {formatPoints(currentBid)}
-            <small>PTS</small>
+            <small>LKR</small>
           </div>
 
           <p>LEADING TEAM</p>
@@ -666,7 +666,7 @@ export default function AuctionPage() {
                 </small>
 
                 <b>
-                  {formatPoints(player.base_price)} PTS
+                  {formatPoints(player.base_price)} LKR
                 </b>
               </button>
             ))}

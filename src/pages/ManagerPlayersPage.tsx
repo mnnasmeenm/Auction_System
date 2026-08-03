@@ -470,7 +470,7 @@ ManagerPlayersPage() {
                         Base:{" "}
                         {player.base_price
                           .toLocaleString()}{" "}
-                        PTS
+                        LKR
                       </span>
                     </div>
                   </div>

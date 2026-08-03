@@ -316,8 +316,8 @@ export default function SafetyPage() {
           </button>
 
           <small>
-            The backup contains tournament
-            points only—no payment data.
+            The backup contains auction values
+            only—no payment transaction records.
           </small>
         </article>
       </section>

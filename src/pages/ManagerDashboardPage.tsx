@@ -223,6 +223,13 @@ ManagerDashboardPage() {
 
           <button
             type="button"
+            onClick={() => navigate("/manager/team-poster")}
+          >
+            Squad poster
+          </button>
+
+          <button
+            type="button"
             onClick={handleSignOut}
           >
             Sign out
@@ -278,7 +285,7 @@ ManagerDashboardPage() {
       <section className="manager-stat-grid">
         <article>
           <span>
-            Starting points
+            Starting budget
           </span>
 
           <strong>
@@ -287,12 +294,12 @@ ManagerDashboardPage() {
             )}
           </strong>
 
-          <small>PTS</small>
+          <small>LKR</small>
         </article>
 
         <article>
           <span>
-            Points spent
+            Amount spent
           </span>
 
           <strong>
@@ -301,12 +308,12 @@ ManagerDashboardPage() {
             )}
           </strong>
 
-          <small>PTS</small>
+          <small>LKR</small>
         </article>
 
         <article className="remaining-points-card">
           <span>
-            Remaining points
+            Remaining balance
           </span>
 
           <strong>
@@ -315,7 +322,7 @@ ManagerDashboardPage() {
             )}
           </strong>
 
-          <small>PTS</small>
+          <small>LKR</small>
         </article>
 
         <article>
@@ -348,9 +355,9 @@ ManagerDashboardPage() {
 
         <button
           type="button"
-          onClick={loadPortal}
+          onClick={() => navigate("/manager/team-poster")}
         >
-          Refresh
+          Create squad poster
         </button>
       </section>
 
@@ -412,7 +419,7 @@ ManagerDashboardPage() {
                         player.sold_price ??
                           0
                       )}{" "}
-                      PTS
+                      LKR
                     </strong>
                   </div>
                 </article>

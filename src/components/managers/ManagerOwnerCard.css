@@ -20,9 +20,14 @@
   color: white;
   isolation: isolate;
   background:
-    radial-gradient(circle at 20% 75%, color-mix(in srgb, var(--team-color) 58%, transparent), transparent 34%),
-    radial-gradient(circle at 92% 5%, rgba(92, 154, 255, .35), transparent 28%),
-    linear-gradient(135deg, #06132d 0%, #101f46 58%, #07132b 100%);
+    radial-gradient(circle at 20% 75%, color-mix(in srgb, var(--team-color) 92%, transparent), transparent 38%),
+    radial-gradient(circle at 92% 5%, color-mix(in srgb, var(--team-color) 86%, transparent), transparent 34%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--team-color) 78%, #030814) 0%,
+      color-mix(in srgb, var(--team-color) 74%, #0a1730) 58%,
+      color-mix(in srgb, var(--team-color) 77%, #020713) 100%
+    );
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 30px;
   box-shadow: 0 35px 90px rgba(7, 20, 47, .3);
@@ -56,31 +61,49 @@
   position: absolute;
   top: 34px;
   left: 42px;
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-transform: uppercase;
 }
+.owner-card-branding > div:last-child { display: grid; gap: 3px; }
 .owner-card-branding small { color: #aebddd; font-size: 10px; letter-spacing: .16em; }
 .owner-card-branding strong { font-size: 14px; letter-spacing: .06em; }
+.owner-card-brand-logos { display: flex; align-items: center; gap: 7px; }
+.owner-card-brand-logos img {
+  width: 72px;
+  height: 72px;
+  padding: 2px;
+  object-fit: contain;
+  background: transparent;
+  border: 2px solid color-mix(in srgb, var(--team-color) 58%, white);
+  border-radius: 12px;
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .28));
+}
 
 .owner-card-photo-frame {
-  width: min(330px, 100%);
-  aspect-ratio: 4 / 5;
+  width: min(350px, 100%);
+  aspect-ratio: 1 / 1;
   align-self: end;
   display: grid;
   place-items: center;
   justify-self: center;
   overflow: hidden;
   color: white;
-  background: linear-gradient(145deg, var(--team-color), #172c59);
-  border: 5px solid rgba(255, 255, 255, .8);
-  border-radius: 160px 160px 28px 28px;
+  background: color-mix(in srgb, var(--team-color) 86%, #071124);
+  border: 5px solid color-mix(in srgb, var(--team-color) 48%, white);
+  border-radius: 50%;
   box-shadow:
     0 0 0 10px color-mix(in srgb, var(--team-color) 28%, transparent),
     0 30px 60px rgba(0, 0, 0, .35);
   animation: owner-photo-rise 900ms 120ms cubic-bezier(.18, .8, .24, 1) both;
 }
-.owner-card-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+.owner-card-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
 .owner-card-photo-frame span { font-size: 72px; font-weight: 950; }
 
 .owner-card-copy { position: relative; z-index: 2; }
@@ -104,14 +127,14 @@
 .owner-card-team { display: flex; align-items: center; gap: 14px; }
 .owner-card-team img,
 .owner-card-team span {
-  width: 62px;
-  height: 62px;
+  width: 92px;
+  height: 92px;
   display: grid;
   place-items: center;
   object-fit: contain;
   color: white;
-  background: rgba(255, 255, 255, .1);
-  border: 1px solid rgba(255, 255, 255, .18);
+  background: transparent;
+  border: 2px solid color-mix(in srgb, var(--team-color) 58%, white);
   border-radius: 17px;
   font-weight: 950;
 }
@@ -161,6 +184,8 @@
   .owner-card-copy { text-align: center; }
   .owner-card-team { justify-content: center; }
   .owner-card-season { display: none; }
+  .owner-card-branding { left: 24px; right: 24px; }
+  .owner-card-brand-logos img { width: 54px; height: 54px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -18,6 +18,12 @@ import {
   validateCategoryDeletion
 } from "../services/settings";
 
+import {
+  deleteTournamentLogo,
+  getTournamentBrandingUrl,
+  uploadTournamentLogo
+} from "../services/tournamentBranding";
+
 import "./SettingsPage.css";
 
 interface EditableCategory {
@@ -46,6 +52,18 @@ export default function SettingsPage() {
 
   const [tournamentName, setTournamentName] =
     useState("");
+
+  const [societyLogoPath, setSocietyLogoPath] =
+    useState<string | null>(null);
+
+  const [tournamentLogoPath, setTournamentLogoPath] =
+    useState<string | null>(null);
+
+  const [societyLogoFile, setSocietyLogoFile] =
+    useState<File | null>(null);
+
+  const [tournamentLogoFile, setTournamentLogoFile] =
+    useState<File | null>(null);
 
   const [startingBudget, setStartingBudget] =
     useState("");
@@ -116,6 +134,17 @@ export default function SettingsPage() {
       setTournamentName(
         tournament.tournament_name
       );
+
+      setSocietyLogoPath(
+        tournament.society_logo_path ?? null
+      );
+
+      setTournamentLogoPath(
+        tournament.tournament_logo_path ?? null
+      );
+
+      setSocietyLogoFile(null);
+      setTournamentLogoFile(null);
 
       setStartingBudget(
         String(tournament.starting_budget)
@@ -272,7 +301,7 @@ export default function SettingsPage() {
     }
 
     if (Number(startingBudget) <= 0) {
-      return "Starting points must be greater than zero.";
+      return "Starting budget must be greater than zero.";
     }
 
     if (Number(maximumSquadSize) <= 0) {
@@ -375,12 +404,33 @@ export default function SettingsPage() {
           first - second
       );
 
+      let nextSocietyLogoPath = societyLogoPath;
+      let nextTournamentLogoPath = tournamentLogoPath;
+
+      if (societyLogoFile) {
+        nextSocietyLogoPath = await uploadTournamentLogo(
+          tournamentId,
+          "society",
+          societyLogoFile
+        );
+      }
+
+      if (tournamentLogoFile) {
+        nextTournamentLogoPath = await uploadTournamentLogo(
+          tournamentId,
+          "tournament",
+          tournamentLogoFile
+        );
+      }
+
       await updateTournamentConfiguration({
         tournamentId,
         societyName:
           societyName.trim(),
         tournamentName:
           tournamentName.trim(),
+        societyLogoPath: nextSocietyLogoPath,
+        tournamentLogoPath: nextTournamentLogoPath,
         startingBudget:
           Number(startingBudget),
         maximumSquadSize:
@@ -393,6 +443,32 @@ export default function SettingsPage() {
           uniqueIncrements,
         applyDefaultsToUnusedTeams
       });
+
+      if (
+        societyLogoFile &&
+        societyLogoPath &&
+        societyLogoPath !== nextSocietyLogoPath
+      ) {
+        await deleteTournamentLogo(societyLogoPath).catch(
+          (cleanupError) => console.warn(
+            "Old society logo cleanup failed:",
+            cleanupError
+          )
+        );
+      }
+
+      if (
+        tournamentLogoFile &&
+        tournamentLogoPath &&
+        tournamentLogoPath !== nextTournamentLogoPath
+      ) {
+        await deleteTournamentLogo(tournamentLogoPath).catch(
+          (cleanupError) => console.warn(
+            "Old tournament logo cleanup failed:",
+            cleanupError
+          )
+        );
+      }
 
       const validCategories =
         categories.filter(
@@ -521,6 +597,66 @@ export default function SettingsPage() {
         <section className="settings-panel">
           <h2>Event information</h2>
 
+          <div className="settings-branding-grid">
+            <label className="settings-logo-field">
+              <span>Society logo</span>
+
+              <div className="settings-logo-preview">
+                {societyLogoPath ? (
+                  <img
+                    src={getTournamentBrandingUrl(societyLogoPath) ?? ""}
+                    alt="Society logo"
+                  />
+                ) : (
+                  <strong>AW</strong>
+                )}
+              </div>
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) =>
+                  setSocietyLogoFile(event.target.files?.[0] ?? null)
+                }
+              />
+
+              <small>
+                {societyLogoFile
+                  ? `Selected: ${societyLogoFile.name}`
+                  : "JPG, PNG or WebP. Maximum 2 MB."}
+              </small>
+            </label>
+
+            <label className="settings-logo-field">
+              <span>Tournament logo</span>
+
+              <div className="settings-logo-preview">
+                {tournamentLogoPath ? (
+                  <img
+                    src={getTournamentBrandingUrl(tournamentLogoPath) ?? ""}
+                    alt="Tournament logo"
+                  />
+                ) : (
+                  <strong>TC</strong>
+                )}
+              </div>
+
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) =>
+                  setTournamentLogoFile(event.target.files?.[0] ?? null)
+                }
+              />
+
+              <small>
+                {tournamentLogoFile
+                  ? `Selected: ${tournamentLogoFile.name}`
+                  : "JPG, PNG or WebP. Maximum 2 MB."}
+              </small>
+            </label>
+          </div>
+
           <div className="settings-form-grid">
             <label>
               Society name
@@ -549,7 +685,7 @@ export default function SettingsPage() {
             </label>
 
             <label>
-              Default team points
+              Default team budget (LKR)
 
               <input
                 type="number"
@@ -762,7 +898,7 @@ export default function SettingsPage() {
 
               <small>
                 Administrators may release a sold player and
-                refund the team’s points.
+                refund the team’s balance.
               </small>
             </span>
           </label>
