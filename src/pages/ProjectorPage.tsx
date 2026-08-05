@@ -566,10 +566,13 @@ export default function ProjectorPage() {
 
               <div>
                 <header>
-                  <strong>
-                    {team.name}
-                  </strong>
-
+                  <strong
+  style={{
+    color: team.team_color
+  }}
+>
+  {team.name}
+</strong>
                   <b
                     style={{
                       color: team.team_color
