@@ -51,6 +51,27 @@ export default function TeamSquadPoster({
     setDownloading(true);
 
     try {
+      await document.fonts.ready;
+
+      const posterImages = Array.from(
+        posterRef.current.querySelectorAll("img")
+      );
+
+      await Promise.all(
+        posterImages.map(async (image) => {
+          if (!image.complete) {
+            await new Promise<void>((resolve) => {
+              image.addEventListener("load", () => resolve(), { once: true });
+              image.addEventListener("error", () => resolve(), { once: true });
+            });
+          }
+
+          if (typeof image.decode === "function") {
+            await image.decode().catch(() => undefined);
+          }
+        })
+      );
+
       const image = await toPng(posterRef.current, {
         cacheBust: true,
         pixelRatio: 2,
@@ -76,6 +97,14 @@ export default function TeamSquadPoster({
         <div className="poster-light poster-light-one" />
         <div className="poster-light poster-light-two" />
         <div className="poster-grid-texture" />
+        {teamLogoUrl && (
+          <img
+            className="poster-team-watermark"
+            src={teamLogoUrl}
+            alt=""
+            aria-hidden="true"
+          />
+        )}
 
         <header className="poster-brand-row">
           <div className="poster-brand-logos">

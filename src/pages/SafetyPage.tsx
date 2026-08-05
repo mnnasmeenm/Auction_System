@@ -25,6 +25,10 @@ import {
   type OperatorEvent
 } from "../services/systemSafety";
 
+import {
+  cleanupTestingTournament
+} from "../services/testCleanup";
+
 import "./SafetyPage.css";
 
 const checklist = [
@@ -65,6 +69,12 @@ export default function SafetyPage() {
     useState(true);
 
   const [working, setWorking] =
+    useState(false);
+
+  const [cleanupConfirmation, setCleanupConfirmation] =
+    useState("");
+
+  const [cleanupAcknowledged, setCleanupAcknowledged] =
     useState(false);
 
   const [errorMessage, setErrorMessage] =
@@ -190,6 +200,88 @@ export default function SafetyPage() {
         error instanceof Error
           ? error.message
           : "Backup could not be created."
+      );
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  async function permanentlyCleanupTestingData() {
+    if (!tournament) {
+      return;
+    }
+
+    if (tournament.status !== "paused") {
+      setErrorMessage(
+        "Pause the tournament before permanently cleaning testing data."
+      );
+      return;
+    }
+
+    if (cleanupConfirmation.trim() !== tournament.tournament_name) {
+      setErrorMessage(
+        "Type the exact tournament name to confirm cleanup."
+      );
+      return;
+    }
+
+    if (!cleanupAcknowledged) {
+      setErrorMessage(
+        "Confirm that you understand this cleanup cannot be undone."
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Permanently delete all testing data for ${tournament.tournament_name}? ` +
+      "A backup will download first. This cannot be undone."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setWorking(true);
+    setErrorMessage("");
+    setSuccessMessage("Creating final backup before cleanup…");
+
+    try {
+      const backupContents = await createTournamentBackup(
+        tournament.id
+      );
+
+      downloadBackup(
+        backupContents,
+        tournament.tournament_name
+      );
+
+      setSuccessMessage("Backup downloaded. Permanently cleaning test data…");
+
+      const result = await cleanupTestingTournament({
+        tournamentId: tournament.id,
+        confirmationName: cleanupConfirmation.trim()
+      });
+
+      const warningText = result.warnings.length > 0
+        ? `\n\nWarnings:\n${result.warnings
+            .map((warning) => `${warning.area}: ${warning.message}`)
+            .join("\n")}`
+        : "";
+
+      window.alert(
+        `${result.message}\n` +
+        `Storage objects removed: ${result.deletedStorageObjects}\n` +
+        `Manager accounts removed: ${result.deletedManagerAccounts}` +
+        warningText
+      );
+
+      navigate("/admin/tournaments", { replace: true });
+    } catch (error) {
+      setSuccessMessage("");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Testing data could not be cleaned up."
       );
     } finally {
       setWorking(false);
@@ -378,6 +470,76 @@ export default function SafetyPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="safety-card cleanup-danger-zone">
+        <div className="cleanup-danger-heading">
+          <div>
+            <span>PERMANENT TEST CLEANUP</span>
+            <h2>Delete this testing tournament completely</h2>
+          </div>
+
+          <b>IRREVERSIBLE</b>
+        </div>
+
+        <p>
+          Use this only after testing is finished. It downloads a final backup,
+          then removes this tournament, its related database records, assigned
+          manager accounts, player photos, team logos, manager photos and
+          tournament-branding files.
+        </p>
+
+        <div className="cleanup-requirements">
+          <span className={tournament?.status === "paused" ? "complete" : ""}>
+            1. Tournament is paused
+          </span>
+          <span className={cleanupConfirmation === tournament?.tournament_name ? "complete" : ""}>
+            2. Exact name entered
+          </span>
+          <span className={cleanupAcknowledged ? "complete" : ""}>
+            3. Permanent deletion accepted
+          </span>
+        </div>
+
+        <label className="cleanup-name-field">
+          Type <strong>{tournament?.tournament_name}</strong> to confirm
+
+          <input
+            value={cleanupConfirmation}
+            onChange={(event) => setCleanupConfirmation(event.target.value)}
+            placeholder={tournament?.tournament_name}
+            autoComplete="off"
+          />
+        </label>
+
+        <label className="cleanup-acknowledgement">
+          <input
+            type="checkbox"
+            checked={cleanupAcknowledged}
+            onChange={(event) => setCleanupAcknowledged(event.target.checked)}
+          />
+
+          <span>
+            I understand this permanently deletes the selected testing
+            tournament and cannot be reversed.
+          </span>
+        </label>
+
+        <button
+          type="button"
+          className="cleanup-permanent-button"
+          disabled={
+            working ||
+            tournament?.status !== "paused" ||
+            cleanupConfirmation !== tournament?.tournament_name ||
+            !cleanupAcknowledged
+          }
+          onClick={permanentlyCleanupTestingData}
+        >
+          {working
+            ? "Cleanup in progress…"
+            : "Download backup and delete test tournament"}
+        </button>
       </section>
     </main>
   );

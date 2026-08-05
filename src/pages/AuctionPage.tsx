@@ -558,6 +558,9 @@ export default function AuctionPage() {
                 team.starting_budget -
                 team.amount_spent;
 
+              const teamLogoUrl =
+                getTeamLogoUrl(team.logo_path);
+
               return (
                 <button
                   type="button"
@@ -574,13 +577,21 @@ export default function AuctionPage() {
                     handleTeamBid(team)
                   }
                 >
-                  <strong
-                    style={{
-                      color: team.team_color
-                    }}
-                  >
-                    {team.short_name}
-                  </strong>
+                  {teamLogoUrl ? (
+                    <img
+                      className="team-bid-logo"
+                      src={teamLogoUrl}
+                      alt={`${team.name} logo`}
+                    />
+                  ) : (
+                    <strong
+                      style={{
+                        color: team.team_color
+                      }}
+                    >
+                      {team.short_name}
+                    </strong>
+                  )}
 
                   <span>{team.name}</span>
 

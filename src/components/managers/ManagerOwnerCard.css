@@ -67,17 +67,30 @@
   text-transform: uppercase;
 }
 .owner-card-branding > div:last-child { display: grid; gap: 3px; }
-.owner-card-branding small { color: #aebddd; font-size: 10px; letter-spacing: .16em; }
-.owner-card-branding strong { font-size: 14px; letter-spacing: .06em; }
+.owner-card-branding small {
+  color: #eef4ff;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: .14em;
+  text-shadow: 0 2px 9px rgba(0, 0, 0, .75);
+}
+.owner-card-branding strong {
+  color: white;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-shadow: 0 2px 11px rgba(0, 0, 0, .82);
+}
 .owner-card-brand-logos { display: flex; align-items: center; gap: 7px; }
 .owner-card-brand-logos img {
-  width: 72px;
-  height: 72px;
-  padding: 2px;
+  width: 88px;
+  height: 88px;
+  padding: 7px;
   object-fit: contain;
-  background: transparent;
-  border: 2px solid color-mix(in srgb, var(--team-color) 58%, white);
-  border-radius: 12px;
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, .92);
+  border-radius: 16px;
   filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .28));
 }
 
@@ -185,7 +198,7 @@
   .owner-card-team { justify-content: center; }
   .owner-card-season { display: none; }
   .owner-card-branding { left: 24px; right: 24px; }
-  .owner-card-brand-logos img { width: 54px; height: 54px; }
+  .owner-card-brand-logos img { width: 64px; height: 64px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
