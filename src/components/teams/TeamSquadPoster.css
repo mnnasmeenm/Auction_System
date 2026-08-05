@@ -8,7 +8,7 @@
   --poster-team-color: #2f72ff;
   position: relative;
   width: min(100%, 1080px);
-  aspect-ratio: 4 / 5;
+  /* aspect-ratio: 4 / 5; <-- REMOVED so the card can flex vertically */
   min-height: 720px;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
@@ -260,12 +260,23 @@
   font-size: clamp(8px, 1vw, 11px);
   letter-spacing: .12em;
 }
+
+/* CHANGED TO FLEXBOX TO CENTER THE LAST ROW */
 .poster-player-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: clamp(8px, 1.5vw, 17px);
 }
-.poster-player { min-width: 0; text-align: center; }
+
+.poster-player { 
+  min-width: 0; 
+  text-align: center;
+  /* (100% width - total gap width for 4 gaps) / 5 columns */
+  flex: 0 0 calc((100% - (clamp(8px, 1.5vw, 17px) * 4)) / 5);
+  max-width: calc((100% - (clamp(8px, 1.5vw, 17px) * 4)) / 5);
+}
+
 .poster-player-photo {
   position: relative;
   width: 100%;
@@ -370,7 +381,13 @@
   .poster-owner-list { display: flex; justify-content: center; }
   .poster-owner { width: 28%; }
   .owner-count-1 .poster-owner { width: 32%; margin: 0; }
-  .poster-player-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  
+  /* UPDATE COLUMNS FOR MOBILE TO 4 IN FLEXBOX */
+  .poster-player { 
+    flex: 0 0 calc((100% - (clamp(8px, 1.5vw, 17px) * 3)) / 4);
+    max-width: calc((100% - (clamp(8px, 1.5vw, 17px) * 3)) / 4);
+  }
+  
   .poster-brand-row > span { display: none; }
   .poster-brand-row { grid-template-columns: auto 1fr; }
 }
