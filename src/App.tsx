@@ -30,9 +30,11 @@ import HistoryPage from
 
 import LoginPage from
   "./pages/LoginPage";
-
 import ManagerAccountsPage from
   "./pages/ManagerAccountsPage";
+  
+import AuctionSummaryPage from
+  "./pages/AuctionSummaryPage";
 
 import ManagerDashboardPage from
   "./pages/ManagerDashboardPage";
@@ -197,7 +199,14 @@ export default function App() {
               path="/admin/history"
               element={<HistoryPage />}
             />
-
+            <Route
+  path="/auction-summary"
+  element={
+    <AdminRoute>
+      <AuctionSummaryPage />
+    </AdminRoute>
+  }
+/>
             <Route
               path="/admin/settings"
               element={<SettingsPage />}

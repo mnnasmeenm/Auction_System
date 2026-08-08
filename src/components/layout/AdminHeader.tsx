@@ -284,6 +284,18 @@ export default function AdminHeader() {
     );
   }
 
+  function openAuctionSummary() {
+    if (!tournamentId) {
+      return;
+    }
+
+    window.open(
+      `/auction-summary?tournament=${tournamentId}`,
+      "aththariq-auction-summary",
+      "popup=yes,width=1440,height=900"
+    );
+  }
+
   async function handleSignOut() {
     try {
       await signOut();
@@ -449,6 +461,13 @@ export default function AdminHeader() {
             onClick={openProjector}
           >
             Projector ↗
+          </button>
+
+          <button
+            type="button"
+            onClick={openAuctionSummary}
+          >
+            Summary ↗
           </button>
 
           <button

@@ -62,6 +62,7 @@ export async function createTournamentBackup(
     "tournaments",
     "player_categories",
     "bid_increments",
+    "bid_increment_rules",
     "teams",
     "players",
     "auction_state",

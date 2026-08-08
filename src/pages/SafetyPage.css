@@ -255,6 +255,122 @@
   font-weight: 900;
 }
 
+.cleanup-danger-zone {
+  margin-top: 18px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 73, 93, .13), transparent 34%),
+    linear-gradient(145deg, #21131d, #100d17);
+  border-color: rgba(255, 111, 125, .42);
+}
+
+.cleanup-danger-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.cleanup-danger-heading span {
+  color: #ff8d99;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .16em;
+}
+
+.cleanup-danger-heading h2 {
+  margin-top: 7px;
+}
+
+.cleanup-danger-heading b {
+  padding: 6px 9px;
+  color: #ffd7db;
+  background: rgba(213, 52, 76, .18);
+  border: 1px solid rgba(255, 111, 125, .42);
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: .1em;
+}
+
+.cleanup-requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.cleanup-requirements span {
+  padding: 7px 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.cleanup-requirements .complete {
+  color: #6de8af;
+  background: rgba(40, 174, 111, .12);
+  border-color: rgba(67, 209, 147, .34);
+}
+
+.cleanup-name-field {
+  max-width: 620px;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cleanup-name-field strong {
+  color: var(--text);
+}
+
+.cleanup-name-field input {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid rgba(255, 111, 125, .38);
+  border-radius: 9px;
+}
+
+.cleanup-acknowledgement {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  max-width: 720px;
+  padding: 13px;
+  margin: 14px 0;
+  color: #e7b9bf;
+  background: rgba(213, 52, 76, .08);
+  border: 1px solid rgba(255, 111, 125, .24);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cleanup-acknowledgement input {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  accent-color: var(--danger);
+}
+
+.cleanup-permanent-button {
+  padding: 12px 16px;
+  color: white;
+  background: #c93745;
+  border: 1px solid #ff6f7d;
+  border-radius: 9px;
+  font-weight: 900;
+}
+
+.cleanup-permanent-button:disabled {
+  color: #936c72;
+  background: #2a1d22;
+  border-color: #513039;
+}
+
 @media (max-width: 760px) {
   .safety-page {
     width: min(100% - 24px, 1180px);

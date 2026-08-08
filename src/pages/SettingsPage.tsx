@@ -301,7 +301,7 @@ export default function SettingsPage() {
     }
 
     if (Number(startingBudget) <= 0) {
-      return "Starting budget must be greater than zero.";
+      return "Starting points must be greater than zero.";
     }
 
     if (Number(maximumSquadSize) <= 0) {
@@ -685,7 +685,7 @@ export default function SettingsPage() {
             </label>
 
             <label>
-              Default team budget (LKR)
+              Default team points
 
               <input
                 type="number"
@@ -898,7 +898,7 @@ export default function SettingsPage() {
 
               <small>
                 Administrators may release a sold player and
-                refund the team’s balance.
+                refund the team’s points.
               </small>
             </span>
           </label>

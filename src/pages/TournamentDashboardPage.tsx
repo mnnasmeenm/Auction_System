@@ -111,6 +111,15 @@ export default function TournamentDashboardPage() {
       openInNewWindow: true
     },
     {
+      title: "Auction summary",
+      description:
+        "Show live team budgets and squad progress.",
+      symbol: "AS",
+      path:
+        `/auction-summary?tournament=${tournamentId}`,
+      openInNewWindow: true
+    },
+    {
   title: "History",
   description:
     "Review sales and approved reversals.",

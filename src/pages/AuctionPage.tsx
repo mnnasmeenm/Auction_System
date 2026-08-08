@@ -56,12 +56,12 @@ export default function AuctionPage() {
     searchParams.get("tournament") ?? "";
 
   const [auctionData, setAuctionData] =
-    useState<AuctionData>({
-      auctionState: null,
-      players: [],
-      teams: [],
-      increments: []
-    });
+  useState<AuctionData>({
+    auctionState: null,
+    players: [],
+    teams: [],
+    incrementRules: []
+  });
 
   const [selectedIncrement, setSelectedIncrement] =
     useState(0);
@@ -99,7 +99,7 @@ export default function AuctionPage() {
           return currentIncrement;
         }
 
-        return data.increments[0]?.amount ?? 0;
+        return data.incrementRules[0]?.increment_amount ?? 0;
       });
     } catch (error) {
       console.error("Auction loading error:", error);
@@ -163,8 +163,8 @@ export default function AuctionPage() {
     [auctionData.players]
   );
 
-  async function runAction(
-    action: () => Promise<void>,
+  async function runAction<TResult>(
+    action: () => Promise<TResult>,
     successText?: string
   ) {
     setActionLoading(true);
@@ -210,11 +210,12 @@ export default function AuctionPage() {
     }
 
     runAction(
-      () =>
-        startPlayerAuction(
+      async () => {
+        await startPlayerAuction(
           tournamentId,
           player.id
-        ),
+        );
+      },
       `Bidding opened for ${player.full_name}.`
     );
   }
@@ -235,32 +236,27 @@ export default function AuctionPage() {
   }
 
   function handleTeamBid(team: Team) {
-    if (!activePlayer) {
-      setErrorMessage(
-        "Select a player before entering a bid."
-      );
-
-      return;
-    }
-
-    if (activePlayer.status === "sold") {
-      setErrorMessage(
-        "This player is already sold."
-      );
-
-      return;
-    }
-
-    const nextBid = calculateNextBid();
-
-    runAction(() =>
-      placePlayerBid(
-        tournamentId,
-        team.id,
-        nextBid
-      )
+  if (!activePlayer) {
+    setErrorMessage(
+      "Select a player before entering a bid."
     );
+    return;
   }
+
+  if (activePlayer.status === "sold") {
+    setErrorMessage(
+      "This player is already sold."
+    );
+    return;
+  }
+
+  runAction(async () => {
+    await placePlayerBid(
+      tournamentId,
+      team.id
+    );
+  });
+}
 
   function handleSell() {
     if (!activePlayer) {
@@ -279,9 +275,9 @@ export default function AuctionPage() {
     const confirmed = window.confirm(
       `Sell ${activePlayer.full_name} to ` +
       `${leadingTeam.name} for ` +
-      `Confirm sale for LKR ${formatPoints(
+      `${formatPoints(
         auctionData.auctionState?.current_bid ?? 0
-      )}?`
+      )} points?`
     );
 
     if (!confirmed) {
@@ -311,8 +307,9 @@ export default function AuctionPage() {
     }
 
     runAction(
-      () =>
-        markActivePlayerUnsold(tournamentId),
+      async () => {
+        await markActivePlayerUnsold(tournamentId);
+      },
       `${activePlayer.full_name} marked unsold.`
     );
   }
@@ -358,7 +355,7 @@ export default function AuctionPage() {
           <h1>Player allocation</h1>
 
           <p>
-            All values are displayed in LKR. Confirm every
+            All values use tournament points. Confirm every
             accepted bid before recording it.
           </p>
         </div>
@@ -462,7 +459,7 @@ export default function AuctionPage() {
                     {formatPoints(
                       activePlayer.base_price
                     )}{" "}
-                    LKR
+                    PTS
                   </strong>
                 </div>
               </div>
@@ -484,7 +481,7 @@ export default function AuctionPage() {
 
           <div className="current-bid">
             {formatPoints(currentBid)}
-            <small>LKR</small>
+            <small>PTS</small>
           </div>
 
           <p>LEADING TEAM</p>
@@ -539,13 +536,13 @@ export default function AuctionPage() {
                 )
               }
             >
-              {auctionData.increments.map(
+              {auctionData.incrementRules.map(
                 (increment) => (
                   <option
-                    value={increment.amount}
+                    value={increment.increment_amount}
                     key={increment.id}
                   >
-                    + {formatPoints(increment.amount)}
+                    + {formatPoints(increment.increment_amount)}
                   </option>
                 )
               )}
@@ -557,9 +554,6 @@ export default function AuctionPage() {
               const remainingPoints =
                 team.starting_budget -
                 team.amount_spent;
-
-              const teamLogoUrl =
-                getTeamLogoUrl(team.logo_path);
 
               return (
                 <button
@@ -577,21 +571,13 @@ export default function AuctionPage() {
                     handleTeamBid(team)
                   }
                 >
-                  {teamLogoUrl ? (
-                    <img
-                      className="team-bid-logo"
-                      src={teamLogoUrl}
-                      alt={`${team.name} logo`}
-                    />
-                  ) : (
-                    <strong
-                      style={{
-                        color: team.team_color
-                      }}
-                    >
-                      {team.short_name}
-                    </strong>
-                  )}
+                  <strong
+                    style={{
+                      color: team.team_color
+                    }}
+                  >
+                    {team.short_name}
+                  </strong>
 
                   <span>{team.name}</span>
 
@@ -677,7 +663,7 @@ export default function AuctionPage() {
                 </small>
 
                 <b>
-                  {formatPoints(player.base_price)} LKR
+                  {formatPoints(player.base_price)} PTS
                 </b>
               </button>
             ))}

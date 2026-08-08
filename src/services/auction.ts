@@ -5,6 +5,10 @@ import type {
   Team
 } from "../types/database";
 
+import type {
+  BidIncrementRule
+} from "./bidRules";
+
 export interface AuctionState {
   tournament_id: string;
   active_player_id: string | null;
@@ -15,18 +19,11 @@ export interface AuctionState {
   updated_at: string;
 }
 
-export interface BidIncrement {
-  id: string;
-  tournament_id: string;
-  amount: number;
-  display_order: number;
-}
-
 export interface AuctionData {
   auctionState: AuctionState | null;
   players: Player[];
   teams: Team[];
-  increments: BidIncrement[];
+  incrementRules: BidIncrementRule[];
 }
 
 export async function getAuctionData(
@@ -71,7 +68,7 @@ export async function getAuctionData(
       .order("created_at"),
 
     supabase
-      .from("bid_increments")
+      .from("bid_increment_rules")
       .select("*")
       .eq("tournament_id", tournamentId)
       .order("display_order")
@@ -103,8 +100,8 @@ export async function getAuctionData(
     teams:
       (teamResponse.data ?? []) as Team[],
 
-    increments:
-      (incrementResponse.data ?? []) as BidIncrement[]
+    incrementRules:
+      (incrementResponse.data ?? []) as BidIncrementRule[]
   };
 }
 
@@ -127,21 +124,21 @@ export async function startPlayerAuction(
 
 export async function placePlayerBid(
   tournamentId: string,
-  teamId: string,
-  bidAmount: number
-): Promise<void> {
-  const { error } = await supabase.rpc(
-    "place_player_bid",
+  teamId: string
+): Promise<number> {
+  const { data, error } = await supabase.rpc(
+    "place_player_bid_auto",
     {
       p_tournament_id: tournamentId,
-      p_team_id: teamId,
-      p_bid_amount: bidAmount
+      p_team_id: teamId
     }
   );
 
   if (error) {
     throw error;
   }
+
+  return data as number;
 }
 
 export async function sellActivePlayer(

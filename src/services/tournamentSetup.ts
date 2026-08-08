@@ -1,5 +1,10 @@
 import { supabase } from "./supabase";
 
+import {
+  type BidIncrementRuleInput,
+  replaceBidIncrementRules
+} from "./bidRules";
+
 export interface CategoryInput {
   name: string;
   minimumRequired: number;
@@ -13,7 +18,7 @@ export interface TournamentSetupInput {
   allowSaleRevocation: boolean;
   requireRevocationReason: boolean;
   categories: CategoryInput[];
-  bidIncrements: number[];
+  bidIncrementRules: BidIncrementRuleInput[];
 }
 
 export async function createTournamentSetup(
@@ -55,19 +60,10 @@ export async function createTournamentSetup(
       throw categoryError;
     }
 
-    const incrementRecords = input.bidIncrements.map((amount, index) => ({
-      tournament_id: tournamentId,
-      amount,
-      display_order: index
-    }));
-
-    const { error: incrementError } = await supabase
-      .from("bid_increments")
-      .insert(incrementRecords);
-
-    if (incrementError) {
-      throw incrementError;
-    }
+    await replaceBidIncrementRules(
+      tournamentId,
+      input.bidIncrementRules
+    );
 
     const { error: stateError } = await supabase
       .from("auction_state")

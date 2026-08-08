@@ -69,7 +69,7 @@ export default function ProjectorPage() {
       auctionState: null,
       players: [],
       teams: [],
-      increments: []
+      incrementRules: []
     });
 
   const [loading, setLoading] = useState(true);
@@ -445,7 +445,7 @@ export default function ProjectorPage() {
               {formatPoints(
                 activePlayer.base_price
               )}{" "}
-              LKR
+              PTS
             </strong>
 
             <div
@@ -457,7 +457,7 @@ export default function ProjectorPage() {
                   {formatPoints(currentBid)}
                 </strong>
 
-                <span>LKR</span>
+                <span>PTS</span>
               </div>
             </div>
 
@@ -566,13 +566,10 @@ export default function ProjectorPage() {
 
               <div>
                 <header>
-                  <strong
-  style={{
-    color: team.team_color
-  }}
->
-  {team.name}
-</strong>
+                  <strong>
+                    {team.name}
+                  </strong>
+
                   <b
                     style={{
                       color: team.team_color
@@ -594,7 +591,7 @@ export default function ProjectorPage() {
                   />
                 </div>
 
-                <small>LKR REMAINING</small>
+                <small>POINTS REMAINING</small>
               </div>
             </article>
           );
