@@ -32,7 +32,7 @@
 
 .open-projector-button {
   padding: 12px 18px;
-  color: white;
+  color: rgb(18, 18, 18);
   background: var(--primary-dark);
   border: 0;
   border-radius: 10px;
