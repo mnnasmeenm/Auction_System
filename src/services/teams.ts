@@ -69,6 +69,18 @@ async function uploadTeamLogo(
   return filePath;
 }
 
+async function deleteTeamLogo(
+  logoPath: string
+): Promise<void> {
+  const { error } = await supabase.storage
+    .from("team-logos")
+    .remove([logoPath]);
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function getTeams(
   tournamentId: string
 ): Promise<Team[]> {
@@ -112,8 +124,10 @@ export async function createTeam(
     return team;
   }
 
+  let uploadedLogoPath: string | null = null;
+
   try {
-    const logoPath = await uploadTeamLogo(
+    uploadedLogoPath = await uploadTeamLogo(
       input.tournamentId,
       team.id,
       input.logoFile
@@ -123,7 +137,7 @@ export async function createTeam(
       await supabase
         .from("teams")
         .update({
-          logo_path: logoPath
+          logo_path: uploadedLogoPath
         })
         .eq("id", team.id)
         .select("*")
@@ -135,6 +149,17 @@ export async function createTeam(
 
     return updatedTeam;
   } catch (uploadError) {
+    if (uploadedLogoPath) {
+      await deleteTeamLogo(uploadedLogoPath).catch(
+        (cleanupError) => {
+          console.error(
+            "New team logo cleanup error:",
+            cleanupError
+          );
+        }
+      );
+    }
+
     await supabase
       .from("teams")
       .delete()
@@ -149,8 +174,22 @@ export async function updateTeam(
   input: TeamInput
 ): Promise<Team> {
   let logoPath: string | undefined;
+  let existingLogoPath: string | null = null;
 
   if (input.logoFile) {
+    const { data: existingTeam, error: existingTeamError } =
+      await supabase
+        .from("teams")
+        .select("logo_path")
+        .eq("id", teamId)
+        .single();
+
+    if (existingTeamError) {
+      throw existingTeamError;
+    }
+
+    existingLogoPath = existingTeam.logo_path;
+
     logoPath = await uploadTeamLogo(
       input.tournamentId,
       teamId,
@@ -179,7 +218,33 @@ export async function updateTeam(
     .single();
 
   if (error) {
+    if (logoPath && logoPath !== existingLogoPath) {
+      await deleteTeamLogo(logoPath).catch(
+        (cleanupError) => {
+          console.error(
+            "Failed team logo cleanup error:",
+            cleanupError
+          );
+        }
+      );
+    }
+
     throw error;
+  }
+
+  if (
+    logoPath &&
+    existingLogoPath &&
+    existingLogoPath !== logoPath
+  ) {
+    await deleteTeamLogo(existingLogoPath).catch(
+      (cleanupError) => {
+        console.error(
+          "Old team logo cleanup error:",
+          cleanupError
+        );
+      }
+    );
   }
 
   return data;
@@ -204,6 +269,17 @@ export async function setTeamActiveStatus(
 export async function deleteTeam(
   teamId: string
 ): Promise<void> {
+  const { data: team, error: teamError } =
+    await supabase
+      .from("teams")
+      .select("logo_path")
+      .eq("id", teamId)
+      .single();
+
+  if (teamError) {
+    throw teamError;
+  }
+
   const { count: salesCount, error: salesError } =
     await supabase
       .from("sales")
@@ -230,5 +306,16 @@ export async function deleteTeam(
 
   if (error) {
     throw error;
+  }
+
+  if (team.logo_path) {
+    await deleteTeamLogo(team.logo_path).catch(
+      (cleanupError) => {
+        console.error(
+          "Deleted team logo cleanup error:",
+          cleanupError
+        );
+      }
+    );
   }
 }

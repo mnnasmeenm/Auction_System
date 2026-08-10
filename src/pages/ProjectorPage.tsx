@@ -393,10 +393,18 @@ export default function ProjectorPage() {
             </div>
 
             <div className="projector-player-information">
-              <span className="projector-category">
-                {activePlayer.category?.name ??
-                  "Uncategorized"}
-              </span>
+              <div className="projector-player-tags">
+                <span className="projector-category">
+                  {activePlayer.category?.name ??
+                    "Uncategorized"}
+                </span>
+
+                {activePlayer.player_number !== null && (
+                  <span className="projector-player-number">
+                    PLAYER NO. {activePlayer.player_number}
+                  </span>
+                )}
+              </div>
 
               <h2>
                 {activePlayer.full_name}

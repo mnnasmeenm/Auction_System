@@ -74,7 +74,7 @@ const emptyForm: PlayerFormState = {
   battingStyle: "",
   bowlingStyle: "",
   preferredPosition: "",
-  basePrice: "",
+  basePrice: "5000",
   achievements: "",
   availabilityNotes: "",
   photoFile: null

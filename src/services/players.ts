@@ -105,8 +105,10 @@ export async function createPlayer(
     return player;
   }
 
+  let uploadedPhotoPath: string | null = null;
+
   try {
-    const photoPath = await uploadPlayerPhoto(
+    uploadedPhotoPath = await uploadPlayerPhoto(
       input.tournamentId,
       player.id,
       input.photoFile
@@ -116,7 +118,7 @@ export async function createPlayer(
       await supabase
         .from("players")
         .update({
-          photo_path: photoPath
+          photo_path: uploadedPhotoPath
         })
         .eq("id", player.id)
         .select("*")
@@ -128,6 +130,17 @@ export async function createPlayer(
 
     return updatedPlayer;
   } catch (photoError) {
+    if (uploadedPhotoPath) {
+      await deletePlayerPhoto(uploadedPhotoPath).catch(
+        (cleanupError) => {
+          console.error(
+            "New player photo cleanup error:",
+            cleanupError
+          );
+        }
+      );
+    }
+
     await supabase
       .from("players")
       .delete()
@@ -143,13 +156,16 @@ export async function updatePlayer(
   input: PlayerInput
 ): Promise<Player> {
   let photoPath = existingPhotoPath;
+  let uploadedPhotoPath: string | null = null;
 
   if (input.photoFile) {
-    photoPath = await uploadPlayerPhoto(
+    uploadedPhotoPath = await uploadPlayerPhoto(
       input.tournamentId,
       playerId,
       input.photoFile
     );
+
+    photoPath = uploadedPhotoPath;
   }
 
   const { data, error } = await supabase
@@ -174,7 +190,36 @@ export async function updatePlayer(
     .single();
 
   if (error) {
+    if (
+      uploadedPhotoPath &&
+      uploadedPhotoPath !== existingPhotoPath
+    ) {
+      await deletePlayerPhoto(uploadedPhotoPath).catch(
+        (cleanupError) => {
+          console.error(
+            "Failed player photo cleanup error:",
+            cleanupError
+          );
+        }
+      );
+    }
+
     throw error;
+  }
+
+  if (
+    uploadedPhotoPath &&
+    existingPhotoPath &&
+    existingPhotoPath !== uploadedPhotoPath
+  ) {
+    await deletePlayerPhoto(existingPhotoPath).catch(
+      (cleanupError) => {
+        console.error(
+          "Old player photo cleanup error:",
+          cleanupError
+        );
+      }
+    );
   }
 
   return data;

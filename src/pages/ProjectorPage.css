@@ -211,6 +211,26 @@
   text-transform: uppercase;
 }
 
+.projector-player-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.projector-player-number {
+  display: inline-flex;
+  padding: 6px 16px;
+  color: #ffffff;
+  background: var(--projector-dark);
+  border: 1px solid var(--projector-blue);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
 .projector-player-information h2 {
   margin: 12px 0 2px;
   color: var(--projector-dark);
@@ -579,6 +599,11 @@
   }
 
   .projector-category {
+    padding: 4px 11px;
+    font-size: 10px;
+  }
+
+  .projector-player-number {
     padding: 4px 11px;
     font-size: 10px;
   }
