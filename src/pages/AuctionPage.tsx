@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   useEffect,
   useMemo,
   useState
@@ -572,6 +573,9 @@ export default function AuctionPage() {
                 Boolean(activePlayer) &&
                 remainingPoints < nextBid;
 
+              const teamLogoUrl =
+                getTeamLogoUrl(team.logo_path);
+
               return (
                 <button
                   type="button"
@@ -588,19 +592,28 @@ export default function AuctionPage() {
                       : `Place bid for ${team.name}`
                   }
                   style={{
-                    borderColor: team.team_color
-                  }}
+                    "--team-bid-color":
+                      team.team_color
+                  } as CSSProperties}
                   onClick={() =>
                     handleTeamBid(team)
                   }
                 >
-                  <strong
-                    style={{
-                      color: team.team_color
-                    }}
-                  >
-                    {team.short_name}
-                  </strong>
+                  {teamLogoUrl ? (
+                    <img
+                      className="team-bid-logo"
+                      src={teamLogoUrl}
+                      alt={`${team.name} logo`}
+                    />
+                  ) : (
+                    <strong
+                      style={{
+                        color: team.team_color
+                      }}
+                    >
+                      {team.short_name}
+                    </strong>
+                  )}
 
                   <span>{team.name}</span>
 
