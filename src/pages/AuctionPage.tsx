@@ -236,27 +236,37 @@ export default function AuctionPage() {
   }
 
   function handleTeamBid(team: Team) {
-  if (!activePlayer) {
-    setErrorMessage(
-      "Select a player before entering a bid."
-    );
-    return;
-  }
+    if (!activePlayer) {
+      setErrorMessage(
+        "Select a player before entering a bid."
+      );
+      return;
+    }
 
-  if (activePlayer.status === "sold") {
-    setErrorMessage(
-      "This player is already sold."
-    );
-    return;
-  }
+    if (activePlayer.status === "sold") {
+      setErrorMessage(
+        "This player is already sold."
+      );
+      return;
+    }
 
-  runAction(async () => {
-    await placePlayerBid(
-      tournamentId,
-      team.id
-    );
-  });
-}
+    const nextBid = calculateNextBid();
+    const remainingPoints =
+      team.starting_budget - team.amount_spent;
+
+    // Normally this is prevented by the disabled button.
+    // This extra guard protects against a stale or rapid click.
+    if (remainingPoints < nextBid) {
+      return;
+    }
+
+    runAction(async () => {
+      await placePlayerBid(
+        tournamentId,
+        team.id
+      );
+    });
+  }
 
   function handleSell() {
     if (!activePlayer) {
@@ -555,6 +565,13 @@ export default function AuctionPage() {
                 team.starting_budget -
                 team.amount_spent;
 
+              const nextBid =
+                calculateNextBid();
+
+              const cannotAffordNextBid =
+                Boolean(activePlayer) &&
+                remainingPoints < nextBid;
+
               return (
                 <button
                   type="button"
@@ -562,7 +579,13 @@ export default function AuctionPage() {
                   disabled={
                     actionLoading ||
                     !activePlayer ||
-                    activePlayer.status === "sold"
+                    activePlayer.status === "sold" ||
+                    cannotAffordNextBid
+                  }
+                  title={
+                    cannotAffordNextBid
+                      ? `Insufficient balance. Next bid requires ${formatPoints(nextBid)}.`
+                      : `Place bid for ${team.name}`
                   }
                   style={{
                     borderColor: team.team_color
@@ -582,7 +605,9 @@ export default function AuctionPage() {
                   <span>{team.name}</span>
 
                   <small>
-                    {formatPoints(remainingPoints)} left
+                    {cannotAffordNextBid
+                      ? `${formatPoints(remainingPoints)} left — unavailable`
+                      : `${formatPoints(remainingPoints)} left`}
                   </small>
                 </button>
               );

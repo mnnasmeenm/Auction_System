@@ -33,6 +33,12 @@ interface EditableCategory {
   minimumRequired: string;
 }
 
+const DEFAULT_BID_INCREMENTS = [
+  "100",
+  "250",
+  "500"
+];
+
 function createKey() {
   return (
     Date.now().toString() +
@@ -91,7 +97,7 @@ export default function SettingsPage() {
     useState<string[]>([]);
 
   const [bidIncrements, setBidIncrements] =
-    useState<string[]>([]);
+    useState<string[]>(DEFAULT_BID_INCREMENTS);
 
   const [loading, setLoading] =
     useState(true);
@@ -183,11 +189,19 @@ export default function SettingsPage() {
         )
       );
 
-      setBidIncrements(
-        configuration.bidIncrements.map(
-          (increment) =>
+      const loadedBidIncrements =
+        configuration.bidIncrements
+          .map((increment) =>
             String(increment.amount)
-        )
+          )
+          .filter((increment) =>
+            Number(increment) > 0
+          );
+
+      setBidIncrements(
+        loadedBidIncrements.length > 0
+          ? loadedBidIncrements
+          : DEFAULT_BID_INCREMENTS
       );
     } catch (error) {
       console.error(
