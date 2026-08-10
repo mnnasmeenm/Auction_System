@@ -36,6 +36,9 @@ import {
 import {
   supabase
 } from "../services/supabase";
+import {
+  getTournamentBrandingUrl
+} from "../services/tournamentBranding";
 
 import "./ProjectorPage.css";
 
@@ -284,7 +287,15 @@ export default function ProjectorPage() {
     getTeamLogoUrl(
       leadingTeam?.logo_path ?? null
     );
+  const societyLogoUrl =
+  getTournamentBrandingUrl(
+    tournament?.society_logo_path ?? null
+  );
 
+ const tournamentLogoUrl =
+  getTournamentBrandingUrl(
+    tournament?.tournament_logo_path ?? null
+  );  
   const currentBid =
     auctionData.auctionState?.current_bid ?? 0;
 
@@ -314,46 +325,58 @@ export default function ProjectorPage() {
       }`}
     >
       <header className="projector-header">
-        <div className="projector-brand">
-          <div className="projector-brand-symbol">
-            AW
-          </div>
+  <div className="projector-brand">
+    <div className="projector-brand-logos">
+      {societyLogoUrl && (
+        <img
+          src={societyLogoUrl}
+          alt={`${tournament?.society_name ?? "Society"} logo`}
+        />
+      )}
 
-          <div>
-            <h1>
-              {tournament?.society_name}
-            </h1>
+      {tournamentLogoUrl && (
+        <img
+          src={tournamentLogoUrl}
+          alt={`${tournament?.tournament_name ?? "Tournament"} logo`}
+        />
+      )}
+    </div>
 
-            <p>
-              {tournament?.tournament_name}
-              {" • "}
-              PLAYER ALLOCATION
-            </p>
-          </div>
-        </div>
+    <div>
+      <h1>
+        {tournament?.society_name}
+      </h1>
 
-        <div className="projector-header-actions">
-          <span className="projector-live">
-            <i />
-            LIVE
-          </span>
+      <p>
+        {tournament?.tournament_name}
+        {" • "}
+        PLAYER ALLOCATION
+      </p>
+    </div>
+  </div>
 
-          <strong>
-            LOT{" "}
-            {String(lotNumber).padStart(
-              3,
-              "0"
-            )}
-          </strong>
+  <div className="projector-header-actions">
+    <span className="projector-live">
+      <i />
+      LIVE
+    </span>
 
-          <button
-            type="button"
-            onClick={enterFullscreen}
-          >
-            Fullscreen
-          </button>
-        </div>
-      </header>
+    <strong>
+      LOT{" "}
+      {String(lotNumber).padStart(
+        3,
+        "0"
+      )}
+    </strong>
+
+    <button
+      type="button"
+      onClick={enterFullscreen}
+    >
+      Fullscreen
+    </button>
+  </div>
+</header>
 
       {!activePlayer ? (
         <section className="projector-waiting">

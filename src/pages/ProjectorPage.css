@@ -110,7 +110,24 @@
   border-left: 1px solid #aeb9c6;
   font-size: 25px;
 }
+.projector-brand-logos {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
 
+.projector-brand-logos img {
+  width: 62px;
+  height: 62px;
+  padding: 5px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  border-radius: 13px;
+  box-shadow:
+    5px 5px 0 var(--projector-lime),
+    0 8px 20px rgba(0, 0, 0, 0.28);
+}
 .projector-header-actions button {
   padding: 9px 13px;
   color: var(--projector-blue);
