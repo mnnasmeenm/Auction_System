@@ -42,6 +42,17 @@ export default function TeamSquadPoster({
     tournament.tournament_logo_path
   );
   const teamLogoUrl = getTeamLogoUrl(team.logo_path);
+  const teamNameWordCount = team.name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .length;
+  const teamNameSizeClass =
+    team.name.trim().length > 22 || teamNameWordCount >= 3
+      ? "poster-team-name-long"
+      : team.name.trim().length > 14
+        ? "poster-team-name-medium"
+        : "poster-team-name-short";
 
   async function downloadPoster() {
     if (!posterRef.current || downloading) {
@@ -136,7 +147,7 @@ export default function TeamSquadPoster({
 
             <div>
               <p>{tournament.tournament_name}</p>
-              <h1>{team.name}</h1>
+              <h1 className={teamNameSizeClass}>{team.name}</h1>
               <span>TEAM • {team.short_name}</span>
             </div>
           </div>
