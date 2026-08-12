@@ -1,4 +1,9 @@
 import {
+  lazy,
+  Suspense
+} from "react";
+
+import {
   BrowserRouter,
   Navigate,
   Route,
@@ -25,22 +30,23 @@ import AdminTournamentSetupPage from
 import AuctionPage from
   "./pages/AuctionPage";
 
+import AuctionSummaryPage from
+  "./pages/AuctionSummaryPage";
+
 import HistoryPage from
   "./pages/HistoryPage";
 
 import LoginPage from
   "./pages/LoginPage";
+
 import ManagerAccountsPage from
   "./pages/ManagerAccountsPage";
-  
-import AuctionSummaryPage from
-  "./pages/AuctionSummaryPage";
-
-import ManagerDashboardPage from
-  "./pages/ManagerDashboardPage";
 
 import ManagerChangePasswordPage from
   "./pages/ManagerChangePasswordPage";
+
+import ManagerDashboardPage from
+  "./pages/ManagerDashboardPage";
 
 import ManagerPlayersPage from
   "./pages/ManagerPlayersPage";
@@ -57,17 +63,24 @@ import SafetyPage from
 import SettingsPage from
   "./pages/SettingsPage";
 
-import TeamsPage from
-  "./pages/TeamsPage";
-
 import TeamPosterPage from
   "./pages/TeamPosterPage";
+
+import TeamsPage from
+  "./pages/TeamsPage";
 
 import TournamentDashboardPage from
   "./pages/TournamentDashboardPage";
 
 import TournamentSelectionPage from
   "./pages/TournamentSelectionPage";
+
+const BackgroundRemoverPage = lazy(
+  () =>
+    import(
+      "./pages/BackgroundRemoverPage"
+    )
+);
 
 function HomeRedirect() {
   const {
@@ -175,7 +188,9 @@ export default function App() {
 
             <Route
               path="/admin/team-poster"
-              element={<TeamPosterPage mode="admin" />}
+              element={
+                <TeamPosterPage mode="admin" />
+              }
             />
 
             <Route
@@ -199,14 +214,14 @@ export default function App() {
               path="/admin/history"
               element={<HistoryPage />}
             />
+
             <Route
-  path="/auction-summary"
-  element={
-    <AdminRoute>
-      <AuctionSummaryPage />
-    </AdminRoute>
-  }
-/>
+              path="/auction-summary"
+              element={
+                <AuctionSummaryPage />
+              }
+            />
+
             <Route
               path="/admin/settings"
               element={<SettingsPage />}
@@ -215,6 +230,22 @@ export default function App() {
             <Route
               path="/admin/safety"
               element={<SafetyPage />}
+            />
+
+            <Route
+              path="/admin/background-remover"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="screen-message">
+                      Loading local background
+                      remover…
+                    </div>
+                  }
+                >
+                  <BackgroundRemoverPage />
+                </Suspense>
+              }
             />
           </Route>
 
@@ -230,7 +261,9 @@ export default function App() {
           <Route
             path="/manager/change-password"
             element={
-              <ManagerRoute passwordChangePage>
+              <ManagerRoute
+                passwordChangePage
+              >
                 <ManagerChangePasswordPage />
               </ManagerRoute>
             }
@@ -258,7 +291,9 @@ export default function App() {
             path="/manager/team-poster"
             element={
               <ManagerRoute>
-                <TeamPosterPage mode="manager" />
+                <TeamPosterPage
+                  mode="manager"
+                />
               </ManagerRoute>
             }
           />

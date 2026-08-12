@@ -320,3 +320,18 @@ button:first-of-type {
     max-width: 110px;
   }
 }
+.header-background-button {
+  color: #07101e;
+  background: var(--accent);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--accent) 70%,
+      #779d11
+    );
+}
+
+.header-background-button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}

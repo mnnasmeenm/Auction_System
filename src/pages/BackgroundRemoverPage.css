@@ -1,0 +1,401 @@
+.background-remover-page {
+  width: min(1240px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 42px 0 90px;
+}
+
+.background-remover-header {
+  max-width: 830px;
+  margin-bottom: 26px;
+}
+
+.background-remover-header .page-label {
+  margin-top: 0;
+}
+
+.background-remover-header h1 {
+  margin: 7px 0 10px;
+  color: var(--primary-dark);
+  font-size: clamp(38px, 5vw, 60px);
+  letter-spacing: -.055em;
+}
+
+.background-remover-header > p:last-child {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.background-remover-warning,
+.background-remover-success {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 11px;
+  line-height: 1.5;
+}
+
+.background-remover-warning {
+  color: #8a4c00;
+  background: #fff2d8;
+  border: 1px solid #e7bd72;
+}
+
+.background-remover-success {
+  color: #116235;
+  background: #eaf9f0;
+  border: 1px solid #92d1aa;
+}
+
+.background-folder-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.background-folder-panel article {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  box-shadow: 0 13px 35px rgba(10, 29, 61, .08);
+}
+
+.background-folder-panel article > span {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--primary-dark);
+  background: var(--accent);
+  border-radius: 13px 5px;
+  font-weight: 950;
+}
+
+.background-folder-panel article > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.background-folder-panel small {
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.background-folder-panel strong {
+  overflow: hidden;
+  color: var(--primary-dark);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.background-folder-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.background-folder-panel button,
+.background-remover-actions button {
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-weight: 850;
+}
+
+.background-folder-panel button {
+  color: var(--primary);
+  background: #ffffff;
+  border: 1px solid var(--primary);
+}
+
+.background-remover-workspace {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.background-remover-settings,
+.background-preview-panel,
+.background-progress-panel {
+  padding: 23px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 13px 35px rgba(10, 29, 61, .08);
+}
+
+.background-remover-settings h2,
+.background-preview-heading h2,
+.background-progress-heading h2 {
+  margin: 0;
+  color: var(--primary-dark);
+}
+
+.background-remover-settings label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+  margin-top: 25px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.background-remover-settings label > strong {
+  color: var(--primary);
+}
+
+.background-remover-settings input {
+  width: 100%;
+  grid-column: 1 / -1;
+  accent-color: var(--primary);
+}
+
+.background-remover-settings label > small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.background-remover-privacy {
+  margin-top: 23px;
+  padding: 15px;
+  color: #cfe0ff;
+  background: var(--primary-dark);
+  border-left: 5px solid var(--accent);
+  border-radius: 10px;
+}
+
+.background-remover-privacy strong {
+  color: var(--accent);
+}
+
+.background-remover-privacy p {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.background-remover-actions {
+  margin-top: 22px;
+}
+
+.background-remover-actions button {
+  width: 100%;
+  min-height: 46px;
+}
+
+.background-start-button {
+  color: #07101e;
+  background: var(--accent);
+  border: 0;
+}
+
+.background-cancel-button {
+  color: white;
+  background: var(--danger);
+  border: 0;
+}
+
+.background-preview-heading,
+.background-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 17px;
+}
+
+.background-preview-heading p,
+.background-progress-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.background-preview-heading > span {
+  padding: 6px 10px;
+  color: var(--primary);
+  background: #eaf0ff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.background-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.background-preview-grid article {
+  position: relative;
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #e8edf2;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+
+.background-preview-grid article > small {
+  position: absolute;
+  top: 11px;
+  left: 11px;
+  z-index: 2;
+  padding: 5px 8px;
+  color: white;
+  background: rgba(8, 23, 47, .78);
+  border-radius: 6px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.background-preview-grid img {
+  width: 100%;
+  height: 100%;
+  max-height: 440px;
+  object-fit: contain;
+}
+
+.background-preview-grid article > div {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.transparent-preview {
+  background-color: #ffffff !important;
+  background-image:
+    linear-gradient(45deg, #dce2e9 25%, transparent 25%),
+    linear-gradient(-45deg, #dce2e9 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #dce2e9 75%),
+    linear-gradient(-45deg, transparent 75%, #dce2e9 75%) !important;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0 !important;
+  background-size: 20px 20px !important;
+}
+
+.background-progress-panel {
+  margin-top: 16px;
+}
+
+.background-progress-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.background-progress-stats span {
+  padding: 6px 9px;
+  color: var(--muted);
+  background: var(--surface-secondary);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.background-progress-track {
+  height: 12px;
+  overflow: hidden;
+  background: var(--surface-secondary);
+  border-radius: 999px;
+}
+
+.background-progress-track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: inherit;
+  transition: width 250ms ease;
+}
+
+.background-model-progress {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.background-model-progress strong {
+  color: var(--primary);
+}
+
+.background-results-list {
+  max-height: 260px;
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+  overflow-y: auto;
+}
+
+.background-results-list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.background-results-list article strong {
+  overflow-wrap: anywhere;
+}
+
+.background-results-list article span {
+  color: var(--muted);
+  text-align: right;
+}
+
+.background-result-success {
+  background: #edf9f2;
+  border: 1px solid #b2dec2;
+}
+
+.background-result-failed {
+  background: #fff0f1;
+  border: 1px solid #efb8bd;
+}
+
+@media (max-width: 950px) {
+  .background-folder-panel,
+  .background-remover-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .background-remover-page {
+    width: min(100% - 24px, 1240px);
+  }
+
+  .background-folder-panel article {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .background-folder-panel button {
+    grid-column: 1 / -1;
+  }
+
+  .background-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .background-preview-grid article {
+    min-height: 280px;
+  }
+
+  .background-progress-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

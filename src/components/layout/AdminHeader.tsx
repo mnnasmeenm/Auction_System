@@ -79,8 +79,10 @@ export default function AdminHeader() {
     setChangingStatus
   ] = useState(false);
 
-  const [mobileMenuOpen, setMobileMenuOpen] =
-    useState(false);
+  const [
+    mobileMenuOpen,
+    setMobileMenuOpen
+  ] = useState(false);
 
   const [
     headerError,
@@ -131,7 +133,6 @@ export default function AdminHeader() {
       .channel(
         `admin-header-${tournamentId}`
       )
-
       .on(
         "postgres_changes",
         {
@@ -145,7 +146,6 @@ export default function AdminHeader() {
           loadTournament();
         }
       )
-
       .subscribe();
 
     return () => {
@@ -160,7 +160,10 @@ export default function AdminHeader() {
 
   useEffect(() => {
     setMobileMenuOpen(false);
-  }, [location.pathname]);
+  }, [
+    location.pathname,
+    location.search
+  ]);
 
   const navigationItems =
     useMemo<NavigationItem[]>(() => {
@@ -205,10 +208,15 @@ export default function AdminHeader() {
             `/admin/safety?tournament=${tournamentId}`
         },
         {
-  label: "Managers",
-  path:
-    `/admin/managers?tournament=${tournamentId}`
-},
+          label: "Managers",
+          path:
+            `/admin/managers?tournament=${tournamentId}`
+        },
+        {
+          label: "BG Remover",
+          path:
+            `/admin/background-remover?tournament=${tournamentId}`
+        }
       ];
     }, [tournamentId]);
 
@@ -270,6 +278,14 @@ export default function AdminHeader() {
     } finally {
       setChangingStatus(false);
     }
+  }
+
+  function openBackgroundRemover() {
+    navigate(
+      tournamentId
+        ? `/admin/background-remover?tournament=${tournamentId}`
+        : "/admin/background-remover"
+    );
   }
 
   function openProjector() {
@@ -353,7 +369,10 @@ export default function AdminHeader() {
               </small>
 
               <strong>
-                {tournament.tournament_name}
+                {
+                  tournament
+                    .tournament_name
+                }
               </strong>
             </div>
 
@@ -373,11 +392,23 @@ export default function AdminHeader() {
         )}
 
         <div className="admin-header-actions">
+          <button
+            type="button"
+            className="header-background-button"
+            onClick={
+              openBackgroundRemover
+            }
+          >
+            BG Remover
+          </button>
+
           {tournament &&
             canControlAuction && (
               <button
                 type="button"
-                disabled={changingStatus}
+                disabled={
+                  changingStatus
+                }
                 className={
                   tournament.status ===
                   "paused"
@@ -465,7 +496,9 @@ export default function AdminHeader() {
 
           <button
             type="button"
-            onClick={openAuctionSummary}
+            onClick={
+              openAuctionSummary
+            }
           >
             Summary ↗
           </button>

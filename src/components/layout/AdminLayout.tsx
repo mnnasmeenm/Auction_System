@@ -2,7 +2,8 @@ import {
   Outlet
 } from "react-router-dom";
 
-import AdminHeader from "./AdminHeader";
+import AdminHeader from
+  "./AdminHeader";
 
 import "./AdminLayout.css";
 
