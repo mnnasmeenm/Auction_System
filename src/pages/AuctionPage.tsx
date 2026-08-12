@@ -77,6 +77,9 @@ export default function AuctionPage() {
   const [successMessage, setSuccessMessage] =
     useState("");
 
+  const [playerNumberSearch, setPlayerNumberSearch] =
+    useState("");
+
   useEffect(() => {
     if (!tournamentId) {
       setLoading(false);
@@ -163,6 +166,22 @@ export default function AuctionPage() {
       ),
     [auctionData.players]
   );
+
+  const filteredAvailablePlayers = useMemo(() => {
+    const searchedNumber = playerNumberSearch
+      .trim()
+      .replace(/^#/, "");
+
+    if (!searchedNumber) {
+      return availablePlayers;
+    }
+
+    return availablePlayers.filter(
+      (player) =>
+        String(player.player_number ?? "") ===
+        searchedNumber
+    );
+  }, [availablePlayers, playerNumberSearch]);
 
   async function runAction<TResult>(
     action: () => Promise<TResult>,
@@ -659,21 +678,65 @@ export default function AuctionPage() {
       </section>
 
       <section className="available-player-section">
-        <div>
-          <h2>Available-player queue</h2>
+        <div className="auction-queue-heading">
+          <div>
+            <h2>Available-player queue</h2>
 
-          <p>
-            Select the next player to open bidding.
-          </p>
+            <p>
+              Select the next player to open bidding.
+            </p>
+          </div>
+
+          <label className="auction-player-number-search">
+            <span>Search by player number</span>
+
+            <div>
+              <input
+                type="search"
+                inputMode="numeric"
+                value={playerNumberSearch}
+                onChange={(event) =>
+                  setPlayerNumberSearch(
+                    event.target.value.replace(
+                      /[^0-9#]/g,
+                      ""
+                    )
+                  )
+                }
+                placeholder="Example: 25"
+                aria-label="Search available player by number"
+              />
+
+              {playerNumberSearch && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPlayerNumberSearch("")
+                  }
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </label>
         </div>
 
         {availablePlayers.length === 0 ? (
           <div className="auction-message">
             No available players remain.
           </div>
+        ) : filteredAvailablePlayers.length === 0 ? (
+          <div className="auction-message auction-search-empty">
+            No available player was found with number
+            {" "}
+            <strong>
+              #{playerNumberSearch.replace(/^#/, "")}
+            </strong>
+            .
+          </div>
         ) : (
           <div className="auction-player-queue">
-            {availablePlayers.map((player) => (
+            {filteredAvailablePlayers.map((player) => (
               <button
                 type="button"
                 key={player.id}
