@@ -1,0 +1,59 @@
+.registered-poster-page {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 42px 0 90px;
+}
+
+.registered-poster-page-header {
+  margin-bottom: 28px;
+}
+
+.registered-poster-page-header > button {
+  margin-bottom: 20px;
+  padding: 9px 13px;
+  color: var(--primary-light);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.registered-poster-page-header .page-label {
+  margin: 0;
+}
+
+.registered-poster-page-header h1 {
+  margin: 8px 0;
+  color: var(--heading);
+  font-size: clamp(36px, 5vw, 58px);
+  letter-spacing: -.05em;
+}
+
+.registered-poster-page-header > p:last-child {
+  color: var(--muted);
+}
+
+.registered-poster-message {
+  padding: 55px;
+  color: var(--muted);
+  text-align: center;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+}
+
+.registered-poster-message button {
+  margin-top: 16px;
+  padding: 10px 15px;
+  color: #07101e;
+  background: var(--accent);
+  border: 0;
+  border-radius: 9px;
+  font-weight: 900;
+}
+
+@media (max-width: 700px) {
+  .registered-poster-page {
+    width: min(100% - 24px, 1180px);
+    padding-top: 28px;
+  }
+}

@@ -74,7 +74,8 @@ import TournamentDashboardPage from
 
 import TournamentSelectionPage from
   "./pages/TournamentSelectionPage";
-
+import RegisteredPlayersPosterPage from
+  "./pages/RegisteredPlayersPosterPage";
 const BackgroundRemoverPage = lazy(
   () =>
     import(
@@ -192,7 +193,12 @@ export default function App() {
                 <TeamPosterPage mode="admin" />
               }
             />
-
+            <Route
+              path="/admin/registered-players-poster"
+              element={
+                <RegisteredPlayersPosterPage />
+              }
+            />
             <Route
               path="/admin/players"
               element={<PlayersPage />}

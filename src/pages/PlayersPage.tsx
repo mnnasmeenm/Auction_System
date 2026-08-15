@@ -452,14 +452,31 @@ export default function PlayersPage() {
             <h2>Player social cards</h2>
             <p>Animated in the app and downloadable as high-resolution PNG cards.</p>
           </div>
-          <button
-            type="button"
-            className="continue-button"
-            disabled={players.length === 0}
-            onClick={() => navigate(`/admin/auction?tournament=${tournamentId}`)}
-          >
-            Continue to auction
-          </button>
+           <button
+    type="button"
+    className="registered-poster-button"
+    disabled={players.length === 0}
+    onClick={() =>
+      navigate(
+        `/admin/registered-players-poster?tournament=${tournamentId}`
+      )
+    }
+  >
+    Registered-player posters
+  </button>
+
+  <button
+    type="button"
+    className="continue-button"
+    disabled={players.length === 0}
+    onClick={() =>
+      navigate(
+        `/admin/auction?tournament=${tournamentId}`
+      )
+    }
+  >
+    Continue to auction
+  </button>
         </div>
 
         <div className="player-filters">
