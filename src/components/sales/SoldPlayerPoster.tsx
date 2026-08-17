@@ -1,5 +1,7 @@
 import {
+  forwardRef,
   type CSSProperties,
+  useImperativeHandle,
   useRef,
   useState
 } from "react";
@@ -45,12 +47,26 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function safeFileName(value: string) {
+export function safeSoldPosterFileName(value: string) {
   return value
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "player";
+}
+
+export function getSoldPosterFileName(
+  sale: SaleHistoryRecord
+) {
+  const playerNumber =
+    sale.player.player_number !== null
+      ? `-${sale.player.player_number}`
+      : "";
+
+  return (
+    `${safeSoldPosterFileName(sale.player.full_name)}` +
+    `${playerNumber}-sold.png`
+  );
 }
 
 async function waitForImages(element: HTMLElement) {
@@ -83,13 +99,25 @@ async function waitForImages(element: HTMLElement) {
   );
 }
 
-export default function SoldPlayerPoster({
-  tournament,
-  sale
-}: {
+export interface SoldPlayerPosterHandle {
+  generatePng: () => Promise<string>;
+  getFileName: () => string;
+}
+
+interface SoldPlayerPosterProps {
   tournament: Tournament;
   sale: SaleHistoryRecord;
-}) {
+  showDownloadButton?: boolean;
+}
+
+const SoldPlayerPoster = forwardRef<
+  SoldPlayerPosterHandle,
+  SoldPlayerPosterProps
+>(function SoldPlayerPoster({
+  tournament,
+  sale,
+  showDownloadButton = true
+}, forwardedRef) {
   const posterRef = useRef<HTMLDivElement | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
@@ -110,8 +138,42 @@ export default function SoldPlayerPoster({
     tournament.tournament_logo_path
   );
 
+  async function generatePosterPng() {
+    if (!posterRef.current) {
+      throw new Error("The SOLD poster is not ready yet.");
+    }
+
+    await document.fonts.ready;
+    await waitForImages(posterRef.current);
+
+    return toPng(
+      posterRef.current,
+      {
+        cacheBust: true,
+        pixelRatio: 1.6,
+        backgroundColor: "#030817",
+        width: 1200,
+        height: 675,
+        style: {
+          width: "1200px",
+          height: "675px",
+          maxWidth: "none"
+        }
+      }
+    );
+  }
+
+  useImperativeHandle(
+    forwardedRef,
+    () => ({
+      generatePng: generatePosterPng,
+      getFileName: () => getSoldPosterFileName(sale)
+    }),
+    [sale]
+  );
+
   async function downloadPoster() {
-    if (!posterRef.current || downloading) {
+    if (downloading) {
       return;
     }
 
@@ -119,34 +181,10 @@ export default function SoldPlayerPoster({
     setDownloadError("");
 
     try {
-      await document.fonts.ready;
-      await waitForImages(posterRef.current);
-
-      const image = await toPng(
-        posterRef.current,
-        {
-          cacheBust: true,
-          pixelRatio: 1.6,
-          backgroundColor: "#030817",
-          width: 1200,
-          height: 675,
-          style: {
-            width: "1200px",
-            height: "675px",
-            maxWidth: "none"
-          }
-        }
-      );
+      const image = await generatePosterPng();
 
       const link = document.createElement("a");
-      const playerNumber =
-        sale.player.player_number !== null
-          ? `-${sale.player.player_number}`
-          : "";
-
-      link.download =
-        `${safeFileName(sale.player.full_name)}` +
-        `${playerNumber}-sold.png`;
+      link.download = getSoldPosterFileName(sale);
 
       link.href = image;
       link.click();
@@ -323,22 +361,26 @@ export default function SoldPlayerPoster({
         </div>
       </div>
 
-      {downloadError && (
+      {showDownloadButton && downloadError && (
         <p className="sold-poster-download-error">
           {downloadError}
         </p>
       )}
 
-      <button
-        type="button"
-        className="sold-poster-download-button"
-        onClick={downloadPoster}
-        disabled={downloading}
-      >
-        {downloading
-          ? "Preparing 1920 × 1080 poster…"
-          : "Download SOLD poster"}
-      </button>
+      {showDownloadButton && (
+        <button
+          type="button"
+          className="sold-poster-download-button"
+          onClick={downloadPoster}
+          disabled={downloading}
+        >
+          {downloading
+            ? "Preparing 1920 × 1080 poster…"
+            : "Download SOLD poster"}
+        </button>
+      )}
     </section>
   );
-}
+});
+
+export default SoldPlayerPoster;

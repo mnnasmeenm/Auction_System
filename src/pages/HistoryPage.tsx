@@ -2,8 +2,11 @@ import {
   type FormEvent,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from "react";
+
+import JSZip from "jszip";
 
 import {
   useNavigate,
@@ -32,8 +35,10 @@ import {
   getTournament
 } from "../services/tournaments";
 
-import SoldPlayerPoster from
-  "../components/sales/SoldPlayerPoster";
+import SoldPlayerPoster, {
+  safeSoldPosterFileName,
+  type SoldPlayerPosterHandle
+} from "../components/sales/SoldPlayerPoster";
 
 import "./HistoryPage.css";
 
@@ -95,6 +100,16 @@ export default function HistoryPage() {
 
   const [posterSale, setPosterSale] =
     useState<SaleHistoryRecord | null>(null);
+
+  const [bulkDownloading, setBulkDownloading] =
+    useState(false);
+
+  const [bulkProgress, setBulkProgress] =
+    useState({ current: 0, total: 0 });
+
+  const bulkPosterRefs = useRef(
+    new Map<string, SoldPlayerPosterHandle>()
+  );
 
   const [revokeReason, setRevokeReason] =
     useState("");
@@ -189,6 +204,116 @@ export default function HistoryPage() {
         ),
     [sales]
   );
+
+  const activeSales = useMemo(
+    () => sales.filter((sale) => !sale.is_revoked),
+    [sales]
+  );
+
+  async function downloadAllSoldPosters() {
+    if (
+      bulkDownloading ||
+      !tournament ||
+      activeSales.length === 0
+    ) {
+      return;
+    }
+
+    setBulkDownloading(true);
+    setBulkProgress({
+      current: 0,
+      total: activeSales.length
+    });
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const zip = new JSZip();
+      const posterFolder = zip.folder("sold-posters");
+
+      if (!posterFolder) {
+        throw new Error(
+          "The poster ZIP folder could not be created."
+        );
+      }
+
+      for (
+        let index = 0;
+        index < activeSales.length;
+        index += 1
+      ) {
+        const sale = activeSales[index];
+        const poster = bulkPosterRefs.current.get(sale.id);
+
+        if (!poster) {
+          throw new Error(
+            `The poster for ${sale.player.full_name} is not ready.`
+          );
+        }
+
+        setBulkProgress({
+          current: index + 1,
+          total: activeSales.length
+        });
+
+        const dataUrl = await poster.generatePng();
+        const imageResponse = await fetch(dataUrl);
+        const imageBlob = await imageResponse.blob();
+
+        posterFolder.file(
+          poster.getFileName(),
+          imageBlob
+        );
+
+        await new Promise<void>((resolve) => {
+          window.requestAnimationFrame(() => resolve());
+        });
+      }
+
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: {
+          level: 6
+        }
+      });
+
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download =
+        `${safeSoldPosterFileName(
+          tournament.tournament_name
+        )}-all-sold-posters.zip`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(downloadUrl);
+      }, 1000);
+
+      setSuccessMessage(
+        `${activeSales.length} SOLD posters were downloaded in one ZIP file.`
+      );
+    } catch (error) {
+      console.error(
+        "Bulk SOLD poster download error:",
+        error
+      );
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "The SOLD poster ZIP could not be created."
+      );
+    } finally {
+      setBulkDownloading(false);
+      setBulkProgress({ current: 0, total: 0 });
+    }
+  }
 
   function openRevocation(
     sale: SaleHistoryRecord
@@ -420,7 +545,50 @@ export default function HistoryPage() {
         >
           Revoked
         </button>
+
+        <button
+          type="button"
+          className="history-download-all-button"
+          onClick={downloadAllSoldPosters}
+          disabled={
+            bulkDownloading ||
+            loading ||
+            !tournament ||
+            activeSales.length === 0
+          }
+        >
+          {bulkDownloading
+            ? `Preparing ${bulkProgress.current}/${bulkProgress.total}`
+            : `Download all SOLD posters (${activeSales.length})`}
+        </button>
       </section>
+
+      {bulkDownloading && (
+        <section
+          className="history-bulk-progress"
+          aria-live="polite"
+        >
+          <div>
+            <strong>Creating poster ZIP</strong>
+            <span>
+              Poster {bulkProgress.current} of {bulkProgress.total}
+            </span>
+          </div>
+
+          <div className="history-bulk-progress-track">
+            <i
+              style={{
+                width: bulkProgress.total
+                  ? `${
+                      (bulkProgress.current /
+                        bulkProgress.total) * 100
+                    }%`
+                  : "0%"
+              }}
+            />
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <section className="history-empty">
@@ -682,6 +850,32 @@ export default function HistoryPage() {
               sale={posterSale}
             />
           </div>
+        </div>
+      )}
+
+      {tournament && activeSales.length > 0 && (
+        <div
+          className="history-bulk-poster-render-zone"
+          aria-hidden="true"
+        >
+          {activeSales.map((sale) => (
+            <SoldPlayerPoster
+              key={sale.id}
+              ref={(posterHandle) => {
+                if (posterHandle) {
+                  bulkPosterRefs.current.set(
+                    sale.id,
+                    posterHandle
+                  );
+                } else {
+                  bulkPosterRefs.current.delete(sale.id);
+                }
+              }}
+              tournament={tournament}
+              sale={sale}
+              showDownloadButton={false}
+            />
+          ))}
         </div>
       )}
     </main>

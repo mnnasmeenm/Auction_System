@@ -105,6 +105,56 @@
   border-color: var(--primary);
 }
 
+.history-controls .history-download-all-button {
+  padding-inline: 16px;
+  color: #071124;
+  background: var(--accent);
+  border-color: #9dce20;
+  font-weight: 900;
+}
+
+.history-controls .history-download-all-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.history-bulk-progress {
+  display: grid;
+  gap: 10px;
+  margin: -7px 0 20px;
+  padding: 14px 16px;
+  color: #ffffff;
+  background: #071225;
+  border: 1px solid #284778;
+  border-radius: 12px;
+}
+
+.history-bulk-progress > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.history-bulk-progress span {
+  color: #a9b8d1;
+}
+
+.history-bulk-progress-track {
+  height: 7px;
+  overflow: hidden;
+  background: #162744;
+  border-radius: 999px;
+}
+
+.history-bulk-progress-track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
 .history-list {
   display: grid;
   gap: 12px;
@@ -452,4 +502,28 @@
   background: #162744;
   border: 1px solid #3b5a89;
   border-radius: 8px;
+}
+
+.history-bulk-poster-render-zone {
+  position: fixed;
+  top: 0;
+  left: -20000px;
+  z-index: -9999;
+  width: 1200px;
+  pointer-events: none;
+}
+
+.history-bulk-poster-render-zone .sold-poster-showcase,
+.history-bulk-poster-render-zone .sold-poster-preview-scroll,
+.history-bulk-poster-render-zone .sold-player-poster {
+  width: 1200px;
+  max-width: none;
+}
+
+.history-bulk-poster-render-zone .sold-poster-preview-scroll {
+  overflow: visible;
+}
+
+.history-bulk-poster-render-zone .sold-player-poster {
+  height: 675px;
 }
