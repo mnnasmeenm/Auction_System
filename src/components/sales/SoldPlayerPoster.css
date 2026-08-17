@@ -1,0 +1,465 @@
+.sold-poster-showcase {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.sold-poster-preview-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sold-player-poster {
+  --sold-team-color: #2f72ff;
+  position: relative;
+  width: min(1200px, 100%);
+  aspect-ratio: 16 / 9;
+  min-width: 760px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  overflow: hidden;
+  padding: 24px 30px 18px;
+  isolation: isolate;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at 82% 50%,
+      color-mix(in srgb, var(--sold-team-color) 48%, transparent),
+      transparent 38%
+    ),
+    radial-gradient(circle at 16% 90%, rgba(255, 106, 20, .22), transparent 32%),
+    linear-gradient(145deg, #06132d 0%, #0b2049 55%, #080914 100%);
+  border: 2px solid color-mix(in srgb, var(--sold-team-color) 64%, #ff7518);
+  border-radius: 24px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .42);
+}
+
+.sold-player-poster * {
+  box-sizing: border-box;
+}
+
+.sold-poster-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -5;
+  opacity: .1;
+  background-image:
+    linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, #000, transparent 92%);
+}
+
+.sold-poster-glow {
+  position: absolute;
+  right: -100px;
+  bottom: -140px;
+  z-index: -4;
+  width: 560px;
+  height: 560px;
+  background: var(--sold-team-color);
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: .34;
+}
+
+.sold-poster-slash {
+  position: absolute;
+  z-index: -3;
+  width: 75px;
+  height: 115%;
+  top: -8%;
+  background: #ff6b16;
+  opacity: .85;
+  transform: skewX(-14deg);
+}
+
+.sold-poster-slash-one {
+  right: 7%;
+}
+
+.sold-poster-slash-two {
+  right: 1%;
+  background: var(--sold-team-color);
+  opacity: .6;
+}
+
+.sold-poster-watermark {
+  position: absolute;
+  right: 3%;
+  top: 19%;
+  z-index: -2;
+  width: 48%;
+  height: 66%;
+  object-fit: contain;
+  opacity: .08;
+  filter: grayscale(1) brightness(3);
+}
+
+.sold-poster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, .22);
+}
+
+.sold-poster-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sold-poster-brand-logos {
+  display: flex;
+  gap: 8px;
+}
+
+.sold-poster-brand-logos img {
+  width: 62px;
+  height: 62px;
+  padding: 5px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, .95);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--sold-team-color) 75%, #ffb21c);
+}
+
+.sold-poster-brand > div:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.sold-poster-brand strong {
+  color: #ffffff;
+  font-size: 23px;
+  font-weight: 1000;
+  letter-spacing: .025em;
+  text-transform: uppercase;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, .9);
+}
+
+.sold-poster-brand span {
+  color: #8bb4ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.sold-poster-header > b {
+  padding: 8px 13px;
+  color: #091328;
+  background: #ffffff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: .16em;
+}
+
+.sold-poster-content {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 41% 1fr;
+  gap: 18px;
+}
+
+.sold-poster-player-card,
+.sold-poster-result-panel {
+  min-height: 0;
+  overflow: hidden;
+  background: rgba(5, 14, 34, .8);
+  border: 1px solid rgba(112, 161, 255, .5);
+  border-radius: 20px;
+  box-shadow: inset 0 0 45px rgba(41, 99, 213, .12);
+}
+
+.sold-poster-player-card {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.sold-poster-player-photo {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(62, 121, 239, .3), rgba(255, 106, 20, .12)),
+    #0d2149;
+  border: 2px solid rgba(119, 164, 255, .7);
+  border-radius: 16px;
+}
+
+.sold-poster-player-photo::after {
+  content: "";
+  position: absolute;
+  left: -20%;
+  bottom: -28%;
+  width: 145%;
+  height: 40%;
+  background: color-mix(in srgb, var(--sold-team-color) 54%, #ff6b16);
+  opacity: .36;
+  transform: rotate(-9deg);
+}
+
+.sold-poster-player-photo img {
+  position: relative;
+  z-index: 1;
+  width: 94%;
+  height: 96%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.sold-poster-player-photo > span {
+  color: #ffffff;
+  font-size: 76px;
+  font-weight: 1000;
+}
+
+.sold-poster-player-photo > b {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  padding: 6px 10px;
+  color: #061026;
+  background: #ffd55e;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .1em;
+}
+
+.sold-poster-player-copy {
+  padding: 12px 5px 0;
+  text-align: center;
+}
+
+.sold-poster-category {
+  display: inline-flex;
+  padding: 5px 11px;
+  color: #ffffff;
+  background: var(--sold-team-color);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.sold-poster-player-copy h1 {
+  margin: 8px 0 2px;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 29px;
+  font-weight: 1000;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sold-poster-player-copy > p {
+  margin: 4px 0 0;
+  color: #9db4d8;
+  font-size: 11px;
+}
+
+.sold-poster-statistics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 10px;
+  border-block: 1px solid rgba(255, 255, 255, .13);
+}
+
+.sold-poster-statistics div {
+  min-width: 0;
+  padding: 8px 5px;
+}
+
+.sold-poster-statistics div:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, .13);
+}
+
+.sold-poster-statistics strong,
+.sold-poster-statistics span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sold-poster-statistics strong {
+  color: #ffffff;
+  font-size: 10px;
+}
+
+.sold-poster-statistics span {
+  margin-top: 3px;
+  color: #71a2ff;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .09em;
+}
+
+.sold-poster-result-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  border-color: color-mix(in srgb, var(--sold-team-color) 58%, #ff6b16);
+}
+
+.sold-poster-base-value {
+  display: grid;
+  gap: 3px;
+}
+
+.sold-poster-base-value span,
+.sold-poster-team-label,
+.sold-poster-price-ring small {
+  color: #79a8ff;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .18em;
+}
+
+.sold-poster-base-value strong {
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.sold-poster-price-ring {
+  width: min(88%, 570px);
+  aspect-ratio: 2.7 / 1;
+  display: grid;
+  place-content: center;
+  margin: 15px 0 12px;
+  border: 4px solid #ff6b16;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 12px rgba(255, 107, 22, .12),
+    0 0 0 24px color-mix(in srgb, var(--sold-team-color) 10%, transparent),
+    inset 0 0 50px color-mix(in srgb, var(--sold-team-color) 22%, transparent);
+}
+
+.sold-poster-price-ring small {
+  margin-bottom: 2px;
+  color: #ffb05f;
+}
+
+.sold-poster-price-ring > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 9px;
+}
+
+.sold-poster-price-ring strong {
+  color: #ffffff;
+  font-size: 70px;
+  font-weight: 1000;
+  line-height: .92;
+  letter-spacing: -.06em;
+  text-shadow: 0 6px 20px rgba(0, 0, 0, .65);
+}
+
+.sold-poster-price-ring span {
+  color: #ffd65c;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.sold-poster-team {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 9px;
+}
+
+.sold-poster-team > div {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #071127;
+  background: #ffffff;
+  border: 3px solid color-mix(in srgb, var(--sold-team-color) 75%, #ffffff);
+  border-radius: 14px;
+}
+
+.sold-poster-team img {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  object-fit: contain;
+}
+
+.sold-poster-team h2 {
+  margin: 0;
+  color: color-mix(in srgb, var(--sold-team-color) 68%, #ffffff);
+  font-size: 34px;
+  font-weight: 1000;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, .75);
+}
+
+.sold-poster-stamp {
+  position: absolute;
+  right: 12px;
+  top: 46%;
+  padding: 3px 22px;
+  color: #9fdb00;
+  background: rgba(4, 12, 27, .9);
+  border: 6px solid #b8f227;
+  font-size: 53px;
+  font-weight: 1000;
+  letter-spacing: .04em;
+  transform: rotate(-11deg);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .42);
+}
+
+.sold-poster-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding-top: 2px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .9);
+}
+
+.sold-poster-download-button {
+  padding: 12px 18px;
+  color: #07101e;
+  background: var(--accent);
+  border: 0;
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+.sold-poster-download-button:disabled {
+  opacity: .65;
+}
+
+.sold-poster-download-error {
+  margin: 0;
+  color: #ff7b89;
+  font-size: 13px;
+}

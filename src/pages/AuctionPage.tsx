@@ -12,17 +12,33 @@ import {
 
 import type {
   Player,
-  Team
+  Team,
+  Tournament
 } from "../types/database";
 
 import {
+  type AuctionBidHistoryEntry,
   type AuctionData,
+  getActiveBidHistory,
   getAuctionData,
   markActivePlayerUnsold,
   placePlayerBid,
   sellActivePlayer,
-  startPlayerAuction
+  startPlayerAuction,
+  undoLastPlayerBid
 } from "../services/auction";
+
+import {
+  getSaleHistory,
+  type SaleHistoryRecord
+} from "../services/history";
+
+import {
+  getTournament
+} from "../services/tournaments";
+
+import SoldPlayerPoster from
+  "../components/sales/SoldPlayerPoster";
 
 import {
   getPlayerPhotoUrl
@@ -64,6 +80,15 @@ export default function AuctionPage() {
     incrementRules: []
   });
 
+  const [tournament, setTournament] =
+    useState<Tournament | null>(null);
+
+  const [bidHistory, setBidHistory] =
+    useState<AuctionBidHistoryEntry[]>([]);
+
+  const [soldPosterSale, setSoldPosterSale] =
+    useState<SaleHistoryRecord | null>(null);
+
   const [selectedIncrement, setSelectedIncrement] =
     useState(0);
 
@@ -94,9 +119,21 @@ export default function AuctionPage() {
     setErrorMessage("");
 
     try {
-      const data = await getAuctionData(tournamentId);
+      const [data, tournamentRecord] =
+        await Promise.all([
+          getAuctionData(tournamentId),
+          getTournament(tournamentId)
+        ]);
+
+      const currentBidHistory =
+        await getActiveBidHistory(
+          tournamentId,
+          data.auctionState?.active_player_id
+        );
 
       setAuctionData(data);
+      setTournament(tournamentRecord);
+      setBidHistory(currentBidHistory);
 
       setSelectedIncrement((currentIncrement) => {
         if (currentIncrement > 0) {
@@ -229,6 +266,8 @@ export default function AuctionPage() {
       return;
     }
 
+    setSoldPosterSale(null);
+
     runAction(
       async () => {
         await startPlayerAuction(
@@ -288,7 +327,7 @@ export default function AuctionPage() {
     });
   }
 
-  function handleSell() {
+  async function handleSell() {
     if (!activePlayer) {
       setErrorMessage("No active player selected.");
       return;
@@ -314,11 +353,105 @@ export default function AuctionPage() {
       return;
     }
 
+    const soldPlayerId = activePlayer.id;
+    const soldTeamId = leadingTeam.id;
+
+    setActionLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      let posterWarning = "";
+
+      await sellActivePlayer(tournamentId);
+
+      setSuccessMessage(
+        `${activePlayer.full_name} sold to ${leadingTeam.name}.`
+      );
+
+      try {
+        const records =
+          await getSaleHistory(tournamentId);
+
+        const completedSale =
+          records.find(
+            (sale) =>
+              sale.player_id === soldPlayerId &&
+              sale.team_id === soldTeamId &&
+              !sale.is_revoked
+          ) ?? null;
+
+        setSoldPosterSale(completedSale);
+      } catch (posterError) {
+        console.error(
+          "Sale poster loading error:",
+          posterError
+        );
+
+        posterWarning =
+          "The sale was completed, but its poster could not " +
+          "be opened automatically. You can download it from History.";
+      }
+
+      await loadAuction();
+
+      if (posterWarning) {
+        setErrorMessage(posterWarning);
+      }
+    } catch (error) {
+      console.error("Auction sale error:", error);
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "The player sale could not be completed."
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  function handleUndoBid() {
+    const latestBid = bidHistory[0];
+
+    if (!activePlayer || !latestBid) {
+      setErrorMessage("There is no bid to undo.");
+      return;
+    }
+
+    const bidTeam = auctionData.teams.find(
+      (team) => team.id === latestBid.team_id
+    );
+
+    const restoredTeam = auctionData.teams.find(
+      (team) =>
+        team.id === latestBid.previous_team_id
+    );
+
+    const restoredState = restoredTeam
+      ? `${restoredTeam.name} at ${formatPoints(
+          latestBid.previous_bid_amount
+        )} points`
+      : `no leading team at ${formatPoints(
+          latestBid.previous_bid_amount
+        )} points`;
+
+    const confirmed = window.confirm(
+      `Undo the latest bid from ${
+        bidTeam?.name ?? "the current team"
+      } at ${formatPoints(latestBid.bid_amount)} points?\n\n` +
+      `The auction will return to ${restoredState}.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     runAction(
       async () => {
-        await sellActivePlayer(tournamentId);
+        await undoLastPlayerBid(tournamentId);
       },
-      `${activePlayer.full_name} sold to ${leadingTeam.name}.`
+      `Latest bid reversed. Restored ${restoredState}.`
     );
   }
 
@@ -555,29 +688,50 @@ export default function AuctionPage() {
             )}
           </div>
 
-          <label className="increment-control">
-            Bid increment
+          <div className="auction-bid-safety-row">
+            <label className="increment-control">
+              Bid increment
 
-            <select
-              value={selectedIncrement}
-              onChange={(event) =>
-                setSelectedIncrement(
-                  Number(event.target.value)
-                )
+              <select
+                value={selectedIncrement}
+                onChange={(event) =>
+                  setSelectedIncrement(
+                    Number(event.target.value)
+                  )
+                }
+              >
+                {auctionData.incrementRules.map(
+                  (increment) => (
+                    <option
+                      value={increment.increment_amount}
+                      key={increment.id}
+                    >
+                      + {formatPoints(increment.increment_amount)}
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+
+            <button
+              type="button"
+              className="undo-bid-button"
+              disabled={
+                actionLoading ||
+                !activePlayer ||
+                activePlayer.status === "sold" ||
+                bidHistory.length === 0
+              }
+              onClick={handleUndoBid}
+              title={
+                bidHistory.length > 0
+                  ? "Restore the immediately previous bid state"
+                  : "No recorded bid is available to undo"
               }
             >
-              {auctionData.incrementRules.map(
-                (increment) => (
-                  <option
-                    value={increment.increment_amount}
-                    key={increment.id}
-                  >
-                    + {formatPoints(increment.increment_amount)}
-                  </option>
-                )
-              )}
-            </select>
-          </label>
+              ↶ Undo last bid
+            </button>
+          </div>
 
           <div className="team-bid-buttons">
             {auctionData.teams.map((team) => {
@@ -771,6 +925,38 @@ export default function AuctionPage() {
           </div>
         )}
       </section>
+
+      {soldPosterSale && tournament && (
+        <div
+          className="auction-sold-poster-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Completed sale poster"
+        >
+          <div className="auction-sold-poster-dialog">
+            <header>
+              <div>
+                <span>SALE RECORDED</span>
+                <h2>Player SOLD poster</h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSoldPosterSale(null)
+                }
+              >
+                Close
+              </button>
+            </header>
+
+            <SoldPlayerPoster
+              tournament={tournament}
+              sale={soldPosterSale}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

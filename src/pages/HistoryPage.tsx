@@ -10,6 +10,10 @@ import {
   useSearchParams
 } from "react-router-dom";
 
+import type {
+  Tournament
+} from "../types/database";
+
 import {
   getSaleHistory,
   revokeSale,
@@ -23,6 +27,13 @@ import {
 import {
   getTeamLogoUrl
 } from "../services/teams";
+
+import {
+  getTournament
+} from "../services/tournaments";
+
+import SoldPlayerPoster from
+  "../components/sales/SoldPlayerPoster";
 
 import "./HistoryPage.css";
 
@@ -70,6 +81,9 @@ export default function HistoryPage() {
   const [sales, setSales] =
     useState<SaleHistoryRecord[]>([]);
 
+  const [tournament, setTournament] =
+    useState<Tournament | null>(null);
+
   const [filter, setFilter] =
     useState<HistoryFilter>("all");
 
@@ -77,6 +91,9 @@ export default function HistoryPage() {
     useState("");
 
   const [selectedSale, setSelectedSale] =
+    useState<SaleHistoryRecord | null>(null);
+
+  const [posterSale, setPosterSale] =
     useState<SaleHistoryRecord | null>(null);
 
   const [revokeReason, setRevokeReason] =
@@ -108,10 +125,14 @@ export default function HistoryPage() {
     setErrorMessage("");
 
     try {
-      const records =
-        await getSaleHistory(tournamentId);
+      const [records, tournamentRecord] =
+        await Promise.all([
+          getSaleHistory(tournamentId),
+          getTournament(tournamentId)
+        ]);
 
       setSales(records);
+      setTournament(tournamentRecord);
     } catch (error) {
       console.error(
         "History loading error:",
@@ -535,14 +556,27 @@ export default function HistoryPage() {
                       </small>
                     </>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openRevocation(sale)
-                      }
-                    >
-                      Revoke sale
-                    </button>
+                    <div className="history-record-actions">
+                      <button
+                        type="button"
+                        className="history-poster-button"
+                        onClick={() =>
+                          setPosterSale(sale)
+                        }
+                      >
+                        SOLD poster
+                      </button>
+
+                      <button
+                        type="button"
+                        className="history-revoke-button"
+                        onClick={() =>
+                          openRevocation(sale)
+                        }
+                      >
+                        Revoke sale
+                      </button>
+                    </div>
                   )}
                 </div>
               </article>
@@ -616,6 +650,38 @@ export default function HistoryPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {posterSale && tournament && (
+        <div
+          className="history-poster-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`SOLD poster for ${posterSale.player.full_name}`}
+        >
+          <div className="history-poster-dialog">
+            <header>
+              <div>
+                <span>HISTORICAL SALE</span>
+                <h2>
+                  {posterSale.player.full_name} — SOLD poster
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPosterSale(null)}
+              >
+                Close
+              </button>
+            </header>
+
+            <SoldPlayerPoster
+              tournament={tournament}
+              sale={posterSale}
+            />
+          </div>
         </div>
       )}
     </main>

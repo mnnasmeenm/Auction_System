@@ -3,9 +3,18 @@ import { supabase } from "./supabase";
 export interface SaleHistoryPlayer {
   id: string;
   full_name: string;
+  nickname: string | null;
   player_number: number | null;
   photo_path: string | null;
+  batting_style: string | null;
+  bowling_style: string | null;
+  preferred_position: string | null;
+  base_price: number;
   status: string;
+  category: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface SaleHistoryTeam {
@@ -49,9 +58,18 @@ export async function getSaleHistory(
       player:players (
         id,
         full_name,
+        nickname,
         player_number,
         photo_path,
-        status
+        batting_style,
+        bowling_style,
+        preferred_position,
+        base_price,
+        status,
+        category:player_categories (
+          id,
+          name
+        )
       ),
 
       team:teams (

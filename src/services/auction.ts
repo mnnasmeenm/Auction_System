@@ -26,6 +26,19 @@ export interface AuctionData {
   incrementRules: BidIncrementRule[];
 }
 
+export interface AuctionBidHistoryEntry {
+  id: string;
+  tournament_id: string;
+  player_id: string;
+  team_id: string;
+  bid_amount: number;
+  previous_team_id: string | null;
+  previous_bid_amount: number;
+  bid_sequence: number;
+  is_undone: boolean;
+  created_at: string;
+}
+
 export async function getAuctionData(
   tournamentId: string
 ): Promise<AuctionData> {
@@ -163,6 +176,64 @@ export async function markActivePlayerUnsold(
 ): Promise<void> {
   const { error } = await supabase.rpc(
     "mark_active_player_unsold",
+    {
+      p_tournament_id: tournamentId
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function getActiveBidHistory(
+  tournamentId: string,
+  playerId: string | null | undefined
+): Promise<AuctionBidHistoryEntry[]> {
+  if (!playerId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("auction_bid_history")
+    .select(`
+      id,
+      tournament_id,
+      player_id,
+      team_id,
+      bid_amount,
+      previous_team_id,
+      previous_bid_amount,
+      bid_sequence,
+      is_undone,
+      created_at
+    `)
+    .eq("tournament_id", tournamentId)
+    .eq("player_id", playerId)
+    .eq("is_undone", false)
+    .order("bid_sequence", {
+      ascending: false
+    });
+
+  if (error) {
+    if (
+      error.code === "42P01" ||
+      error.code === "PGRST205"
+    ) {
+      return [];
+    }
+
+    throw error;
+  }
+
+  return (data ?? []) as AuctionBidHistoryEntry[];
+}
+
+export async function undoLastPlayerBid(
+  tournamentId: string
+): Promise<void> {
+  const { error } = await supabase.rpc(
+    "undo_last_player_bid",
     {
       p_tournament_id: tournamentId
     }
