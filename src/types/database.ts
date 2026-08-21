@@ -50,6 +50,46 @@ export type MatchResultType =
   | "no_result"
   | "abandoned";
 
+export type ScoringMode =
+  | "live"
+  | "manual"
+  | "hybrid";
+
+export type InningsStatus =
+  | "not_started"
+  | "live"
+  | "completed";
+
+export type DismissalType =
+  | "not_out"
+  | "bowled"
+  | "caught"
+  | "lbw"
+  | "run_out"
+  | "stumped"
+  | "hit_wicket"
+  | "retired"
+  | "other";
+
+export type BallExtraType =
+  | "wide"
+  | "no_ball"
+  | "bye"
+  | "leg_bye"
+  | "penalty";
+
+export type ScoreAuditAction =
+  | "start_match"
+  | "start_innings"
+  | "add_ball"
+  | "undo_ball"
+  | "correct_ball"
+  | "manual_innings_save"
+  | "complete_innings"
+  | "complete_match"
+  | "reopen_match"
+  | "other";
+
 export interface PlayerCategory {
   id: string;
   tournament_id: string;
@@ -246,6 +286,10 @@ export interface TournamentMatch {
   result_summary: string | null;
   player_of_match_id: string | null;
   player_of_match_reason: string | null;
+  scoring_mode: ScoringMode;
+  revised_target: number | null;
+  revised_target_note: string | null;
+  last_score_update_at: string | null;
   is_published: boolean;
   started_at: string | null;
   completed_at: string | null;
@@ -256,4 +300,185 @@ export interface TournamentMatch {
   schedule_window?: TournamentScheduleWindow | null;
   team_one?: Team | null;
   team_two?: Team | null;
+}
+
+export interface MatchInnings {
+  id: string;
+  match_id: string;
+  tournament_id: string;
+  innings_number: number;
+  batting_team_id: string;
+  bowling_team_id: string;
+  runs: number;
+  wickets: number;
+  legal_balls: number;
+  extras: number;
+  wides: number;
+  no_balls: number;
+  byes: number;
+  leg_byes: number;
+  penalty_runs: number;
+  is_all_out: boolean;
+  is_completed: boolean;
+  nrr_runs_override: number | null;
+  nrr_balls_override: number | null;
+  innings_status: InningsStatus;
+  maximum_overs: number;
+  balls_per_over: number;
+  maximum_wickets: number;
+  target_runs: number | null;
+  target_note: string | null;
+  is_declared: boolean;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at?: string;
+  updated_at?: string;
+  batting_team?: Team | null;
+  bowling_team?: Team | null;
+  batting_scorecards?: BattingScorecard[];
+  bowling_scorecards?: BowlingScorecard[];
+  fall_of_wickets?: FallOfWicket[];
+}
+
+export interface BattingScorecard {
+  id: string;
+  innings_id: string;
+  tournament_id: string;
+  team_id: string;
+  player_id: string | null;
+  player_name: string;
+  batting_position: number | null;
+  runs: number;
+  balls: number;
+  fours: number;
+  sixes: number;
+  dismissal_type: DismissalType;
+  bowler_player_id: string | null;
+  fielder_player_id: string | null;
+  dismissal_text: string | null;
+  created_at?: string;
+  updated_at?: string;
+  player?: Player | null;
+}
+
+export interface BowlingScorecard {
+  id: string;
+  innings_id: string;
+  tournament_id: string;
+  team_id: string;
+  player_id: string | null;
+  player_name: string;
+  legal_balls: number;
+  maidens: number;
+  runs_conceded: number;
+  wickets: number;
+  wides: number;
+  no_balls: number;
+  dot_balls: number;
+  fours_conceded: number;
+  sixes_conceded: number;
+  created_at?: string;
+  updated_at?: string;
+  player?: Player | null;
+}
+
+export interface FieldingScorecard {
+  id: string;
+  match_id: string;
+  tournament_id: string;
+  team_id: string;
+  player_id: string | null;
+  player_name: string;
+  catches: number;
+  stumpings: number;
+  direct_run_outs: number;
+  assisted_run_outs: number;
+  created_at?: string;
+  updated_at?: string;
+  player?: Player | null;
+  team?: Team | null;
+}
+
+export interface MatchBallEvent {
+  id: string;
+  match_id: string;
+  innings_id: string;
+  tournament_id: string;
+  sequence_number: number;
+  over_number: number;
+  ball_in_over: number;
+  batter_player_id: string | null;
+  batter_name: string | null;
+  non_striker_player_id: string | null;
+  non_striker_name: string | null;
+  bowler_player_id: string | null;
+  bowler_name: string | null;
+  runs_off_bat: number;
+  extra_type: BallExtraType | null;
+  extra_runs: number;
+  is_legal_ball: boolean;
+  is_wicket: boolean;
+  dismissal_type: DismissalType | null;
+  dismissed_player_id: string | null;
+  dismissed_player_name: string | null;
+  fielder_player_id: string | null;
+  wicket_counts: boolean;
+  credited_bowler_wicket: boolean;
+  free_hit_delivery: boolean;
+  strike_rotation_runs: number;
+  run_out_kind: "direct" | "assisted" | null;
+  note: string | null;
+  created_by: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FallOfWicket {
+  id: string;
+  innings_id: string;
+  tournament_id: string;
+  wicket_number: number;
+  team_runs: number;
+  legal_balls: number;
+  player_id: string | null;
+  player_name: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MatchLiveState {
+  match_id: string;
+  tournament_id: string;
+  current_innings_id: string | null;
+  striker_player_id: string | null;
+  striker_name: string | null;
+  non_striker_player_id: string | null;
+  non_striker_name: string | null;
+  bowler_player_id: string | null;
+  bowler_name: string | null;
+  target_runs: number | null;
+  last_ball_event_id: string | null;
+  free_hit: boolean;
+  over_complete: boolean;
+  next_bowler_required: boolean;
+  last_over_bowler_player_id: string | null;
+  last_over_bowler_name: string | null;
+  revision: number;
+  updated_by: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MatchScoreAudit {
+  id: string;
+  tournament_id: string;
+  match_id: string;
+  innings_id: string | null;
+  ball_event_id: string | null;
+  action: ScoreAuditAction;
+  reason: string | null;
+  before_data: Record<string, unknown> | null;
+  after_data: Record<string, unknown> | null;
+  performed_by: string | null;
+  created_at?: string;
 }

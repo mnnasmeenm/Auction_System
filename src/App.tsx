@@ -57,11 +57,23 @@ import PlayersPage from
 import ProjectorPage from
   "./pages/ProjectorPage";
 
+import PublicLandingPage from
+  "./pages/PublicLandingPage";
+
+import PublicMatchPage from
+  "./pages/PublicMatchPage";
+
+import PublicTournamentPage from
+  "./pages/PublicTournamentPage";
+
 import SafetyPage from
   "./pages/SafetyPage";
 
 import SchedulePage from
   "./pages/SchedulePage";
+
+import ScoreControlPage from
+  "./pages/ScoreControlPage";
 
 import SettingsPage from
   "./pages/SettingsPage";
@@ -149,7 +161,22 @@ export default function App() {
         <Routes>
           <Route
             path="/"
+            element={<PublicLandingPage />}
+          />
+
+          <Route
+            path="/account"
             element={<HomeRedirect />}
+          />
+
+          <Route
+            path="/t/:publicSlug"
+            element={<PublicTournamentPage />}
+          />
+
+          <Route
+            path="/t/:publicSlug/match/:matchId"
+            element={<PublicMatchPage />}
           />
 
           <Route
@@ -244,6 +271,11 @@ export default function App() {
             <Route
               path="/admin/schedule"
               element={<SchedulePage />}
+            />
+
+            <Route
+              path="/admin/scoring"
+              element={<ScoreControlPage />}
             />
 
             <Route

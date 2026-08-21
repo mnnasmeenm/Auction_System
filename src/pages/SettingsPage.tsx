@@ -59,6 +59,12 @@ export default function SettingsPage() {
   const [tournamentName, setTournamentName] =
     useState("");
 
+  const [publicSlug, setPublicSlug] =
+    useState("");
+
+  const [isPublic, setIsPublic] =
+    useState(false);
+
   const [societyLogoPath, setSocietyLogoPath] =
     useState<string | null>(null);
 
@@ -139,6 +145,14 @@ export default function SettingsPage() {
 
       setTournamentName(
         tournament.tournament_name
+      );
+
+      setPublicSlug(
+        tournament.public_slug ?? ""
+      );
+
+      setIsPublic(
+        tournament.is_public ?? false
       );
 
       setSocietyLogoPath(
@@ -314,6 +328,17 @@ export default function SettingsPage() {
       return "Tournament name is required.";
     }
 
+    if (isPublic && !publicSlug.trim()) {
+      return "Enter a public URL name before publishing the tournament.";
+    }
+
+    if (
+      publicSlug.trim() &&
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(publicSlug.trim())
+    ) {
+      return "The public URL may contain lowercase letters, numbers and single hyphens only.";
+    }
+
     if (Number(startingBudget) <= 0) {
       return "Starting points must be greater than zero.";
     }
@@ -445,6 +470,8 @@ export default function SettingsPage() {
           tournamentName.trim(),
         societyLogoPath: nextSocietyLogoPath,
         tournamentLogoPath: nextTournamentLogoPath,
+        publicSlug: publicSlug.trim() || null,
+        isPublic,
         startingBudget:
           Number(startingBudget),
         maximumSquadSize:
@@ -750,6 +777,68 @@ export default function SettingsPage() {
               <small>
                 Teams that already own players will not be
                 changed.
+              </small>
+            </span>
+          </label>
+        </section>
+
+        <section className="settings-panel settings-public-panel">
+          <div className="settings-section-heading">
+            <div>
+              <h2>Public match centre</h2>
+              <p>
+                Publish scheduled matches, live scores and completed
+                scorecards without requiring a login.
+              </p>
+            </div>
+
+            {isPublic && publicSlug && (
+              <a
+                href={`/t/${publicSlug}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open public page ↗
+              </a>
+            )}
+          </div>
+
+          <div className="settings-form-grid">
+            <label>
+              Public URL name
+
+              <input
+                value={publicSlug}
+                onChange={(event) =>
+                  setPublicSlug(
+                    event.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]/g, "-")
+                      .replace(/-+/g, "-")
+                      .replace(/^-/, "")
+                  )
+                }
+                placeholder="arakyala-super-league"
+              />
+
+              <small>
+                Public address: /t/{publicSlug || "your-tournament"}
+              </small>
+            </label>
+          </div>
+
+          <label className="settings-checkbox">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(event) => setIsPublic(event.target.checked)}
+            />
+
+            <span>
+              <strong>Make this tournament public</strong>
+              <small>
+                Only matches separately marked Published in Schedule are
+                visible to the public.
               </small>
             </span>
           </label>

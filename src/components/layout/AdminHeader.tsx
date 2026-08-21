@@ -198,6 +198,11 @@ export default function AdminHeader() {
             `/admin/schedule?tournament=${tournamentId}`
         },
         {
+          label: "Scoring",
+          path:
+            `/admin/scoring?tournament=${tournamentId}`
+        },
+        {
           label: "History",
           path:
             `/admin/history?tournament=${tournamentId}`

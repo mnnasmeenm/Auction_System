@@ -128,6 +128,14 @@ export default function TournamentDashboardPage() {
         `/admin/schedule?tournament=${tournamentId}`
     },
     {
+      title: "Score control",
+      description:
+        "Run live ball-by-ball scoring or save a complete innings manually.",
+      symbol: "SR",
+      path:
+        `/admin/scoring?tournament=${tournamentId}`
+    },
+    {
   title: "History",
   description:
     "Review sales and approved reversals.",

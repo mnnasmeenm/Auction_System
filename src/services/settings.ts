@@ -24,6 +24,8 @@ export interface TournamentConfigurationInput {
   tournamentName: string;
   societyLogoPath: string | null;
   tournamentLogoPath: string | null;
+  publicSlug: string | null;
+  isPublic: boolean;
   startingBudget: number;
   maximumSquadSize: number;
   allowSaleRevocation: boolean;
@@ -121,7 +123,9 @@ export async function updateTournamentConfiguration(
     .from("tournaments")
     .update({
       society_logo_path: input.societyLogoPath,
-      tournament_logo_path: input.tournamentLogoPath
+      tournament_logo_path: input.tournamentLogoPath,
+      public_slug: input.publicSlug,
+      is_public: input.isPublic
     })
     .eq("id", input.tournamentId);
 

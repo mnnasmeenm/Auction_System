@@ -1,0 +1,47 @@
+.full-scorecard { display: grid; gap: 18px; }
+.scorecard-innings {
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(13, 30, 58, .96), rgba(5, 15, 33, .98));
+  border: 1px solid #29405f;
+  border-radius: 17px;
+}
+.scorecard-innings > header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 20px;
+  background: linear-gradient(105deg, rgba(35, 94, 196, .28), transparent);
+  border-bottom: 1px solid #29405f;
+}
+.scorecard-innings header span { color: #78a9ff; font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+.scorecard-innings header h2 { margin: 4px 0 0; color: white; font-size: 20px; }
+.scorecard-innings header > strong { color: white; font-size: 36px; letter-spacing: -.05em; }
+.scorecard-innings header > small { color: #9dabc0; }
+.scorecard-table-wrap { overflow-x: auto; }
+.scorecard-table-wrap table { width: 100%; border-collapse: collapse; min-width: 680px; }
+.scorecard-table-wrap th,
+.scorecard-table-wrap td { padding: 11px 14px; text-align: right; border-bottom: 1px solid rgba(55, 77, 108, .44); }
+.scorecard-table-wrap th { color: #7792b8; font-size: 9px; letter-spacing: .09em; text-transform: uppercase; }
+.scorecard-table-wrap td { color: #cbd5e5; font-size: 12px; }
+.scorecard-table-wrap th:first-child,
+.scorecard-table-wrap td:first-child,
+.scorecard-table-wrap th:nth-child(2),
+.scorecard-table-wrap td:nth-child(2) { text-align: left; }
+.scorecard-table-wrap td strong { color: white; }
+.scorecard-extras { display: flex; justify-content: space-between; gap: 16px; padding: 12px 15px; color: white; background: rgba(3, 11, 25, .55); }
+.scorecard-extras small { color: #93a3bb; }
+.scorecard-fielding,
+.scorecard-fow { padding: 14px 16px; color: #9fafc7; font-size: 11px; }
+.scorecard-fielding h3 { margin: 0 0 8px; color: white; font-size: 13px; }
+.scorecard-fielding > div { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.scorecard-fielding b { color: #dce6f6; }
+.scorecard-fow { border-top: 1px solid rgba(55, 77, 108, .44); }
+.compact-scorecard .scorecard-innings > header { padding: 13px 15px; }
+.compact-scorecard .scorecard-table-wrap th,
+.compact-scorecard .scorecard-table-wrap td { padding: 8px 10px; }
+@media (max-width: 650px) {
+  .scorecard-innings > header { grid-template-columns: 1fr auto; }
+  .scorecard-innings header > small { grid-column: 1 / -1; }
+  .scorecard-extras { flex-direction: column; }
+}
