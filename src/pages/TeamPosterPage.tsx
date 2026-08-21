@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import DivisionRosterPoster from "../components/teams/DivisionRosterPoster";
 import TeamSquadPoster from "../components/teams/TeamSquadPoster";
 import {
   getTeamPosterData,
@@ -7,6 +8,8 @@ import {
   type TeamPosterData
 } from "../services/teamPoster";
 import "./TeamPosterPage.css";
+
+type PosterTemplate = "photo" | "name-list";
 
 export default function TeamPosterPage({
   mode
@@ -18,6 +21,7 @@ export default function TeamPosterPage({
   const requestedTeamId = mode === "admin"
     ? searchParams.get("team") ?? ""
     : "";
+  const requestedDivisionId = searchParams.get("division") ?? "";
 
   const [data, setData] = useState<TeamPosterData | null>(null);
   const [captainId, setCaptainId] = useState("");
@@ -26,6 +30,8 @@ export default function TeamPosterPage({
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [posterTemplate, setPosterTemplate] =
+    useState<PosterTemplate>("photo");
 
   const loadPoster = useCallback(async () => {
     if (mode === "admin" && !requestedTeamId) {
@@ -36,12 +42,18 @@ export default function TeamPosterPage({
 
     try {
       const posterData = await getTeamPosterData(
-        mode === "admin" ? requestedTeamId : undefined
+        mode === "admin" ? requestedTeamId : undefined,
+        requestedDivisionId || undefined
       );
 
       setData(posterData);
       setCaptainId(posterData.team.captain_player_id ?? "");
       setViceCaptainId(posterData.team.vice_captain_player_id ?? "");
+      setPosterTemplate(
+        posterData.players.some((player) => Boolean(player.photo_path))
+          ? "photo"
+          : "name-list"
+      );
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(
@@ -52,7 +64,7 @@ export default function TeamPosterPage({
     } finally {
       setLoading(false);
     }
-  }, [mode, requestedTeamId]);
+  }, [mode, requestedTeamId, requestedDivisionId]);
 
   useEffect(() => {
     loadPoster();
@@ -82,6 +94,7 @@ export default function TeamPosterPage({
     try {
       await setTeamLeadership({
         teamId: data.team.id,
+        divisionId: data.division.id,
         captainPlayerId: captainId,
         viceCaptainPlayerId: viceCaptainId
       });
@@ -110,7 +123,9 @@ export default function TeamPosterPage({
           ← {mode === "admin" ? "Teams" : "My team"}
         </button>
 
-        <p className="page-label">SOCIAL MEDIA POSTER</p>
+        <p className="page-label">
+          {data?.division.name ?? "DIVISION"} · SOCIAL MEDIA POSTER
+        </p>
         <h1>Official team squad</h1>
         <p>
           Assign the leadership, preview the final squad and download the poster.
@@ -128,6 +143,29 @@ export default function TeamPosterPage({
         </section>
       ) : (
         <>
+          <section className="team-poster-template-panel">
+            <div>
+              <h2>Poster template</h2>
+              <p>
+                Use the name-list layout for a manually registered division
+                without player or owner photographs.
+              </p>
+            </div>
+
+            <label>
+              Poster style
+              <select
+                value={posterTemplate}
+                onChange={(event) =>
+                  setPosterTemplate(event.target.value as PosterTemplate)
+                }
+              >
+                <option value="photo">Photo squad poster</option>
+                <option value="name-list">Name-list poster (no photos)</option>
+              </select>
+            </label>
+          </section>
+
           <form
             className="team-leadership-panel"
             onSubmit={handleLeadershipSubmit}
@@ -135,7 +173,7 @@ export default function TeamPosterPage({
             <div>
               <h2>Captain and vice-captain</h2>
               <p>
-                Only players purchased by {data.team.name} can be selected.
+                Select leadership from the {data.division.name} squad of {data.team.name}.
               </p>
             </div>
 
@@ -179,7 +217,11 @@ export default function TeamPosterPage({
             </button>
           </form>
 
-          <TeamSquadPoster data={data} />
+          {posterTemplate === "name-list" ? (
+            <DivisionRosterPoster data={data} />
+          ) : (
+            <TeamSquadPoster data={data} />
+          )}
         </>
       )}
     </main>

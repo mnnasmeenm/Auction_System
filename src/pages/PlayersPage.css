@@ -128,6 +128,72 @@
   grid-column: 1 / -1;
 }
 
+.player-registration-pools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.player-registration-pools button {
+  min-height: 82px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 5px;
+  padding: 15px 17px;
+  color: var(--text);
+  text-align: left;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.player-registration-pools button:hover {
+  border-color: var(--primary);
+}
+
+.player-registration-pools button strong {
+  color: var(--primary-dark);
+  font-size: 15px;
+}
+
+.player-registration-pools button span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.player-registration-pools .selected-registration-pool {
+  color: white;
+  background: linear-gradient(145deg, var(--primary), #0e347f);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(22, 70, 184, .14);
+}
+
+.player-registration-pools .selected-registration-pool strong,
+.player-registration-pools .selected-registration-pool span {
+  color: white;
+}
+
+.manual-allocation-note {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 76px;
+  padding: 13px;
+  color: #b8f3d4;
+  background: #0d3023;
+  border: 1px solid #287653;
+  border-radius: 10px;
+}
+
+.manual-allocation-note span {
+  color: #8fc9aa;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .player-submit-area {
   grid-column: 1 / -1;
   display: flex;
@@ -606,4 +672,13 @@
 }
 @keyframes player-glow-pulse {
   to { transform: translate(-35px, 24px) scale(1.18); opacity: .5; }
+}
+
+.player-filters select {
+  min-height: 40px;
+  padding: 8px 12px;
+  color: var(--text);
+  background: var(--surface-strong, white);
+  border: 1px solid var(--border);
+  border-radius: 999px;
 }

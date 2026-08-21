@@ -132,6 +132,67 @@
   color: var(--muted);
 }
 
+.team-division-field {
+  grid-column: 1 / -1;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.team-division-field legend {
+  padding: 0 7px;
+  color: var(--primary-dark);
+  font-weight: 850;
+}
+
+.team-division-field > p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.team-division-field > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 9px;
+}
+
+.team-division-field > div > label {
+  display: grid;
+  grid-template-columns: auto 44px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.team-division-field > div > label.selected {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.team-division-field input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--primary);
+}
+
+.team-division-field span {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  color: white;
+  border-radius: 7px;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.team-division-field strong {
+  color: var(--primary-dark);
+  font-size: 11px;
+}
+
 .team-submit-area {
   grid-column: 1 / -1;
   display: flex;

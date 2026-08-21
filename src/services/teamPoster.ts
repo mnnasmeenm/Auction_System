@@ -1,5 +1,10 @@
 import { supabase } from "./supabase";
-import type { Player, Team, Tournament } from "../types/database";
+import type {
+  Player,
+  Team,
+  Tournament,
+  TournamentDivision
+} from "../types/database";
 
 export interface TeamPosterManager {
   id: string;
@@ -9,18 +14,21 @@ export interface TeamPosterManager {
 
 export interface TeamPosterData {
   tournament: Tournament;
+  division: TournamentDivision;
   team: Team;
   players: Player[];
   managers: TeamPosterManager[];
 }
 
 export async function getTeamPosterData(
-  teamId?: string
+  teamId?: string,
+  divisionId?: string
 ): Promise<TeamPosterData> {
   const { data, error } = await supabase.rpc(
-    "get_team_poster_data",
+    "get_division_team_poster_data",
     {
-      p_team_id: teamId || null
+      p_team_id: teamId || null,
+      p_division_id: divisionId || null
     }
   );
 
@@ -37,13 +45,15 @@ export async function getTeamPosterData(
 
 export async function setTeamLeadership(input: {
   teamId: string;
+  divisionId: string;
   captainPlayerId: string;
   viceCaptainPlayerId: string;
 }): Promise<void> {
   const { error } = await supabase.rpc(
-    "set_team_leadership",
+    "set_division_team_leadership",
     {
       p_team_id: input.teamId,
+      p_division_id: input.divisionId,
       p_captain_player_id: input.captainPlayerId,
       p_vice_captain_player_id: input.viceCaptainPlayerId
     }

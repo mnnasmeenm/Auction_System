@@ -63,6 +63,38 @@
   border: 1px solid rgba(67, 209, 147, .36);
   border-radius: 10px;
 }
+.team-poster-template-panel {
+  display: grid;
+  grid-template-columns: 1fr minmax(250px, 320px);
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  background: linear-gradient(145deg, #12223a, #0a1527);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.team-poster-template-panel h2,
+.team-poster-template-panel p { margin: 0; }
+.team-poster-template-panel h2 { color: var(--primary-dark); }
+.team-poster-template-panel p {
+  margin-top: 5px;
+  color: var(--muted);
+}
+.team-poster-template-panel label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.team-poster-template-panel select {
+  width: 100%;
+  padding: 11px 12px;
+  color: var(--text);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
 .team-poster-message {
   padding: 60px;
   color: var(--muted);
@@ -79,4 +111,5 @@
   .team-poster-page { width: min(100% - 20px, 1180px); padding-top: 28px; }
   .team-leadership-panel { grid-template-columns: 1fr; }
   .team-leadership-panel > div { grid-column: auto; }
+  .team-poster-template-panel { grid-template-columns: 1fr; }
 }

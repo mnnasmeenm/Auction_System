@@ -132,7 +132,7 @@ export default function TeamSquadPoster({
             <strong>{tournament.tournament_name}</strong>
           </div>
 
-          <span>OFFICIAL SQUAD</span>
+          <span>{data.division.short_name} · OFFICIAL SQUAD</span>
         </header>
 
         <section className="poster-team-hero">
@@ -146,7 +146,7 @@ export default function TeamSquadPoster({
             </div>
 
             <div>
-              <p>{tournament.tournament_name}</p>
+              <p>{tournament.tournament_name} · {data.division.name}</p>
               <h1 className={teamNameSizeClass}>{team.name}</h1>
               <span>TEAM • {team.short_name}</span>
             </div>
@@ -186,7 +186,7 @@ export default function TeamSquadPoster({
 
           {players.length === 0 ? (
             <div className="poster-no-players">
-              Squad will appear after the auction.
+              Add auction or manually allocated players to create this squad.
             </div>
           ) : (
             <div
@@ -227,7 +227,7 @@ export default function TeamSquadPoster({
 
         <footer className="poster-footer">
           <span>{tournament.society_name}</span>
-          <strong>{team.name} • OFFICIAL SQUAD</strong>
+          <strong>{team.name} • {data.division.name} SQUAD</strong>
         </footer>
       </div>
 

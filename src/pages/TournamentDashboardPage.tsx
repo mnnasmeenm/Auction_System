@@ -120,6 +120,14 @@ export default function TournamentDashboardPage() {
       openInNewWindow: true
     },
     {
+      title: "Match schedule",
+      description:
+        "Generate league, group or knockout fixtures and download branded schedules.",
+      symbol: "SC",
+      path:
+        `/admin/schedule?tournament=${tournamentId}`
+    },
+    {
   title: "History",
   description:
     "Review sales and approved reversals.",

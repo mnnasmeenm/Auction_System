@@ -10,7 +10,11 @@ import {
   useSearchParams
 } from "react-router-dom";
 
-import type { Team } from "../types/database";
+import type {
+  Team,
+  TournamentDivision,
+  TournamentDivisionTeam
+} from "../types/database";
 
 import {
   createTeam,
@@ -21,6 +25,11 @@ import {
   type TeamInput,
   updateTeam
 } from "../services/teams";
+import {
+  getDivisionTeamAssignments,
+  getTournamentDivisions,
+  setTeamDivisionAssignments
+} from "../services/scheduleConfiguration";
 
 import "./TeamsPage.css";
 
@@ -32,6 +41,7 @@ interface TeamFormState {
   startingBudget: string;
   squadLimit: string;
   logoFile: File | null;
+  divisionIds: string[];
 }
 
 const emptyForm: TeamFormState = {
@@ -41,7 +51,8 @@ const emptyForm: TeamFormState = {
   teamColor: "#1646b8",
   startingBudget: "",
   squadLimit: "",
-  logoFile: null
+  logoFile: null,
+  divisionIds: []
 };
 
 export default function TeamsPage() {
@@ -52,6 +63,9 @@ export default function TeamsPage() {
     searchParams.get("tournament") ?? "";
 
   const [teams, setTeams] = useState<Team[]>([]);
+  const [divisions, setDivisions] = useState<TournamentDivision[]>([]);
+  const [divisionTeams, setDivisionTeams] =
+    useState<TournamentDivisionTeam[]>([]);
   const [form, setForm] =
     useState<TeamFormState>(emptyForm);
 
@@ -77,8 +91,24 @@ export default function TeamsPage() {
     setErrorMessage("");
 
     try {
-      const teamRecords = await getTeams(tournamentId);
+      const [teamRecords, divisionRecords, assignmentRecords] =
+        await Promise.all([
+          getTeams(tournamentId),
+          getTournamentDivisions(tournamentId),
+          getDivisionTeamAssignments(tournamentId)
+        ]);
       setTeams(teamRecords);
+      setDivisions(divisionRecords.filter((division) => division.is_active));
+      setDivisionTeams(assignmentRecords);
+      setForm((current) => ({
+        ...current,
+        divisionIds:
+          current.divisionIds.length > 0
+            ? current.divisionIds
+            : divisionRecords[0]
+              ? [divisionRecords[0].id]
+              : []
+      }));
     } catch (error) {
       console.error("Team loading error:", error);
 
@@ -94,7 +124,7 @@ export default function TeamsPage() {
 
   function updateForm(
     field: keyof TeamFormState,
-    value: string | File | null
+    value: string | string[] | File | null
   ) {
     setForm((currentForm) => ({
       ...currentForm,
@@ -130,6 +160,10 @@ export default function TeamsPage() {
 
     if (Number(form.squadLimit) <= 0) {
       return "The squad limit must be greater than zero.";
+    }
+
+    if (form.divisionIds.length === 0) {
+      return "Select at least one tournament division.";
     }
 
     return null;
@@ -169,13 +203,26 @@ export default function TeamsPage() {
 
       if (editingTeamId) {
         await updateTeam(editingTeamId, input);
+        await setTeamDivisionAssignments(
+          tournamentId,
+          editingTeamId,
+          form.divisionIds
+        );
         setSuccessMessage("Team updated successfully.");
       } else {
-        await createTeam(input);
+        const createdTeam = await createTeam(input);
+        await setTeamDivisionAssignments(
+          tournamentId,
+          createdTeam.id,
+          form.divisionIds
+        );
         setSuccessMessage("Team created successfully.");
       }
 
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        divisionIds: divisions[0] ? [divisions[0].id] : []
+      });
       setEditingTeamId(null);
 
       await loadTeams();
@@ -202,7 +249,10 @@ export default function TeamsPage() {
       teamColor: team.team_color,
       startingBudget: String(team.starting_budget),
       squadLimit: String(team.squad_limit ?? ""),
-      logoFile: null
+      logoFile: null,
+      divisionIds: divisionTeams
+        .filter((assignment) => assignment.team_id === team.id)
+        .map((assignment) => assignment.division_id)
     });
 
     setErrorMessage("");
@@ -216,7 +266,10 @@ export default function TeamsPage() {
 
   function cancelEditing() {
     setEditingTeamId(null);
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      divisionIds: divisions[0] ? [divisions[0].id] : []
+    });
     setErrorMessage("");
   }
 
@@ -330,8 +383,8 @@ export default function TeamsPage() {
             </h2>
 
             <p>
-              Team names, budgets and squad limits can be
-              changed before the auction.
+              Create auction or manual-squad teams and assign
+              them to one or more tournament divisions.
             </p>
           </div>
 
@@ -463,6 +516,46 @@ export default function TeamsPage() {
               JPG, PNG or WebP. Maximum size: 2 MB.
             </small>
           </label>
+
+          <fieldset className="team-division-field">
+            <legend>Tournament divisions</legend>
+            <p>
+              Select every division in which this team participates.
+            </p>
+
+            <div>
+              {divisions.map((division) => {
+                const checked = form.divisionIds.includes(division.id);
+
+                return (
+                  <label
+                    key={division.id}
+                    className={checked ? "selected" : ""}
+                    style={{ borderColor: checked ? division.division_color : undefined }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) =>
+                        updateForm(
+                          "divisionIds",
+                          event.target.checked
+                            ? [...form.divisionIds, division.id]
+                            : form.divisionIds.filter(
+                                (id) => id !== division.id
+                              )
+                        )
+                      }
+                    />
+                    <span style={{ background: division.division_color }}>
+                      {division.short_name}
+                    </span>
+                    <strong>{division.name}</strong>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
           <div className="team-submit-area">
             <button
@@ -620,17 +713,28 @@ export default function TeamsPage() {
                   </dl>
 
                   <div className="team-card-actions">
-                    <button
-                      type="button"
-                      className="team-poster-button"
-                      onClick={() =>
-                        navigate(
-                          `/admin/team-poster?tournament=${tournamentId}&team=${team.id}`
+                    {divisions
+                      .filter((division) =>
+                        divisionTeams.some(
+                          (assignment) =>
+                            assignment.team_id === team.id &&
+                            assignment.division_id === division.id
                         )
-                      }
-                    >
-                      Squad poster
-                    </button>
+                      )
+                      .map((division) => (
+                        <button
+                          type="button"
+                          className="team-poster-button"
+                          key={division.id}
+                          onClick={() =>
+                            navigate(
+                              `/admin/team-poster?tournament=${tournamentId}&team=${team.id}&division=${division.id}`
+                            )
+                          }
+                        >
+                          {division.short_name} poster
+                        </button>
+                      ))}
 
                     <button
                       type="button"

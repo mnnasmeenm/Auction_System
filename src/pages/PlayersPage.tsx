@@ -7,7 +7,14 @@ import {
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import PlayerCard from "../components/players/PlayerCard";
-import type { Player, PlayerCategory, Tournament } from "../types/database";
+import type {
+  Player,
+  PlayerCategory,
+  Team,
+  Tournament,
+  TournamentDivision,
+  TournamentDivisionTeam
+} from "../types/database";
 import {
   createPlayer,
   deletePlayer,
@@ -17,9 +24,17 @@ import {
   updatePlayer
 } from "../services/players";
 import { getTournament } from "../services/tournaments";
+import { getTeams } from "../services/teams";
+import {
+  getDivisionTeamAssignments,
+  getTournamentDivisions
+} from "../services/scheduleConfiguration";
 import "./PlayersPage.css";
 
 interface PlayerFormState {
+  divisionId: string;
+  allocationSource: "auction" | "manual";
+  assignedTeamId: string;
   categoryId: string;
   playerNumber: string;
   fullName: string;
@@ -67,6 +82,9 @@ const positions = [
 ];
 
 const emptyForm: PlayerFormState = {
+  divisionId: "",
+  allocationSource: "auction",
+  assignedTeamId: "",
   categoryId: "",
   playerNumber: "",
   fullName: "",
@@ -88,10 +106,15 @@ export default function PlayersPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [categories, setCategories] = useState<PlayerCategory[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [divisions, setDivisions] = useState<TournamentDivision[]>([]);
+  const [divisionTeams, setDivisionTeams] =
+    useState<TournamentDivisionTeam[]>([]);
   const [form, setForm] = useState<PlayerFormState>(emptyForm);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [searchText, setSearchText] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [divisionFilter, setDivisionFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -111,19 +134,33 @@ export default function PlayersPage() {
     setErrorMessage("");
 
     try {
-      const [playerRecords, categoryRecords, tournamentRecord] =
+      const [
+        playerRecords,
+        categoryRecords,
+        tournamentRecord,
+        teamRecords,
+        divisionRecords,
+        divisionTeamRecords
+      ] =
         await Promise.all([
           getPlayers(tournamentId),
           getPlayerCategories(tournamentId),
-          getTournament(tournamentId)
+          getTournament(tournamentId),
+          getTeams(tournamentId),
+          getTournamentDivisions(tournamentId),
+          getDivisionTeamAssignments(tournamentId)
         ]);
 
       setPlayers(playerRecords);
       setCategories(categoryRecords);
       setTournament(tournamentRecord);
+      setTeams(teamRecords.filter((team) => team.is_active));
+      setDivisions(divisionRecords.filter((division) => division.is_active));
+      setDivisionTeams(divisionTeamRecords);
       setForm((current) => ({
         ...current,
-        categoryId: current.categoryId || categoryRecords[0]?.id || ""
+        categoryId: current.categoryId || categoryRecords[0]?.id || "",
+        divisionId: current.divisionId || divisionRecords[0]?.id || ""
       }));
     } catch (error) {
       setErrorMessage(
@@ -149,6 +186,11 @@ export default function PlayersPage() {
 
   function validateForm() {
     if (!form.fullName.trim()) return "Enter the player’s full name.";
+    if (!form.divisionId) return "Select a tournament division.";
+    if (form.allocationSource === "manual" && !form.assignedTeamId) {
+      return "Select the team receiving this manually allocated player.";
+    }
+    if (form.allocationSource === "manual") return null;
     if (!form.categoryId) return "Select a player category.";
     if (!form.battingStyle) return "Select a batting style.";
     if (!form.bowlingStyle) return "Select a bowling style.";
@@ -163,7 +205,16 @@ export default function PlayersPage() {
   function buildPlayerInput(): PlayerInput {
     return {
       tournamentId,
-      categoryId: form.categoryId,
+      divisionId: form.divisionId,
+      allocationSource: form.allocationSource,
+      assignedTeamId:
+        form.allocationSource === "manual"
+          ? form.assignedTeamId
+          : null,
+      categoryId:
+        form.allocationSource === "manual"
+          ? null
+          : form.categoryId,
       playerNumber: form.playerNumber ? Number(form.playerNumber) : null,
       fullName: form.fullName,
       nickname: form.nickname,
@@ -201,7 +252,18 @@ export default function PlayersPage() {
         setSuccessMessage("Player registered successfully.");
       }
 
-      resetForm();
+      if (!editingPlayer && form.allocationSource === "manual") {
+        setForm({
+          ...emptyForm,
+          divisionId: form.divisionId,
+          allocationSource: "manual",
+          assignedTeamId: "",
+          categoryId: "",
+          basePrice: "0"
+        });
+      } else {
+        resetForm();
+      }
       await loadPageData();
     } catch (error) {
       setErrorMessage(
@@ -215,6 +277,9 @@ export default function PlayersPage() {
   function beginEditing(player: Player) {
     setEditingPlayer(player);
     setForm({
+      divisionId: player.division_id ?? divisions[0]?.id ?? "",
+      allocationSource: player.allocation_source ?? "auction",
+      assignedTeamId: player.sold_team_id ?? "",
       categoryId: player.category_id ?? "",
       playerNumber: player.player_number?.toString() ?? "",
       fullName: player.full_name,
@@ -236,7 +301,8 @@ export default function PlayersPage() {
     setEditingPlayer(null);
     setForm({
       ...emptyForm,
-      categoryId: categories[0]?.id ?? ""
+      categoryId: categories[0]?.id ?? "",
+      divisionId: divisions[0]?.id ?? ""
     });
   }
 
@@ -266,14 +332,59 @@ export default function PlayersPage() {
     return players.filter((player) => {
       const categoryMatch =
         categoryFilter === "all" || player.category_id === categoryFilter;
+      const divisionMatch =
+        divisionFilter === "all" || player.division_id === divisionFilter;
       const searchMatch =
         !query ||
         player.full_name.toLowerCase().includes(query) ||
         (player.nickname ?? "").toLowerCase().includes(query);
 
-      return categoryMatch && searchMatch;
+      return categoryMatch && divisionMatch && searchMatch;
     });
-  }, [players, searchText, categoryFilter]);
+  }, [players, searchText, categoryFilter, divisionFilter]);
+
+  const availableTeamsForDivision = teams.filter((team) =>
+    divisionTeams.some(
+      (assignment) =>
+        assignment.division_id === form.divisionId &&
+        assignment.team_id === team.id
+    )
+  );
+
+  const orderedDivisions = [...divisions].sort(
+    (first, second) => first.display_order - second.display_order
+  );
+  const auctionDivision = orderedDivisions[0] ?? null;
+  const nonAuctionDivisions = orderedDivisions.slice(1);
+
+  function selectAuctionPool() {
+    if (!auctionDivision) return;
+
+    setEditingPlayer(null);
+    setForm({
+      ...emptyForm,
+      divisionId: auctionDivision.id,
+      allocationSource: "auction",
+      categoryId: categories[0]?.id ?? "",
+      basePrice: "5000"
+    });
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  function selectNonAuctionDivision(divisionId: string) {
+    setEditingPlayer(null);
+    setForm({
+      ...emptyForm,
+      divisionId,
+      allocationSource: "manual",
+      assignedTeamId: "",
+      categoryId: "",
+      basePrice: "0"
+    });
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
 
   if (!tournamentId) {
     return (
@@ -294,7 +405,10 @@ export default function PlayersPage() {
         <div>
           <p className="page-label">PLAYER REGISTRATION</p>
           <h1>Registered players</h1>
-          <p>Register playing styles and create shareable player cards.</p>
+          <p>
+            Add players to an auction pool or allocate them directly to a
+            division team without changing its auction budget.
+          </p>
         </div>
         <div className="player-count">
           <strong>{players.length}</strong>
@@ -316,35 +430,131 @@ export default function PlayersPage() {
         </div>
 
         <form className="player-form" onSubmit={handleSubmit}>
-          <label>
-            Player number
-            <input
-              type="number"
-              min="1"
-              value={form.playerNumber}
-              onChange={(event) => updateForm("playerNumber", event.target.value)}
-              placeholder="Optional"
-            />
-          </label>
+          <div className="player-registration-pools player-wide-field">
+            <button
+              type="button"
+              className={
+                form.allocationSource === "auction"
+                  ? "selected-registration-pool"
+                  : ""
+              }
+              onClick={selectAuctionPool}
+              disabled={
+                editingPlayer?.allocation_source !== "manual" &&
+                editingPlayer?.status === "sold"
+              }
+            >
+              <strong>Auction pool</strong>
+              <span>
+                {auctionDivision?.name ?? "Primary division"} · Full player
+                registration
+              </span>
+            </button>
 
-          <label>
-            Full name
-            <input
-              value={form.fullName}
-              onChange={(event) => updateForm("fullName", event.target.value)}
-              required
-            />
-          </label>
+            {nonAuctionDivisions.map((division) => (
+              <button
+                type="button"
+                key={division.id}
+                className={
+                  form.allocationSource === "manual" &&
+                  form.divisionId === division.id
+                    ? "selected-registration-pool"
+                    : ""
+                }
+                onClick={() => selectNonAuctionDivision(division.id)}
+                disabled={
+                  editingPlayer?.allocation_source !== "manual" &&
+                  editingPlayer?.status === "sold"
+                }
+              >
+                <strong>{division.name}</strong>
+                <span>Non-auction pool · Direct team entry</span>
+              </button>
+            ))}
+          </div>
 
-          <label>
+          {form.allocationSource === "manual" && (
+            <>
+              <label>
+                Player name
+                <input
+                  value={form.fullName}
+                  onChange={(event) =>
+                    updateForm("fullName", event.target.value)
+                  }
+                  placeholder="Enter player name"
+                  autoFocus
+                  required
+                />
+              </label>
+
+              <label>
+                Assigned team
+                <select
+                  value={form.assignedTeamId}
+                  onChange={(event) =>
+                    updateForm("assignedTeamId", event.target.value)
+                  }
+                  required
+                >
+                  <option value="">Select team</option>
+                  {availableTeamsForDivision.map((team) => (
+                    <option value={team.id} key={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  Only teams assigned to this division are shown.
+                </small>
+              </label>
+
+              <div className="manual-allocation-note player-wide-field">
+                <strong>Quick non-auction entry</strong>
+                <span>
+                  Save this player, then the same division stays selected for
+                  the next name. The team selection resets to prevent an
+                  accidental assignment.
+                </span>
+              </div>
+            </>
+          )}
+
+          {form.allocationSource === "auction" && (
+            <>
+              <label>
+                Player number
+                <input
+                  type="number"
+                  min="1"
+                  value={form.playerNumber}
+                  onChange={(event) =>
+                    updateForm("playerNumber", event.target.value)
+                  }
+                  placeholder="Optional"
+                />
+              </label>
+
+              <label>
+                Full name
+                <input
+                  value={form.fullName}
+                  onChange={(event) =>
+                    updateForm("fullName", event.target.value)
+                  }
+                  required
+                />
+              </label>
+
+              <label>
             Nickname
             <input
               value={form.nickname}
               onChange={(event) => updateForm("nickname", event.target.value)}
             />
-          </label>
+              </label>
 
-          <label>
+              <label>
             Category
             <select
               value={form.categoryId}
@@ -356,9 +566,9 @@ export default function PlayersPage() {
                 <option value={category.id} key={category.id}>{category.name}</option>
               ))}
             </select>
-          </label>
+              </label>
 
-          <label>
+              <label>
             Batting style
             <select
               value={form.battingStyle}
@@ -368,9 +578,9 @@ export default function PlayersPage() {
               <option value="">Select batting style</option>
               {battingStyles.map((style) => <option key={style}>{style}</option>)}
             </select>
-          </label>
+              </label>
 
-          <label>
+              <label>
             Bowling style
             <select
               value={form.bowlingStyle}
@@ -380,9 +590,9 @@ export default function PlayersPage() {
               <option value="">Select bowling style</option>
               {bowlingStyles.map((style) => <option key={style}>{style}</option>)}
             </select>
-          </label>
+              </label>
 
-          <label>
+              <label>
             Preferred position
             <select
               value={form.preferredPosition}
@@ -392,36 +602,38 @@ export default function PlayersPage() {
               <option value="">Select position</option>
               {positions.map((position) => <option key={position}>{position}</option>)}
             </select>
-          </label>
+              </label>
 
-          <label>
-            Base price (LKR)
-            <input
-              type="number"
-              min="0"
-              value={form.basePrice}
-              onChange={(event) => updateForm("basePrice", event.target.value)}
-              required
-            />
-          </label>
+            <label>
+              Base price (LKR)
+              <input
+                type="number"
+                min="0"
+                value={form.basePrice}
+                onChange={(event) =>
+                  updateForm("basePrice", event.target.value)
+                }
+                required
+              />
+            </label>
 
-          <label className="player-wide-field">
+              <label className="player-wide-field">
             Achievements
             <textarea
               value={form.achievements}
               onChange={(event) => updateForm("achievements", event.target.value)}
             />
-          </label>
+              </label>
 
-          <label className="player-wide-field">
+              <label className="player-wide-field">
             Availability notes
             <textarea
               value={form.availabilityNotes}
               onChange={(event) => updateForm("availabilityNotes", event.target.value)}
             />
-          </label>
+              </label>
 
-          <label className="player-wide-field">
+              <label className="player-wide-field">
             Player photograph
             <input
               type="file"
@@ -429,7 +641,9 @@ export default function PlayersPage() {
               onChange={handlePhotoChange}
             />
             <small>JPG, PNG or WebP. Maximum size: 2 MB.</small>
-          </label>
+              </label>
+            </>
+          )}
 
           <div className="player-submit-area">
             <button type="submit" disabled={submitting}>
@@ -437,7 +651,9 @@ export default function PlayersPage() {
                 ? "Saving player…"
                 : editingPlayer
                   ? "Update player"
-                  : "Register player"}
+                  : form.allocationSource === "manual"
+                    ? "Add player to team"
+                    : "Register player"}
             </button>
           </div>
         </form>
@@ -492,6 +708,18 @@ export default function PlayersPage() {
           >
             All · {players.length}
           </button>
+          <select
+            value={divisionFilter}
+            onChange={(event) => setDivisionFilter(event.target.value)}
+            aria-label="Filter players by division"
+          >
+            <option value="all">All divisions</option>
+            {divisions.map((division) => (
+              <option value={division.id} key={division.id}>
+                {division.name}
+              </option>
+            ))}
+          </select>
           {categories.map((category) => (
             <button
               type="button"

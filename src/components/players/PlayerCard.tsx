@@ -108,8 +108,16 @@ export default function PlayerCard({
           </div>
 
           <div className="social-player-value">
-            <span>BASE VALUE</span>
-            <strong>{player.base_price.toLocaleString()} LKR</strong>
+            <span>
+              {player.allocation_source === "manual"
+                ? "SQUAD STATUS"
+                : "BASE VALUE"}
+            </span>
+            <strong>
+              {player.allocation_source === "manual"
+                ? "DIRECT SQUAD"
+                : `${player.base_price.toLocaleString()} LKR`}
+            </strong>
           </div>
         </div>
       </div>

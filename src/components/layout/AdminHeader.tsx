@@ -193,6 +193,11 @@ export default function AdminHeader() {
             `/admin/auction?tournament=${tournamentId}`
         },
         {
+          label: "Schedule",
+          path:
+            `/admin/schedule?tournament=${tournamentId}`
+        },
+        {
           label: "History",
           path:
             `/admin/history?tournament=${tournamentId}`

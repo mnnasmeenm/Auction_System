@@ -60,6 +60,9 @@ import ProjectorPage from
 import SafetyPage from
   "./pages/SafetyPage";
 
+import SchedulePage from
+  "./pages/SchedulePage";
+
 import SettingsPage from
   "./pages/SettingsPage";
 
@@ -236,6 +239,11 @@ export default function App() {
             <Route
               path="/admin/safety"
               element={<SafetyPage />}
+            />
+
+            <Route
+              path="/admin/schedule"
+              element={<SchedulePage />}
             />
 
             <Route

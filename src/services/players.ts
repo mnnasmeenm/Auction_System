@@ -11,7 +11,10 @@ import type {
 
 export interface PlayerInput {
   tournamentId: string;
-  categoryId: string;
+  divisionId: string;
+  allocationSource: "auction" | "manual";
+  assignedTeamId: string | null;
+  categoryId: string | null;
   playerNumber: number | null;
   fullName: string;
   nickname: string;
@@ -76,6 +79,7 @@ export async function createPlayer(
     .from("players")
     .insert({
       tournament_id: input.tournamentId,
+      division_id: input.divisionId,
       category_id: input.categoryId,
       player_number: input.playerNumber,
       full_name: input.fullName.trim(),
@@ -92,7 +96,17 @@ export async function createPlayer(
       achievements: input.achievements.trim() || null,
       availability_notes:
         input.availabilityNotes.trim() || null,
-      status: "available"
+      status: input.allocationSource === "manual"
+        ? "sold"
+        : "available",
+      sold_team_id: input.allocationSource === "manual"
+        ? input.assignedTeamId
+        : null,
+      sold_price: input.allocationSource === "manual"
+        ? 0
+        : null,
+      allocation_source: input.allocationSource,
+      counts_toward_budget: input.allocationSource !== "manual"
     })
     .select("*")
     .single();
@@ -155,6 +169,26 @@ export async function updatePlayer(
   existingPhotoPath: string | null,
   input: PlayerInput
 ): Promise<Player> {
+  const { data: existingPlayer, error: existingPlayerError } =
+    await supabase
+      .from("players")
+      .select(`
+        status,
+        sold_team_id,
+        sold_price,
+        allocation_source,
+        counts_toward_budget
+      `)
+      .eq("id", playerId)
+      .single();
+
+  if (existingPlayerError) {
+    throw existingPlayerError;
+  }
+
+  const protectedAuctionSale =
+    existingPlayer.allocation_source !== "manual" &&
+    existingPlayer.status === "sold";
   let photoPath = existingPhotoPath;
   let uploadedPhotoPath: string | null = null;
 
@@ -171,6 +205,9 @@ export async function updatePlayer(
   const { data, error } = await supabase
     .from("players")
     .update({
+      division_id: protectedAuctionSale
+        ? undefined
+        : input.divisionId,
       category_id: input.categoryId,
       player_number: input.playerNumber,
       full_name: input.fullName.trim(),
@@ -183,7 +220,28 @@ export async function updatePlayer(
       achievements: input.achievements.trim() || null,
       availability_notes:
         input.availabilityNotes.trim() || null,
-      photo_path: photoPath
+      photo_path: photoPath,
+      status: protectedAuctionSale
+        ? existingPlayer.status
+        : input.allocationSource === "manual"
+          ? "sold"
+          : "available",
+      sold_team_id: protectedAuctionSale
+        ? existingPlayer.sold_team_id
+        : input.allocationSource === "manual"
+          ? input.assignedTeamId
+          : null,
+      sold_price: protectedAuctionSale
+        ? existingPlayer.sold_price
+        : input.allocationSource === "manual"
+          ? 0
+          : null,
+      allocation_source: protectedAuctionSale
+        ? existingPlayer.allocation_source
+        : input.allocationSource,
+      counts_toward_budget: protectedAuctionSale
+        ? existingPlayer.counts_toward_budget
+        : input.allocationSource !== "manual"
     })
     .eq("id", playerId)
     .select("*")
@@ -228,7 +286,10 @@ export async function updatePlayer(
 export async function deletePlayer(
   player: Player
 ): Promise<void> {
-  if (player.status === "sold") {
+  if (
+    player.status === "sold" &&
+    player.allocation_source !== "manual"
+  ) {
     throw new Error(
       "A sold player cannot be deleted. Revoke the sale first."
     );

@@ -1,0 +1,273 @@
+.division-roster-showcase {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
+.division-roster-poster {
+  --roster-team-color: #2f72ff;
+  position: relative;
+  width: min(100%, 1080px);
+  aspect-ratio: 4 / 5;
+  min-height: 850px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: clamp(18px, 2.6vw, 30px);
+  overflow: hidden;
+  padding: clamp(25px, 4.2vw, 54px);
+  color: #fff;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 84% 13%, color-mix(in srgb, var(--roster-team-color) 78%, transparent), transparent 37%),
+    radial-gradient(circle at 12% 88%, color-mix(in srgb, var(--roster-team-color) 66%, transparent), transparent 39%),
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--roster-team-color) 72%, #020713),
+      color-mix(in srgb, var(--roster-team-color) 55%, #071326) 53%,
+      color-mix(in srgb, var(--roster-team-color) 68%, #020610));
+  border: 1px solid color-mix(in srgb, var(--roster-team-color) 58%, #60718c);
+  border-radius: 28px;
+  box-shadow: 0 34px 90px rgba(0, 0, 0, .36);
+}
+
+.division-roster-grid,
+.division-roster-stripe,
+.division-roster-watermark {
+  position: absolute;
+  pointer-events: none;
+}
+
+.division-roster-grid {
+  inset: 0;
+  z-index: -3;
+  opacity: .09;
+  background-image:
+    linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, #000, transparent 88%);
+}
+
+.division-roster-stripe {
+  top: -8%;
+  right: 8%;
+  z-index: -2;
+  width: 13%;
+  height: 118%;
+  opacity: .78;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.16) 0 16%, transparent 16% 28%,
+    color-mix(in srgb, var(--roster-team-color) 68%, white) 28% 72%,
+    transparent 72% 84%, rgba(255,255,255,.24) 84%);
+  transform: skewX(-13deg);
+}
+
+.division-roster-watermark {
+  top: 54%;
+  left: 50%;
+  z-index: -2;
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  opacity: .07;
+  filter: grayscale(1) brightness(2.8) contrast(1.15);
+  transform: translate(-50%, -50%);
+}
+
+.division-roster-brand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,.2);
+}
+
+.division-roster-logos { display: flex; gap: 8px; }
+.division-roster-logos img,
+.division-roster-team-logo {
+  background: #fff;
+  border: 2px solid rgba(255,255,255,.92);
+}
+.division-roster-logos img {
+  width: clamp(70px, 8vw, 96px);
+  height: clamp(70px, 8vw, 96px);
+  padding: 7px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+.division-roster-brand-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  text-transform: uppercase;
+}
+.division-roster-brand small {
+  font-size: clamp(12px, 1.4vw, 17px);
+  font-weight: 950;
+  letter-spacing: .13em;
+}
+.division-roster-brand strong {
+  overflow: hidden;
+  font-size: clamp(18px, 2.3vw, 29px);
+  font-weight: 1000;
+  text-overflow: ellipsis;
+  text-shadow: 0 3px 12px rgba(0,0,0,.94);
+  white-space: nowrap;
+}
+.division-roster-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(16px, 2.8vw, 34px);
+}
+.division-roster-team-logo {
+  width: clamp(104px, 15vw, 165px);
+  height: clamp(104px, 15vw, 165px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #06101f;
+  border-radius: 23px;
+  box-shadow: 0 18px 38px rgba(0,0,0,.28);
+}
+.division-roster-team-logo img {
+  width: 100%; height: 100%; padding: 5px; object-fit: contain;
+}
+.division-roster-title { min-width: 0; text-transform: uppercase; }
+.division-roster-title p,
+.division-roster-title h1 { margin: 0; }
+.division-roster-title p {
+  font-size: clamp(9px, 1.25vw, 14px);
+  font-weight: 950;
+  letter-spacing: .13em;
+}
+.division-roster-title h1 {
+  margin-top: 7px;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(34px, 6vw, 70px);
+  line-height: .92;
+  letter-spacing: .01em;
+  text-shadow: 0 5px 18px rgba(0,0,0,.72);
+}
+.division-roster-squad {
+  min-height: 0;
+  padding: clamp(20px, 3vw, 34px);
+  background: rgba(3,9,20,.6);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 24px;
+}
+.division-roster-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: clamp(16px, 2.5vw, 28px);
+}
+.division-roster-heading div { display: grid; gap: 2px; }
+.division-roster-heading small {
+  color: color-mix(in srgb, var(--roster-team-color) 45%, white);
+  font-size: clamp(8px, 1vw, 11px);
+  font-weight: 950;
+  letter-spacing: .18em;
+}
+.division-roster-heading strong {
+  font-size: clamp(19px, 2.7vw, 32px);
+  font-weight: 1000;
+  letter-spacing: .06em;
+}
+.division-roster-heading > span {
+  font-size: clamp(9px, 1.1vw, 13px);
+  font-weight: 950;
+  letter-spacing: .13em;
+}
+.division-roster-player-list {
+  display: grid;
+  gap: clamp(7px, 1vw, 11px);
+}
+.division-roster-player-row {
+  min-width: 0;
+  min-height: clamp(48px, 6vw, 66px);
+  display: grid;
+  grid-template-columns: clamp(38px, 5vw, 55px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(10px, 1.6vw, 18px);
+  padding: clamp(8px, 1.1vw, 12px) clamp(11px, 1.6vw, 18px);
+  background:
+    linear-gradient(100deg, rgba(255,255,255,.1), transparent 62%),
+    color-mix(in srgb, var(--roster-team-color) 23%, rgba(3,9,20,.94));
+  border: 1px solid color-mix(in srgb, var(--roster-team-color) 48%, rgba(255,255,255,.28));
+  border-left: 5px solid color-mix(in srgb, var(--roster-team-color) 62%, white);
+  border-radius: 12px;
+}
+.division-roster-list-number {
+  color: color-mix(in srgb, var(--roster-team-color) 38%, white);
+  font-size: clamp(11px, 1.5vw, 17px);
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+.division-roster-player-row > div {
+  min-width: 0;
+}
+.division-roster-leadership {
+  min-width: clamp(30px, 4vw, 42px);
+  height: clamp(30px, 4vw, 42px);
+  display: grid;
+  place-items: center;
+  color: #07101e;
+  background: #ffd43b;
+  border: 2px solid #fff5bd;
+  border-radius: 50%;
+  font-size: clamp(9px, 1.25vw, 13px);
+  font-style: normal;
+  font-weight: 1000;
+}
+.division-roster-player-row h2 {
+  margin: 0;
+  overflow: hidden;
+  color: white;
+  font-size: clamp(12px, 1.75vw, 20px);
+  line-height: 1.1;
+  letter-spacing: .025em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.division-roster-player-row p {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: rgba(255,255,255,.7);
+  font-size: clamp(7px, .9vw, 10px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.division-roster-empty {
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+  color: rgba(255,255,255,.68);
+  border: 1px dashed rgba(255,255,255,.22);
+  border-radius: 17px;
+}
+.division-roster-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: clamp(9px, 1.1vw, 13px);
+  font-weight: 950;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 9px rgba(0,0,0,.9);
+}
+.division-roster-download {
+  padding: 12px 19px;
+  color: #07101e;
+  background: var(--accent);
+  border: 0;
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+@media (max-width: 700px) {
+  .division-roster-poster { min-height: 760px; border-radius: 18px; }
+  .division-roster-hero { grid-template-columns: auto 1fr; }
+}
