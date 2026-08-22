@@ -1,0 +1,105 @@
+.standings-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #29486f;
+  border-radius: 16px;
+}
+
+.standings-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  color: #eaf2ff;
+  background: rgba(5, 17, 38, .94);
+}
+
+.standings-table th {
+  padding: 13px 11px;
+  color: #789bd0;
+  background: #081a38;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-align: center;
+}
+
+.standings-table th:nth-child(2) { text-align: left; }
+
+.standings-table td {
+  padding: 11px;
+  border-top: 1px solid #203b60;
+  text-align: center;
+}
+
+.standings-table tbody tr {
+  box-shadow: inset 4px 0 var(--standing-team, #2f72ff);
+}
+
+.standings-table tbody tr:hover { background: rgba(42, 82, 143, .16); }
+.standings-table .qualifying-row { background: rgba(184, 242, 39, .055); }
+
+.standing-position {
+  width: 29px;
+  height: 29px;
+  display: inline-grid;
+  place-items: center;
+  color: #07101e;
+  background: #dfe9f7;
+  border-radius: 50%;
+}
+
+.qualifying-row .standing-position { background: #b8f227; }
+
+.standing-team {
+  min-width: 220px;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.standing-team > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: white;
+  background: color-mix(in srgb, var(--standing-team) 38%, #0b1930);
+  border: 2px solid var(--standing-team);
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 950;
+}
+
+.standing-team img {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  object-fit: contain;
+  background: white;
+}
+
+.standing-team > strong { text-transform: uppercase; }
+
+.standing-team small {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: #07101e;
+  background: #b8f227;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 1000;
+}
+
+.standing-team .standing-eliminated {
+  color: white;
+  background: #ef4056;
+}
+
+.standings-table td > b { color: #ffd166; font-size: 17px; }
+.positive-nrr { color: #62e3ad; font-weight: 900; }
+.negative-nrr { color: #ff8793; font-weight: 900; }

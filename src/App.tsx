@@ -54,6 +54,12 @@ import ManagerPlayersPage from
 import PlayersPage from
   "./pages/PlayersPage";
 
+import PointsTablePage from
+  "./pages/PointsTablePage";
+
+import QualificationAdvisorPage from
+  "./pages/QualificationAdvisorPage";
+
 import ProjectorPage from
   "./pages/ProjectorPage";
 
@@ -276,6 +282,16 @@ export default function App() {
             <Route
               path="/admin/scoring"
               element={<ScoreControlPage />}
+            />
+
+            <Route
+              path="/admin/points-table"
+              element={<PointsTablePage />}
+            />
+
+            <Route
+              path="/admin/qualification"
+              element={<QualificationAdvisorPage />}
             />
 
             <Route

@@ -69,6 +69,12 @@
 .public-match-tile footer { padding-top: 10px; color: #8495ad; border-top: 1px solid #233b5c; font-size: 9px; }
 .public-match-tile footer b { color: #bdc9d9; text-align: right; }
 .public-no-matches { padding: 25px; color: #8192aa; background: rgba(8,24,50,.55); border-radius: 13px; }
+.public-standings-section { margin-top: 38px; }
+.public-standings-section > header > div span { color: #75a5e9; font-size: 8px; font-weight: 950; letter-spacing: .13em; }
+.public-standings-section > header > div h2 { margin-top: 4px; }
+.public-poster-download { margin-top: 13px; padding: 13px; background: #07162e; border: 1px solid #29466c; border-radius: 13px; }
+.public-poster-download > summary { color: #b8f227; cursor: pointer; font-size: 12px; font-weight: 900; }
+.public-poster-download > .points-poster-showcase { margin-top: 18px; }
 .public-score-header { grid-template-columns: auto auto 1fr auto; }
 .public-live-hero { width: min(1320px, 100%); margin: 0 auto 14px; display: grid; grid-template-columns: 1fr 1.3fr 1fr; align-items: center; gap: 22px; padding: clamp(22px, 4vw, 42px); background: radial-gradient(circle at 50% 120%, rgba(255,105,28,.3), transparent 42%), radial-gradient(circle at 50% 0%, rgba(37,94,194,.45), transparent 50%), #06142b; border: 1px solid #31527d; border-radius: 23px; box-shadow: 0 28px 75px rgba(0,0,0,.32); }
 .public-hero-team { display: grid; justify-items: center; text-align: center; }

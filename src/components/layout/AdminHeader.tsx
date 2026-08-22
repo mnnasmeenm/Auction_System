@@ -203,6 +203,16 @@ export default function AdminHeader() {
             `/admin/scoring?tournament=${tournamentId}`
         },
         {
+          label: "Points",
+          path:
+            `/admin/points-table?tournament=${tournamentId}`
+        },
+        {
+          label: "Qualification",
+          path:
+            `/admin/qualification?tournament=${tournamentId}`
+        },
+        {
           label: "History",
           path:
             `/admin/history?tournament=${tournamentId}`

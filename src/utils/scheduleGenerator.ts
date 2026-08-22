@@ -173,6 +173,18 @@ function qualificationFixtures(
   return [];
 }
 
+function playoffStageOrder(stage: DivisionFixture["stage"]) {
+  const order: Partial<Record<DivisionFixture["stage"], number>> = {
+    qualifier_one: 1,
+    eliminator: 2,
+    qualifier_two: 3,
+    semi_final: 1,
+    third_place: 2
+  };
+
+  return order[stage] ?? 99;
+}
+
 function knockoutFixtures(
   division: TournamentDivision,
   teams: Team[]
@@ -548,6 +560,10 @@ export function generateMultiDivisionSchedule(
       division.id,
       fixtures.filter((fixture) =>
         !["league", "group", "custom", "final"].includes(fixture.stage)
+      ).sort(
+        (first, second) =>
+          playoffStageOrder(first.stage) -
+          playoffStageOrder(second.stage)
       )
     );
   });

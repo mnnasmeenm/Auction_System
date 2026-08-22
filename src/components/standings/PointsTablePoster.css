@@ -1,0 +1,65 @@
+.points-poster-showcase { display: grid; justify-items: center; gap: 15px; }
+.points-poster {
+  --points-division: #2f72ff;
+  --points-poster-min-height: 462px;
+  position: relative;
+  width: min(100%, 1080px);
+  min-height: var(--points-poster-min-height);
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 24px;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 58px);
+  isolation: isolate;
+  color: white;
+  background:
+    radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--points-division) 62%, transparent), transparent 36%),
+    radial-gradient(circle at 8% 90%, rgba(255, 119, 31, .22), transparent 34%),
+    linear-gradient(145deg, #030b1b, #0a214a 58%, #041027);
+  border: 1px solid color-mix(in srgb, var(--points-division) 65%, #2a4267);
+  border-radius: 28px;
+}
+.points-poster-grid { position: absolute; inset: 0; z-index: -3; opacity: .08; background-image: linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px); background-size: 42px 42px; }
+.points-poster-light { position: absolute; right: -140px; bottom: 80px; z-index: -2; width: 420px; height: 420px; background: var(--points-division); border-radius: 50%; filter: blur(110px); opacity: .35; }
+.points-poster > header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding-bottom: 22px; border-bottom: 2px solid rgba(255,255,255,.14); }
+.points-poster-logos { display: flex; gap: 8px; }
+.points-poster-logos img { width: 82px; height: 82px; padding: 6px; object-fit: contain; background: white; border-radius: 13px; }
+.points-poster header small { color: #dbe8ff; font-size: 13px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.points-poster header h1 { margin: 4px 0; font-size: clamp(27px, 4vw, 48px); line-height: .95; text-transform: uppercase; }
+.points-poster header p { margin: 0; color: #ffd166; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+.points-poster header > strong { padding: 9px 13px; color: #07101e; background: #b8f227; border-radius: 999px; font-size: 12px; }
+.points-poster main { align-self: start; display: grid; gap: 9px; }
+.points-poster-heading,
+.points-poster article { display: grid; grid-template-columns: 48px minmax(270px, 1fr) repeat(6, 55px) 92px; align-items: center; gap: 7px; }
+.points-poster-heading { padding: 0 16px 8px; color: #84a9dc; font-size: 10px; font-weight: 950; text-align: center; }
+.points-poster-heading span:nth-child(2) { text-align: left; }
+.points-poster article { padding: 12px 16px; background: rgba(3, 12, 29, .84); border: 1px solid rgba(255,255,255,.12); border-left: 5px solid var(--poster-row-color); border-radius: 13px; text-align: center; }
+.points-poster article > b { width: 31px; height: 31px; display: grid; place-items: center; color: #07101e; background: #e6eef9; border-radius: 50%; }
+.points-poster .poster-qualifying > b { background: #b8f227; }
+.points-poster article > div { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; text-align: left; }
+.points-poster article > div > span { width: 48px; height: 48px; display: grid; place-items: center; overflow: hidden; background: white; border: 2px solid var(--poster-row-color); border-radius: 10px; color: #07101e; font-size: 8px; font-weight: 950; }
+.points-poster article img { width: 100%; height: 100%; padding: 3px; object-fit: contain; }
+.points-poster article > div > strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.points-poster article i { width: 24px; height: 24px; display: grid; place-items: center; color: #07101e; background: #b8f227; border-radius: 50%; font-size: 9px; font-style: normal; font-weight: 1000; }
+.points-poster article .poster-eliminated { color: white; background: #ef4056; }
+.points-poster article > strong { color: #ffd166; font-size: 20px; }
+.points-poster article > em { color: #7ee5b9; font-size: 13px; font-style: normal; font-weight: 900; }
+.points-poster footer { display: flex; justify-content: space-between; gap: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.15); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.points-poster footer strong { color: #ffd166; }
+.points-poster-showcase > button { padding: 12px 18px; color: #07101e; background: #b8f227; border: 0; border-radius: 10px; font-weight: 900; }
+@media (max-width: 760px) {
+  .points-poster {
+    min-height: var(--points-poster-min-height);
+    padding: 20px;
+    border-radius: 18px;
+  }
+  .points-poster > header { grid-template-columns: auto 1fr; }
+  .points-poster header > strong { display: none; }
+  .points-poster-logos img { width: 50px; height: 50px; }
+  .points-poster-heading,
+  .points-poster article { grid-template-columns: 34px minmax(150px, 1fr) repeat(6, 30px) 58px; font-size: 8px; }
+  .points-poster article { padding: 8px; }
+  .points-poster article > div { grid-template-columns: 34px 1fr; }
+  .points-poster article > div > span { width: 34px; height: 34px; }
+  .points-poster article i { display: none; }
+}

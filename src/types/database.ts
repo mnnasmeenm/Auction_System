@@ -235,6 +235,43 @@ export interface TournamentDivisionTeam {
   team?: Team | null;
 }
 
+export interface PointsTableRow {
+  position: number;
+  team_id: string;
+  team_name: string;
+  short_name: string;
+  team_color: string;
+  logo_path: string | null;
+  played: number;
+  won: number;
+  lost: number;
+  tied: number;
+  no_result: number;
+  points: number;
+  runs_for: number;
+  overs_for: number;
+  runs_against: number;
+  overs_against: number;
+  net_run_rate: number;
+}
+
+export interface PointsTableAdjustment {
+  id: string;
+  tournament_id: string;
+  division_id: string;
+  group_id: string | null;
+  team_id: string;
+  played_adjustment: number;
+  won_adjustment: number;
+  lost_adjustment: number;
+  tied_adjustment: number;
+  no_result_adjustment: number;
+  points_adjustment: number;
+  reason: string;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface TournamentScheduleWindow {
   id: string;
   tournament_id: string;

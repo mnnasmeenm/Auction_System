@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Link, useParams } from "react-router-dom";
 
+import PointsTable from "../components/standings/PointsTable";
+import PointsTablePoster from "../components/standings/PointsTablePoster";
+
 import {
   getPublicTournament,
   getPublicTournamentMatches
@@ -9,6 +12,11 @@ import {
 
 import { getTeamLogoUrl } from "../services/teams";
 import { getTournamentBrandingUrl } from "../services/tournamentBranding";
+
+import {
+  getTournamentStandingsSections,
+  type StandingsSection
+} from "../services/standings";
 
 import type { Tournament, TournamentMatch } from "../types/database";
 
@@ -46,15 +54,20 @@ export default function PublicTournamentPage() {
   const { publicSlug = "" } = useParams();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [matches, setMatches] = useState<TournamentMatch[]>([]);
+  const [standings, setStandings] = useState<StandingsSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   const load = useCallback(async () => {
     try {
       const record = await getPublicTournament(publicSlug);
-      const fixtures = await getPublicTournamentMatches(record.id);
+      const [fixtures, standingSections] = await Promise.all([
+        getPublicTournamentMatches(record.id),
+        getTournamentStandingsSections(record.id)
+      ]);
       setTournament(record);
       setMatches(fixtures);
+      setStandings(standingSections);
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Tournament could not be loaded.");
@@ -109,6 +122,37 @@ export default function PublicTournamentPage() {
               {records.map((match) => <MatchTile key={match.id} match={match} slug={publicSlug} />)}
             </div>
           )}
+        </section>
+      ))}
+
+      {standings.map((section) => (
+        <section className="public-match-section public-standings-section" key={section.key}>
+          <header>
+            <div>
+              <span>OFFICIAL STANDINGS</span>
+              <h2>
+                {section.division.name}
+                {section.group ? ` · ${section.group.name}` : ""}
+              </h2>
+            </div>
+            <span>Q = QUALIFICATION POSITION</span>
+          </header>
+
+          <PointsTable
+            rows={section.rows}
+            qualifiersCount={section.qualifiersCount}
+          />
+
+          <details className="public-poster-download">
+            <summary>Download branded points-table poster</summary>
+            <PointsTablePoster
+              tournament={tournament}
+              division={section.division}
+              group={section.group}
+              rows={section.rows}
+              qualifiersCount={section.qualifiersCount}
+            />
+          </details>
         </section>
       ))}
     </main>

@@ -1,0 +1,41 @@
+.points-page { width: min(1280px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 90px; }
+.points-page-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.points-page-header h1 { margin: 5px 0; color: white; font-size: clamp(38px, 5vw, 58px); letter-spacing: -.05em; }
+.points-page-header p { margin: 0; color: var(--muted); }
+.points-page-header button,
+.points-rules > button,
+.points-adjustment-form > div > button { padding: 11px 15px; color: #07101e; background: var(--accent); border: 0; border-radius: 9px; font-weight: 900; }
+.points-alert { margin-bottom: 16px; padding: 13px; border-radius: 10px; }
+.points-error { color: #ffb4bc; background: #35111b; border: 1px solid #77313f; }
+.points-success { color: #8de9bd; background: #0b2b22; border: 1px solid #27634d; }
+.points-message { padding: 50px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 16px; }
+.points-scope-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 17px; }
+.points-scope-tabs button { display: flex; align-items: center; gap: 8px; padding: 10px 13px; color: #aebdd2; background: #09182f; border: 1px solid #294569; border-radius: 999px; font-weight: 800; }
+.points-scope-tabs button span { width: 10px; height: 10px; border-radius: 50%; }
+.points-scope-tabs button.selected { color: #07101e; background: var(--accent); border-color: var(--accent); }
+.points-panel { display: grid; gap: 17px; padding: 22px; margin-bottom: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; }
+.points-panel > header { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.points-panel header span { color: var(--primary); font-size: 9px; font-weight: 950; letter-spacing: .13em; }
+.points-panel h2 { margin: 4px 0 0; color: white; font-size: 25px; }
+.points-panel header p { margin: 0; color: var(--muted); font-size: 12px; }
+.points-rules > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
+.points-rules label,
+.points-adjustment-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
+.points-rules input,
+.points-adjustment-form input,
+.points-adjustment-form select { width: 100%; padding: 10px 12px; color: white; background: #07152b; border: 1px solid #29466b; border-radius: 9px; }
+.points-rules > button { justify-self: end; }
+.points-adjustment-form > div { display: grid; grid-template-columns: 1fr 140px 1.4fr auto; align-items: end; gap: 10px; }
+.points-adjustment-list { display: grid !important; grid-template-columns: 1fr !important; gap: 8px !important; }
+.points-adjustment-list article { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 12px; background: #08172d; border-radius: 10px; }
+.points-adjustment-list article div { display: grid; gap: 3px; }
+.points-adjustment-list span { color: var(--muted); font-size: 11px; }
+.points-adjustment-list button { padding: 8px 10px; color: var(--danger); background: transparent; border: 1px solid rgba(255,111,125,.45); border-radius: 8px; }
+.points-page > .points-poster-showcase { margin-top: 28px; }
+@media (max-width: 760px) {
+  .points-page { width: min(100% - 24px, 1280px); }
+  .points-page-header,
+  .points-panel > header { align-items: stretch; flex-direction: column; }
+  .points-rules > div,
+  .points-adjustment-form > div { grid-template-columns: 1fr; }
+}

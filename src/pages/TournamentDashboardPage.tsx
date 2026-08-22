@@ -136,6 +136,22 @@ export default function TournamentDashboardPage() {
         `/admin/scoring?tournament=${tournamentId}`
     },
     {
+      title: "Points table",
+      description:
+        "Calculate division and group standings with variable-format NRR.",
+      symbol: "PT",
+      path:
+        `/admin/points-table?tournament=${tournamentId}`
+    },
+    {
+      title: "Qualification advisor",
+      description:
+        "Calculate Q/E status, remaining points paths and variable-format NRR targets.",
+      symbol: "QA",
+      path:
+        `/admin/qualification?tournament=${tournamentId}`
+    },
+    {
   title: "History",
   description:
     "Review sales and approved reversals.",
