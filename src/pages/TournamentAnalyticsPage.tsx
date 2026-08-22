@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router-dom";
 
 import TournamentAwardPoster from
   "../components/analytics/TournamentAwardPoster";
+import PlayerOfMatchPoster from
+  "../components/analytics/PlayerOfMatchPoster";
 
 import { getTournamentDivisions } from
   "../services/scheduleConfiguration";
@@ -12,6 +14,7 @@ import {
   type TournamentAnalyticsSnapshot
 } from "../services/tournamentAnalytics";
 import { getTournament } from "../services/tournaments";
+import { setMatchPlayerOfMatch } from "../services/scoring";
 
 import type {
   Tournament,
@@ -23,6 +26,7 @@ import "./TournamentAnalyticsPage.css";
 const EMPTY_ANALYTICS: TournamentAnalyticsSnapshot = {
   players: [],
   awards: [],
+  matchPlayerSuggestions: [],
   playerOfTournament: null,
   playerOfTournamentReason: "",
   highestTeamScore: null,
@@ -39,6 +43,10 @@ export default function TournamentAnalyticsPage() {
   const [analytics, setAnalytics] =
     useState<TournamentAnalyticsSnapshot>(EMPTY_ANALYTICS);
   const [selectedAwardId, setSelectedAwardId] = useState("");
+  const [selectedMatchId, setSelectedMatchId] = useState("");
+  const [matchAwardReason, setMatchAwardReason] = useState("");
+  const [working, setWorking] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -52,6 +60,13 @@ export default function TournamentAnalyticsPage() {
       (award) => award.id === selectedAwardId
     ) ?? analytics.awards[0] ?? null,
     [analytics.awards, selectedAwardId]
+  );
+
+  const selectedMatchSuggestion = useMemo(
+    () => analytics.matchPlayerSuggestions.find(
+      (suggestion) => suggestion.match.id === selectedMatchId
+    ) ?? analytics.matchPlayerSuggestions[0] ?? null,
+    [analytics.matchPlayerSuggestions, selectedMatchId]
   );
 
   const loadBase = useCallback(async () => {
@@ -92,6 +107,13 @@ export default function TournamentAnalyticsPage() {
           ? current
           : snapshot.awards[0]?.id ?? ""
       );
+      setSelectedMatchId((current) =>
+        snapshot.matchPlayerSuggestions.some(
+          (suggestion) => suggestion.match.id === current
+        )
+          ? current
+          : snapshot.matchPlayerSuggestions[0]?.match.id ?? ""
+      );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -110,6 +132,57 @@ export default function TournamentAnalyticsPage() {
   useEffect(() => {
     void loadAnalytics();
   }, [loadAnalytics]);
+
+  useEffect(() => {
+    if (!selectedMatchSuggestion) {
+      setMatchAwardReason("");
+      return;
+    }
+
+    setMatchAwardReason(
+      selectedMatchSuggestion.confirmedReason ??
+      selectedMatchSuggestion.suggestedReason
+    );
+  }, [selectedMatchSuggestion]);
+
+  async function confirmMatchAward() {
+    const playerId = selectedMatchSuggestion?.suggestedPlayer?.playerId;
+    if (!selectedMatchSuggestion || !playerId) {
+      setErrorMessage(
+        "The suggested performance is not connected to a registered player. Select the award manually from Score Control."
+      );
+      return;
+    }
+
+    if (matchAwardReason.trim().length < 3) {
+      setErrorMessage("Enter a short reason for the Player of the Match award.");
+      return;
+    }
+
+    setWorking(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      await setMatchPlayerOfMatch(
+        selectedMatchSuggestion.match.id,
+        playerId,
+        matchAwardReason
+      );
+      setSuccessMessage(
+        "Player of the Match confirmed. The public match page has been updated."
+      );
+      await loadAnalytics();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "The Player of the Match award could not be saved."
+      );
+    } finally {
+      setWorking(false);
+    }
+  }
 
   if (!tournamentId) {
     return (
@@ -139,6 +212,9 @@ export default function TournamentAnalyticsPage() {
 
       {errorMessage && (
         <div className="analytics-alert">{errorMessage}</div>
+      )}
+      {successMessage && (
+        <div className="analytics-success">{successMessage}</div>
       )}
 
       <section className="analytics-controls">
@@ -245,6 +321,95 @@ export default function TournamentAnalyticsPage() {
             <small>
               Formula: runs + wickets×25 + catches×8 + stumpings×10 + run-outs×10 + POTM×15 − wides − no-balls×2.
             </small>
+          </section>
+
+          <section className="analytics-match-awards">
+            <header>
+              <div>
+                <span>MATCH-BY-MATCH AWARDS</span>
+                <h2>Player of the Match suggestions</h2>
+              </div>
+              <p>
+                Suggestions use only that match’s runs, wickets, catches, stumpings and run-outs. Confirming an award publishes the player and reason on the public match page.
+              </p>
+            </header>
+
+            {analytics.matchPlayerSuggestions.length === 0 ? (
+              <div className="analytics-message">
+                Complete a match to calculate Player of the Match suggestions.
+              </div>
+            ) : (
+              <>
+                <div className="match-award-selector">
+                  {analytics.matchPlayerSuggestions.map((suggestion) => {
+                    const player = suggestion.confirmedPlayer ?? suggestion.suggestedPlayer;
+                    return (
+                      <button
+                        type="button"
+                        key={suggestion.match.id}
+                        className={
+                          suggestion.match.id === selectedMatchSuggestion?.match.id
+                            ? "selected"
+                            : ""
+                        }
+                        onClick={() => setSelectedMatchId(suggestion.match.id)}
+                      >
+                        <span>MATCH {suggestion.match.match_number}</span>
+                        <strong>{player?.playerName ?? "No performance"}</strong>
+                        <small>
+                          {suggestion.confirmedPlayer ? "OFFICIAL" : "SUGGESTED"}
+                        </small>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedMatchSuggestion?.suggestedPlayer && (
+                  <div className="match-award-control">
+                    <div>
+                      <span>AUTOMATIC SUGGESTION</span>
+                      <h3>{selectedMatchSuggestion.suggestedPlayer.playerName}</h3>
+                      <p>{selectedMatchSuggestion.suggestedReason}</p>
+                    </div>
+
+                    <label>
+                      Public award reason
+                      <textarea
+                        value={matchAwardReason}
+                        onChange={(event) =>
+                          setMatchAwardReason(event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      disabled={working || !selectedMatchSuggestion.suggestedPlayer.playerId}
+                      onClick={() => void confirmMatchAward()}
+                    >
+                      {working
+                        ? "Saving award…"
+                        : selectedMatchSuggestion.confirmedPlayer
+                          ? "Update official award"
+                          : "Confirm as Player of the Match"}
+                    </button>
+                  </div>
+                )}
+
+                {tournament &&
+                  selectedMatchSuggestion?.confirmedPlayer && (
+                    <PlayerOfMatchPoster
+                      tournament={tournament}
+                      suggestion={selectedMatchSuggestion}
+                      player={selectedMatchSuggestion.confirmedPlayer}
+                      reason={
+                        selectedMatchSuggestion.confirmedReason ??
+                        matchAwardReason
+                      }
+                    />
+                  )}
+              </>
+            )}
           </section>
 
           <section className="analytics-award-section">

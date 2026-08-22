@@ -7,7 +7,8 @@ import type {
   FieldingScorecard,
   MatchInnings,
   Player,
-  Team
+  Team,
+  TournamentMatch
 } from "../types/database";
 
 export interface PlayerTournamentStatistics {
@@ -88,10 +89,21 @@ export interface TournamentAward {
 export interface TournamentAnalyticsSnapshot {
   players: PlayerTournamentStatistics[];
   awards: TournamentAward[];
+  matchPlayerSuggestions: MatchPlayerAwardSuggestion[];
   playerOfTournament: PlayerTournamentStatistics | null;
   playerOfTournamentReason: string;
   highestTeamScore: TeamInningsRecord | null;
   scoredMatches: number;
+}
+
+export interface MatchPlayerAwardSuggestion {
+  match: TournamentMatch;
+  innings: MatchInnings[];
+  candidates: PlayerTournamentStatistics[];
+  suggestedPlayer: PlayerTournamentStatistics | null;
+  suggestedReason: string;
+  confirmedPlayer: PlayerTournamentStatistics | null;
+  confirmedReason: string | null;
 }
 
 interface AnalyticsAccumulator
@@ -204,6 +216,58 @@ function playerOfTournamentReason(player: PlayerTournamentStatistics | null) {
     : `Composite performance score: ${player.tournamentScore.toFixed(1)}.`;
 }
 
+function finalizeAccumulator(
+  player: AnalyticsAccumulator
+): PlayerTournamentStatistics {
+  return {
+    ...player,
+    strikeRate: player.balls > 0
+      ? player.runs / player.balls * 100
+      : 0,
+    economy: player.bowlingOvers > 0
+      ? player.runsConceded / player.bowlingOvers
+      : 0,
+    tournamentScore:
+      player.runs +
+      player.wickets * 25 +
+      player.catches * 8 +
+      player.stumpings * 10 +
+      player.runOuts * 10 +
+      player.playerOfMatchAwards * 15 -
+      player.wides -
+      player.noBalls * 2
+  };
+}
+
+function matchAwardReason(player: PlayerTournamentStatistics | null) {
+  if (!player) return "No player performance was recorded for this match.";
+
+  const parts: string[] = [];
+  if (player.runs > 0) {
+    parts.push(
+      `${player.runs} run${player.runs === 1 ? "" : "s"} from ${player.balls} ball${player.balls === 1 ? "" : "s"}`
+    );
+  }
+  if (player.wickets > 0) {
+    parts.push(
+      `${player.wickets} wicket${player.wickets === 1 ? "" : "s"} for ${player.runsConceded} runs`
+    );
+  }
+  if (player.catches > 0) {
+    parts.push(`${player.catches} catch${player.catches === 1 ? "" : "es"}`);
+  }
+  if (player.stumpings > 0) {
+    parts.push(`${player.stumpings} stumping${player.stumpings === 1 ? "" : "s"}`);
+  }
+  if (player.runOuts > 0) {
+    parts.push(`${player.runOuts} run-out contribution${player.runOuts === 1 ? "" : "s"}`);
+  }
+
+  return parts.length > 0
+    ? `${parts.join(", ")}. Match performance score: ${player.tournamentScore.toFixed(1)}.`
+    : `Best recorded match performance with a score of ${player.tournamentScore.toFixed(1)}.`;
+}
+
 export async function getTournamentAnalytics(
   tournamentId: string,
   divisionId: string | null = null
@@ -241,6 +305,7 @@ export async function getTournamentAnalytics(
     return {
       players: [],
       awards: [],
+      matchPlayerSuggestions: [],
       playerOfTournament: null,
       playerOfTournamentReason: "No scored matches are available yet.",
       highestTeamScore: null,
@@ -397,26 +462,119 @@ export async function getTournamentAnalytics(
     player.playerOfMatchAwards += 1;
   });
 
-  const players = Array.from(aggregate.values()).map(
-    (player): PlayerTournamentStatistics => ({
-      ...player,
-      strikeRate: player.balls > 0
-        ? player.runs / player.balls * 100
-        : 0,
-      economy: player.bowlingOvers > 0
-        ? player.runsConceded / player.bowlingOvers
-        : 0,
-      tournamentScore:
-        player.runs +
-        player.wickets * 25 +
-        player.catches * 8 +
-        player.stumpings * 10 +
-        player.runOuts * 10 +
-        player.playerOfMatchAwards * 15 -
-        player.wides -
-        player.noBalls * 2
+  const players = Array.from(aggregate.values()).map(finalizeAccumulator);
+
+  const matchPlayerSuggestions = relevantMatches
+    .filter((match) => match.status === "completed")
+    .map((match): MatchPlayerAwardSuggestion => {
+      const matchInnings = innings.filter(
+        (record) => record.match_id === match.id
+      );
+      const matchFielding = fielding.filter(
+        (record) => record.match_id === match.id
+      );
+      const matchAggregate = new Map<string, AnalyticsAccumulator>();
+
+      function localPlayer(
+        playerId: string | null,
+        playerName: string,
+        teamId: string | null
+      ) {
+        const key = playerKey(playerId, teamId, playerName);
+        const existing = matchAggregate.get(key);
+        if (existing) return existing;
+        const registered = playerId
+          ? playersById.get(playerId) ?? null
+          : null;
+        const resolvedTeamId = teamId ?? registered?.sold_team_id ?? null;
+        const team = resolvedTeamId
+          ? teamsById.get(resolvedTeamId) ?? null
+          : null;
+        const created = initialAccumulator(
+          key,
+          playerId,
+          playerName,
+          team,
+          registered
+        );
+        matchAggregate.set(key, created);
+        return created;
+      }
+
+      matchInnings.forEach((record) => {
+        (record.batting_scorecards ?? []).forEach((score) => {
+          const player = localPlayer(
+            score.player_id,
+            score.player_name,
+            score.team_id
+          );
+          player.innings += 1;
+          player.runs += score.runs;
+          player.balls += score.balls;
+          player.fours += score.fours;
+          player.sixes += score.sixes;
+          player.highestScore = Math.max(player.highestScore, score.runs);
+        });
+
+        (record.bowling_scorecards ?? []).forEach((score) => {
+          const player = localPlayer(
+            score.player_id,
+            score.player_name,
+            score.team_id
+          );
+          player.bowlingInnings += 1;
+          player.legalBalls += score.legal_balls;
+          player.bowlingOvers += score.legal_balls /
+            Math.max(record.balls_per_over, 1);
+          player.runsConceded += score.runs_conceded;
+          player.wickets += score.wickets;
+          player.wides += score.wides;
+          player.noBalls += score.no_balls;
+          player.bowlingExtras += score.wides + score.no_balls;
+          player.bestWickets = score.wickets;
+          player.bestBowlingRuns = score.runs_conceded;
+        });
+      });
+
+      matchFielding.forEach((score) => {
+        const player = localPlayer(
+          score.player_id,
+          score.player_name,
+          score.team_id
+        );
+        player.catches += score.catches;
+        player.stumpings += score.stumpings;
+        player.runOuts += score.direct_run_outs + score.assisted_run_outs;
+      });
+
+      const candidates = Array.from(matchAggregate.values())
+        .map(finalizeAccumulator)
+        .sort(
+          (first, second) =>
+            second.tournamentScore - first.tournamentScore ||
+            second.runs - first.runs ||
+            second.wickets - first.wickets
+        );
+      const suggestedPlayer = candidates[0] ?? null;
+      const confirmedPlayer = match.player_of_match_id
+        ? candidates.find(
+            (candidate) => candidate.playerId === match.player_of_match_id
+          ) ?? null
+        : null;
+
+      return {
+        match,
+        innings: matchInnings,
+        candidates,
+        suggestedPlayer,
+        suggestedReason: matchAwardReason(suggestedPlayer),
+        confirmedPlayer,
+        confirmedReason: match.player_of_match_reason
+      };
     })
-  );
+    .sort((first, second) =>
+      second.match.match_number - first.match.match_number
+    );
 
   const mostRuns = topPlayer(players, (player) => player.runs, (player) => player.strikeRate);
   const mostWickets = topPlayer(players, (player) => player.wickets, (player) => -player.economy);
@@ -459,6 +617,7 @@ export async function getTournamentAnalytics(
       (first, second) => second.tournamentScore - first.tournamentScore
     ),
     awards,
+    matchPlayerSuggestions,
     playerOfTournament,
     playerOfTournamentReason: playerOfTournamentReason(playerOfTournament),
     highestTeamScore,
