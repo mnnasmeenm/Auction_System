@@ -93,6 +93,9 @@ import TeamsPage from
 import TournamentDashboardPage from
   "./pages/TournamentDashboardPage";
 
+import TournamentAnalyticsPage from
+  "./pages/TournamentAnalyticsPage";
+
 import TournamentSelectionPage from
   "./pages/TournamentSelectionPage";
 import RegisteredPlayersPosterPage from
@@ -292,6 +295,11 @@ export default function App() {
             <Route
               path="/admin/qualification"
               element={<QualificationAdvisorPage />}
+            />
+
+            <Route
+              path="/admin/analytics"
+              element={<TournamentAnalyticsPage />}
             />
 
             <Route

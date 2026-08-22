@@ -213,6 +213,11 @@ export default function AdminHeader() {
             `/admin/qualification?tournament=${tournamentId}`
         },
         {
+          label: "Honours",
+          path:
+            `/admin/analytics?tournament=${tournamentId}`
+        },
+        {
           label: "History",
           path:
             `/admin/history?tournament=${tournamentId}`

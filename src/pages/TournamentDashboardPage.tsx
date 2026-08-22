@@ -152,6 +152,14 @@ export default function TournamentDashboardPage() {
         `/admin/qualification?tournament=${tournamentId}`
     },
     {
+      title: "Tournament honours",
+      description:
+        "Review batting, bowling and fielding leaders and download award posters.",
+      symbol: "TH",
+      path:
+        `/admin/analytics?tournament=${tournamentId}`
+    },
+    {
   title: "History",
   description:
     "Review sales and approved reversals.",

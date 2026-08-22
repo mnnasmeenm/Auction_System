@@ -1,0 +1,277 @@
+.award-poster-showcase {
+  display: grid;
+  justify-items: center;
+  gap: 15px;
+}
+
+.tournament-award-poster {
+  --award-accent: #b8f227;
+  --award-team: #2f72ff;
+  position: relative;
+  width: min(100%, 900px);
+  aspect-ratio: 1 / 1;
+  min-height: 720px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 24px;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 56px);
+  isolation: isolate;
+  color: white;
+  background:
+    radial-gradient(circle at 82% 22%, color-mix(in srgb, var(--award-team) 68%, transparent), transparent 36%),
+    radial-gradient(circle at 13% 85%, color-mix(in srgb, var(--award-accent) 35%, transparent), transparent 33%),
+    linear-gradient(145deg, #020817, #09204a 56%, #040b1c);
+  border: 2px solid color-mix(in srgb, var(--award-accent) 65%, #344d74);
+  border-radius: 30px;
+  box-shadow: 0 35px 95px rgba(0, 0, 0, .38);
+}
+
+.award-poster-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  opacity: .09;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .15) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.award-poster-glow {
+  position: absolute;
+  right: -150px;
+  bottom: 80px;
+  z-index: -3;
+  width: 490px;
+  height: 490px;
+  background: var(--award-accent);
+  border-radius: 50%;
+  filter: blur(130px);
+  opacity: .3;
+}
+
+.award-team-watermark {
+  position: absolute;
+  right: -9%;
+  bottom: 3%;
+  z-index: -2;
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+  opacity: .075;
+  filter: grayscale(1) brightness(2.5);
+}
+
+.tournament-award-poster > header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+}
+
+.award-brand-logos {
+  display: flex;
+  gap: 8px;
+}
+
+.award-brand-logos img {
+  width: clamp(64px, 8vw, 88px);
+  height: clamp(64px, 8vw, 88px);
+  padding: 6px;
+  object-fit: contain;
+  background: white;
+  border: 2px solid white;
+  border-radius: 14px;
+}
+
+.tournament-award-poster > header small {
+  color: #dce9ff;
+  font-size: clamp(9px, 1.2vw, 13px);
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.tournament-award-poster > header h1 {
+  margin: 4px 0;
+  font-size: clamp(22px, 4vw, 42px);
+  line-height: .95;
+  text-transform: uppercase;
+}
+
+.tournament-award-poster > header p {
+  margin: 0;
+  color: var(--award-accent);
+  font-size: clamp(9px, 1.2vw, 13px);
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tournament-award-poster > header > strong {
+  padding: 8px 12px;
+  color: #07101e;
+  background: white;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.tournament-award-poster main {
+  display: grid;
+  align-content: center;
+  gap: clamp(24px, 4vw, 42px);
+}
+
+.award-title-block span {
+  color: var(--award-accent);
+  font-size: clamp(11px, 1.5vw, 16px);
+  font-weight: 950;
+  letter-spacing: .18em;
+}
+
+.award-title-block h2 {
+  margin: 5px 0 0;
+  font-size: clamp(38px, 7vw, 82px);
+  line-height: .86;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+}
+
+.award-subject {
+  display: grid;
+  grid-template-columns: minmax(240px, .9fr) 1.1fr;
+  align-items: center;
+  gap: clamp(22px, 5vw, 55px);
+}
+
+.award-subject-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: white;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--award-team) 75%, #071225), #061023);
+  border: 4px solid color-mix(in srgb, var(--award-accent) 70%, white);
+  border-radius: 28px;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, .34);
+}
+
+.award-subject-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.award-subject-image strong {
+  font-size: clamp(42px, 8vw, 90px);
+}
+
+.award-subject-copy small {
+  color: #a8bee0;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.award-subject-copy h3 {
+  margin: 6px 0 12px;
+  font-size: clamp(28px, 5vw, 58px);
+  line-height: .93;
+  text-transform: uppercase;
+}
+
+.award-subject-copy > strong {
+  display: block;
+  color: var(--award-accent);
+  font-size: clamp(38px, 7vw, 78px);
+  line-height: 1;
+}
+
+.award-subject-copy p {
+  margin: 13px 0 0;
+  color: #d8e4f5;
+  font-size: clamp(11px, 1.45vw, 16px);
+  line-height: 1.5;
+}
+
+.award-team-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(3, 11, 27, .7);
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-left: 5px solid var(--award-team);
+  border-radius: 14px;
+}
+
+.award-team-lockup img {
+  width: 55px;
+  height: 55px;
+  padding: 4px;
+  object-fit: contain;
+  background: white;
+  border-radius: 10px;
+}
+
+.award-team-lockup span {
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.tournament-award-poster > footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, .17);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.tournament-award-poster > footer strong {
+  color: var(--award-accent);
+}
+
+.award-poster-showcase > button {
+  padding: 12px 18px;
+  color: #07101e;
+  background: #b8f227;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+@media (max-width: 720px) {
+  .tournament-award-poster {
+    min-height: 670px;
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .tournament-award-poster > header {
+    grid-template-columns: auto 1fr;
+  }
+
+  .tournament-award-poster > header > strong {
+    display: none;
+  }
+
+  .award-brand-logos img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .award-subject {
+    grid-template-columns: 42% 1fr;
+  }
+}
