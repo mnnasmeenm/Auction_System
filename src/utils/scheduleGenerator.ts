@@ -5,7 +5,8 @@ import type {
   TournamentDivision,
   TournamentGroup,
   TournamentScheduleBreak,
-  TournamentScheduleWindow
+  TournamentScheduleWindow,
+  TournamentScheduleWindowDivision
 } from "../types/database";
 
 export interface DivisionScheduleInput {
@@ -21,6 +22,7 @@ export interface GenerateMultiDivisionScheduleInput {
   tournamentId: string;
   divisions: DivisionScheduleInput[];
   windows: TournamentScheduleWindow[];
+  windowDivisionAvailability: TournamentScheduleWindowDivision[];
   breaks: TournamentScheduleBreak[];
   publishMatches: boolean;
 }
@@ -94,14 +96,18 @@ function createRoundRobinPairings(teamIds: string[]): Pairing[] {
 }
 
 function qualificationFixtures(
-  division: TournamentDivision
+  division: TournamentDivision,
+  teamCount: number
 ): DivisionFixture[] {
   const common = { divisionId: division.id };
 
-  if (
-    division.qualification_format === "ipl_playoff" &&
-    division.qualifiers_count >= 4
-  ) {
+  if (division.qualification_format === "ipl_playoff") {
+    if (teamCount < 4) {
+      throw new Error(
+        `${division.name} needs at least four teams for an IPL-style playoff. Use Top two final when the division has fewer than four teams.`
+      );
+    }
+
     return [
       {
         ...common,
@@ -130,10 +136,13 @@ function qualificationFixtures(
     ];
   }
 
-  if (
-    division.qualification_format === "semi_final" &&
-    division.qualifiers_count >= 4
-  ) {
+  if (division.qualification_format === "semi_final") {
+    if (teamCount < 4) {
+      throw new Error(
+        `${division.name} needs at least four teams for two semi-finals. Use Top two final when the division has fewer than four teams.`
+      );
+    }
+
     return [
       {
         ...common,
@@ -156,10 +165,13 @@ function qualificationFixtures(
     ];
   }
 
-  if (
-    division.qualification_format === "final_only" &&
-    division.qualifiers_count >= 2
-  ) {
+  if (division.qualification_format === "final_only") {
+    if (teamCount < 2) {
+      throw new Error(
+        `${division.name} needs at least two teams for a final.`
+      );
+    }
+
     return [
       {
         ...common,
@@ -288,7 +300,10 @@ function createDivisionFixtures(
       }));
     });
 
-    return [...groupFixtures, ...qualificationFixtures(division)];
+    return [
+      ...groupFixtures,
+      ...qualificationFixtures(division, teams.length)
+    ];
   }
 
   const league = createRoundRobinPairings(
@@ -301,7 +316,10 @@ function createDivisionFixtures(
     teamTwoId: pairing.secondTeamId
   }));
 
-  return [...league, ...qualificationFixtures(division)];
+  return [
+    ...league,
+    ...qualificationFixtures(division, teams.length)
+  ];
 }
 
 function overlaps(
@@ -383,8 +401,23 @@ function timeOnDate(reference: Date, value: string) {
 
 function divisionCanUseSlot(
   division: TournamentDivision,
-  slot: ScheduleSlot
+  slot: ScheduleSlot,
+  availability: TournamentScheduleWindowDivision[]
 ) {
+  const windowRules = availability.filter(
+    (rule) => rule.schedule_window_id === slot.windowId
+  );
+
+  if (windowRules.length > 0) {
+    const divisionRule = windowRules.find(
+      (rule) => rule.division_id === division.id
+    );
+
+    if (!divisionRule?.is_available) {
+      return false;
+    }
+  }
+
   if (!division.avoid_time_from || !division.avoid_time_to) {
     return true;
   }
@@ -516,7 +549,11 @@ export function generateMultiDivisionSchedule(
         if (
           candidateDivision &&
           queue.length > 0 &&
-          divisionCanUseSlot(candidateDivision, slot)
+          divisionCanUseSlot(
+            candidateDivision,
+            slot,
+            input.windowDivisionAvailability
+          )
         ) {
           selectedDivisionId = candidateId;
           selectedRotationIndex = candidateIndex;
@@ -594,7 +631,11 @@ export function generateMultiDivisionSchedule(
       const slot = slots[slotIndex];
       slotIndex += 1;
 
-      if (!divisionCanUseSlot(division, slot)) {
+      if (!divisionCanUseSlot(
+        division,
+        slot,
+        input.windowDivisionAvailability
+      )) {
         continue;
       }
 
@@ -617,7 +658,7 @@ export function generateMultiDivisionSchedule(
       .join(", ");
 
     throw new Error(
-      `Not enough valid time slots. Unscheduled matches — ${unscheduledByDivision}. Add another event window, shorten match duration, reduce breaks, or adjust heat restrictions.`
+      `Not enough valid time slots. Unscheduled matches — ${unscheduledByDivision}. Add another event window, allow the affected division on another event day, shorten match duration, reduce breaks, or adjust heat restrictions.`
     );
   }
 

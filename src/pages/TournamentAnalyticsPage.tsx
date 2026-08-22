@@ -81,7 +81,15 @@ export default function TournamentAnalyticsPage() {
         getTournamentDivisions(tournamentId)
       ]);
       setTournament(tournamentRecord);
-      setDivisions(divisionRecords.filter((division) => division.is_active));
+      const activeDivisions = divisionRecords.filter(
+        (division) => division.is_active
+      );
+      setDivisions(activeDivisions);
+      setDivisionId((current) =>
+        activeDivisions.some((division) => division.id === current)
+          ? current
+          : activeDivisions[0]?.id ?? ""
+      );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -92,14 +100,14 @@ export default function TournamentAnalyticsPage() {
   }, [tournamentId]);
 
   const loadAnalytics = useCallback(async () => {
-    if (!tournamentId) return;
+    if (!tournamentId || !divisionId) return;
     setLoading(true);
     setErrorMessage("");
 
     try {
       const snapshot = await getTournamentAnalytics(
         tournamentId,
-        divisionId || null
+        divisionId
       );
       setAnalytics(snapshot);
       setSelectedAwardId((current) =>
@@ -224,13 +232,15 @@ export default function TournamentAnalyticsPage() {
             value={divisionId}
             onChange={(event) => setDivisionId(event.target.value)}
           >
-            <option value="">All tournament divisions</option>
             {divisions.map((division) => (
               <option key={division.id} value={division.id}>
                 {division.name}
               </option>
             ))}
           </select>
+          <small>
+            Every leaderboard and award is calculated only from this division.
+          </small>
         </label>
 
         <article>

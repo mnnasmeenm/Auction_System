@@ -356,6 +356,111 @@
   margin-bottom: 14px;
 }
 
+.schedule-window-division-access {
+  margin-top: 16px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.schedule-window-access-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.schedule-window-access-heading h4,
+.schedule-window-access-heading p {
+  margin: 0;
+}
+
+.schedule-window-access-heading h4 {
+  color: var(--primary-dark);
+}
+
+.schedule-window-access-heading p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.schedule-window-access-heading button {
+  padding: 8px 11px;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.schedule-window-division-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 9px;
+}
+
+.schedule-window-division-grid label {
+  display: grid;
+  grid-template-columns: auto 46px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  background: var(--surface-strong, #fff);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.schedule-window-division-grid label.selected {
+  background: color-mix(
+    in srgb,
+    var(--division-color) 11%,
+    var(--surface-strong, #fff)
+  );
+  border-color: var(--division-color);
+}
+
+.schedule-window-division-grid label.blocked {
+  opacity: .62;
+}
+
+.schedule-window-division-grid input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--division-color);
+}
+
+.schedule-window-division-grid span {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  padding: 5px;
+  color: white;
+  background: var(--division-color);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 950;
+}
+
+.schedule-window-division-grid strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--primary-dark);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-window-division-grid small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
 .schedule-break-area {
   margin-top: 16px;
   padding-top: 15px;

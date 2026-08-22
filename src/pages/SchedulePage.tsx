@@ -31,10 +31,12 @@ import {
   getDivisionGroups,
   getDivisionTeamAssignments,
   getScheduleBreaks,
+  getScheduleWindowDivisions,
   getScheduleWindows,
   getTournamentDivisions,
   replaceDivisionGroups,
   replaceDivisionTeams,
+  replaceScheduleWindowDivisions,
   saveScheduleBreak,
   saveScheduleWindow,
   saveTournamentDivision
@@ -110,6 +112,7 @@ interface EditableWindow {
   matchDurationMinutes: number;
   turnaroundMinutes: number;
   displayOrder: number;
+  divisionKeys: string[];
 }
 
 interface EditableBreak {
@@ -167,6 +170,21 @@ function stageLabel(stage: MatchStage) {
   return stageOptions.find((item) => item.value === stage)?.label ?? stage;
 }
 
+function requiredQualifierCount(
+  format: QualificationFormat,
+  currentCount: number
+) {
+  if (format === "ipl_playoff" || format === "semi_final") {
+    return 4;
+  }
+
+  if (format === "final_only") {
+    return 2;
+  }
+
+  return Math.max(1, currentCount);
+}
+
 function teamName(match: TournamentMatch, side: "one" | "two") {
   return side === "one"
     ? match.team_one?.name ?? match.team_one_placeholder ?? "To be decided"
@@ -210,7 +228,10 @@ function newDivision(order: number): EditableDivision {
   };
 }
 
-function newWindow(order: number): EditableWindow {
+function newWindow(
+  order: number,
+  divisionKeys: string[]
+): EditableWindow {
   return {
     key: key(),
     label: `Event day ${order + 1}`,
@@ -219,7 +240,8 @@ function newWindow(order: number): EditableWindow {
     venue: "",
     matchDurationMinutes: 40,
     turnaroundMinutes: 5,
-    displayOrder: order
+    displayOrder: order,
+    divisionKeys
   };
 }
 
@@ -307,6 +329,7 @@ export default function SchedulePage() {
         divisionRecords,
         divisionTeamRecords,
         windowRecords,
+        windowDivisionRecords,
         breakRecords,
         groupRecords,
         groupAssignmentRecords,
@@ -317,6 +340,7 @@ export default function SchedulePage() {
         getTournamentDivisions(tournamentId),
         getDivisionTeamAssignments(tournamentId),
         getScheduleWindows(tournamentId),
+        getScheduleWindowDivisions(tournamentId),
         getScheduleBreaks(tournamentId),
         getDivisionGroups(tournamentId),
         getDivisionGroupAssignments(tournamentId),
@@ -382,17 +406,30 @@ export default function SchedulePage() {
       );
 
       setWindows(
-        windowRecords.map((window) => ({
-          key: window.id,
-          id: window.id,
-          label: window.label,
-          startsAt: toLocalDateTime(window.starts_at),
-          endsAt: toLocalDateTime(window.ends_at),
-          venue: window.venue ?? "",
-          matchDurationMinutes: window.match_duration_minutes,
-          turnaroundMinutes: window.turnaround_minutes,
-          displayOrder: window.display_order
-        }))
+        windowRecords.map((window) => {
+          const savedRules = windowDivisionRecords.filter(
+            (rule) => rule.schedule_window_id === window.id
+          );
+
+          return {
+            key: window.id,
+            id: window.id,
+            label: window.label,
+            startsAt: toLocalDateTime(window.starts_at),
+            endsAt: toLocalDateTime(window.ends_at),
+            venue: window.venue ?? "",
+            matchDurationMinutes: window.match_duration_minutes,
+            turnaroundMinutes: window.turnaround_minutes,
+            displayOrder: window.display_order,
+            divisionKeys: savedRules.length > 0
+              ? savedRules
+                  .filter((rule) => rule.is_available)
+                  .map((rule) => rule.division_id)
+              : divisionRecords
+                  .filter((division) => division.is_active)
+                  .map((division) => division.id)
+          };
+        })
       );
 
       setBreaks(
@@ -468,6 +505,17 @@ export default function SchedulePage() {
     );
   }
 
+  function addDivision() {
+    const division = newDivision(divisions.length);
+    setDivisions((current) => [...current, division]);
+    setWindows((current) =>
+      current.map((window) => ({
+        ...window,
+        divisionKeys: [...window.divisionKeys, division.key]
+      }))
+    );
+  }
+
   function validateConfiguration() {
     if (divisions.length === 0) return "Create at least one division.";
     if (windows.length === 0) return "Create at least one event window.";
@@ -491,6 +539,21 @@ export default function SchedulePage() {
         division.teamIds.length < 2
       ) {
         return `${division.name} needs at least two selected teams.`;
+      }
+      if (
+        division.isActive &&
+        division.format !== "knockout" &&
+        division.format !== "custom" &&
+        ["ipl_playoff", "semi_final"].includes(
+          division.qualificationFormat
+        ) &&
+        division.teamIds.length < 4
+      ) {
+        return `${division.name} needs at least four selected teams for ${
+          division.qualificationFormat === "ipl_playoff"
+            ? "an IPL-style playoff"
+            : "two semi-finals"
+        }. Choose Top two final if this division has fewer than four teams.`;
       }
       if (division.avoidHeat && !division.avoidTimeFrom) {
         return `${division.name} requires a heat restriction start time.`;
@@ -519,6 +582,21 @@ export default function SchedulePage() {
       if (window.matchDurationMinutes < 1 || window.turnaroundMinutes < 0) {
         return `Check the duration settings for ${window.label}.`;
       }
+
+      const availableActiveDivisions = divisions.filter(
+        (division) =>
+          division.isActive && window.divisionKeys.includes(division.key)
+      );
+
+      if (availableActiveDivisions.length === 0) {
+        return `${window.label} must allow at least one active division.`;
+      }
+    }
+
+    for (const division of divisions.filter((item) => item.isActive)) {
+      if (!windows.some((window) => window.divisionKeys.includes(division.key))) {
+        return `${division.name} is blocked on every event day. Allow it on at least one day.`;
+      }
     }
 
     for (const item of breaks) {
@@ -539,6 +617,7 @@ export default function SchedulePage() {
 
   async function persistConfiguration() {
     const savedDivisionInputs: DivisionScheduleInput[] = [];
+    const savedDivisionIdByKey = new Map<string, string>();
 
     for (let index = 0; index < divisions.length; index += 1) {
       const draft = divisions[index];
@@ -553,7 +632,10 @@ export default function SchedulePage() {
         format: draft.format,
         groupCount: draft.groupCount,
         qualificationFormat: draft.qualificationFormat,
-        qualifiersCount: draft.qualifiersCount,
+        qualifiersCount: requiredQualifierCount(
+          draft.qualificationFormat,
+          draft.qualifiersCount
+        ),
         defaultOvers: draft.defaultOvers,
         defaultBallsPerOver: draft.defaultBallsPerOver,
         defaultWicketsPerInnings: draft.defaultWickets,
@@ -563,6 +645,7 @@ export default function SchedulePage() {
       });
 
       await replaceDivisionTeams(saved.id, draft.teamIds);
+      savedDivisionIdByKey.set(draft.key, saved.id);
       let groups: DivisionScheduleInput["groups"] = [];
 
       if (draft.format === "groups") {
@@ -611,6 +694,25 @@ export default function SchedulePage() {
       });
       windowByKey.set(draft.key, saved);
       savedWindowRecords.push(saved);
+
+      await replaceScheduleWindowDivisions(
+        saved.id,
+        divisions.map((division) => {
+          const savedDivisionId = savedDivisionIdByKey.get(division.key);
+
+          if (!savedDivisionId) {
+            throw new Error(
+              `Division availability could not be saved for ${division.name}.`
+            );
+          }
+
+          return {
+            divisionId: savedDivisionId,
+            isAvailable:
+              division.isActive && draft.divisionKeys.includes(division.key)
+          };
+        })
+      );
     }
 
     const savedBreakRecords: TournamentScheduleBreak[] = [];
@@ -629,10 +731,14 @@ export default function SchedulePage() {
       );
     }
 
+    const savedWindowDivisionAvailability =
+      await getScheduleWindowDivisions(tournamentId);
+
     return {
       divisions: savedDivisionInputs,
       windows: savedWindowRecords,
-      breaks: savedBreakRecords
+      breaks: savedBreakRecords,
+      windowDivisionAvailability: savedWindowDivisionAvailability
     };
   }
 
@@ -677,6 +783,7 @@ export default function SchedulePage() {
         tournamentId,
         divisions: saved.divisions,
         windows: saved.windows,
+        windowDivisionAvailability: saved.windowDivisionAvailability,
         breaks: saved.breaks,
         publishMatches: publishGenerated
       });
@@ -694,6 +801,14 @@ export default function SchedulePage() {
   async function removeDivision(division: EditableDivision) {
     if (!division.id) {
       setDivisions((current) => current.filter((item) => item.key !== division.key));
+      setWindows((current) =>
+        current.map((window) => ({
+          ...window,
+          divisionKeys: window.divisionKeys.filter(
+            (divisionKey) => divisionKey !== division.key
+          )
+        }))
+      );
       return;
     }
     if (!window.confirm(`Delete ${division.name}?`)) return;
@@ -783,6 +898,18 @@ export default function SchedulePage() {
       setErrorMessage("A team cannot play itself.");
       return;
     }
+    if (
+      editableMatch.scheduleWindowId &&
+      !windowAllowsDivision(
+        editableMatch.scheduleWindowId,
+        editableMatch.divisionId
+      )
+    ) {
+      setErrorMessage(
+        "That division is not available in the selected event window. Choose an allowed day."
+      );
+      return;
+    }
     setSaving(true);
     setErrorMessage("");
     try {
@@ -829,6 +956,28 @@ export default function SchedulePage() {
     return division?.teamIds.includes(team.id);
   });
 
+  function windowAllowsDivision(
+    scheduleWindowId: string,
+    divisionId: string
+  ) {
+    const editableWindow = windows.find(
+      (item) => item.id === scheduleWindowId
+    );
+    const editableDivision = divisions.find(
+      (item) => item.id === divisionId
+    );
+
+    if (!editableWindow || !editableDivision) {
+      return true;
+    }
+
+    return editableWindow.divisionKeys.includes(editableDivision.key);
+  }
+
+  const manualWindows = savedWindows.filter((window) =>
+    windowAllowsDivision(window.id, editableMatch?.divisionId ?? "")
+  );
+
   if (!tournamentId) {
     return (
       <main className="schedule-page"><section className="schedule-empty">
@@ -867,7 +1016,7 @@ export default function SchedulePage() {
       <section className="schedule-panel">
         <div className="schedule-panel-heading">
           <div><span>STEP 1</span><h2>Tournament divisions</h2><p>Use one division for an ordinary tournament, or add Under 40, Over 40 and other independent competitions.</p></div>
-          <button type="button" onClick={() => setDivisions((current) => [...current, newDivision(current.length)])}>+ Add division</button>
+          <button type="button" onClick={addDivision}>+ Add division</button>
         </div>
 
         <div className="schedule-division-list">
@@ -884,8 +1033,8 @@ export default function SchedulePage() {
                 <label>Short name<input value={division.shortName} maxLength={12} onChange={(event) => updateDivision(division.key, { shortName: event.target.value })} /></label>
                 <label>Division colour<input type="color" value={division.color} onChange={(event) => updateDivision(division.key, { color: event.target.value })} /></label>
                 <label>Competition format<select value={division.format} onChange={(event) => updateDivision(division.key, { format: event.target.value as CompetitionFormat })}><option value="league">League</option><option value="groups">Groups</option><option value="knockout">Direct knockout</option><option value="custom">Manual fixtures only</option></select></label>
-                <label>Qualification<select value={division.qualificationFormat} disabled={division.format === "knockout" || division.format === "custom"} onChange={(event) => updateDivision(division.key, { qualificationFormat: event.target.value as QualificationFormat })}><option value="ipl_playoff">IPL-style playoff</option><option value="semi_final">Two semi-finals and final</option><option value="final_only">Top two final</option><option value="custom">No automatic finals</option></select></label>
-                <label>Qualifying teams<input type="number" min="2" value={division.qualifiersCount} onChange={(event) => updateDivision(division.key, { qualifiersCount: Number(event.target.value) })} /></label>
+                <label>Qualification<select value={division.qualificationFormat} disabled={division.format === "knockout" || division.format === "custom"} onChange={(event) => { const qualificationFormat = event.target.value as QualificationFormat; updateDivision(division.key, { qualificationFormat, qualifiersCount: requiredQualifierCount(qualificationFormat, division.qualifiersCount) }); }}><option value="ipl_playoff">IPL-style playoff</option><option value="semi_final">Two semi-finals and final</option><option value="final_only">Top two final</option><option value="custom">No automatic finals</option></select></label>
+                <label>Qualifying teams<input type="number" min="2" value={requiredQualifierCount(division.qualificationFormat, division.qualifiersCount)} disabled={division.qualificationFormat !== "custom"} onChange={(event) => updateDivision(division.key, { qualifiersCount: Number(event.target.value) })} /><small>Automatically set to 4 for IPL/semi-finals and 2 for a top-two final.</small></label>
                 {division.format === "groups" && <label>Number of groups<input type="number" min="1" value={division.groupCount} onChange={(event) => { const count = Math.max(1, Number(event.target.value)); updateDivision(division.key, { groupCount: count, groupNames: groupNames(count, division.groupNames) }); }} /></label>}
                 <label>Overs<input type="number" min="1" value={division.defaultOvers} onChange={(event) => updateDivision(division.key, { defaultOvers: Number(event.target.value) })} /></label>
                 <label>Balls per over<input type="number" min="1" max="12" value={division.defaultBallsPerOver} onChange={(event) => updateDivision(division.key, { defaultBallsPerOver: Number(event.target.value) })} /></label>
@@ -905,12 +1054,59 @@ export default function SchedulePage() {
       </section>
 
       <section className="schedule-panel">
-        <div className="schedule-panel-heading"><div><span>STEP 2</span><h2>Event dates and time windows</h2><p>Add only the periods when the ground is available. Dates do not need to be consecutive.</p></div><button type="button" onClick={() => setWindows((current) => [...current, newWindow(current.length)])}>+ Add event window</button></div>
+        <div className="schedule-panel-heading"><div><span>STEP 2</span><h2>Event dates and time windows</h2><p>Add only the periods when the ground is available, then allow or block every division for that day.</p></div><button type="button" onClick={() => setWindows((current) => [...current, newWindow(current.length, divisions.filter((division) => division.isActive).map((division) => division.key))])}>+ Add event window</button></div>
         <div className="schedule-window-list">
           {windows.map((item) => (
             <article className="schedule-window-card" key={item.key}>
               <div className="schedule-window-heading"><h3>{item.label}</h3><button type="button" onClick={() => removeWindow(item)}>Remove</button></div>
               <div className="schedule-form-grid"><label>Label<input value={item.label} onChange={(event) => updateWindow(item.key, { label: event.target.value })} /></label><label>Starts<input type="datetime-local" value={item.startsAt} onChange={(event) => updateWindow(item.key, { startsAt: event.target.value })} /></label><label>Ends<input type="datetime-local" value={item.endsAt} onChange={(event) => updateWindow(item.key, { endsAt: event.target.value })} /></label><label>Venue<input value={item.venue} onChange={(event) => updateWindow(item.key, { venue: event.target.value })} /></label><label>Match duration (minutes)<input type="number" min="1" value={item.matchDurationMinutes} onChange={(event) => updateWindow(item.key, { matchDurationMinutes: Number(event.target.value) })} /></label><label>Turnaround (minutes)<input type="number" min="0" value={item.turnaroundMinutes} onChange={(event) => updateWindow(item.key, { turnaroundMinutes: Number(event.target.value) })} /></label></div>
+              <div className="schedule-window-division-access">
+                <div className="schedule-window-access-heading">
+                  <div>
+                    <h4>Divisions available on this day</h4>
+                    <p>Blocked divisions will never receive an automatic or manual fixture in this window.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateWindow(item.key, {
+                      divisionKeys: divisions
+                        .filter((division) => division.isActive)
+                        .map((division) => division.key)
+                    })}
+                  >
+                    Allow all
+                  </button>
+                </div>
+                <div className="schedule-window-division-grid">
+                  {divisions
+                    .filter((division) => division.isActive)
+                    .map((division) => {
+                      const checked = item.divisionKeys.includes(division.key);
+                      return (
+                        <label
+                          className={checked ? "selected" : "blocked"}
+                          key={division.key}
+                          style={{ "--division-color": division.color } as CSSProperties}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(event) => updateWindow(item.key, {
+                              divisionKeys: event.target.checked
+                                ? [...item.divisionKeys, division.key]
+                                : item.divisionKeys.filter(
+                                    (divisionKey) => divisionKey !== division.key
+                                  )
+                            })}
+                          />
+                          <span>{division.shortName}</span>
+                          <strong>{division.name}</strong>
+                          <small>{checked ? "Allowed" : "Blocked"}</small>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
               <div className="schedule-break-area"><div><h4>Breaks</h4><button type="button" onClick={() => setBreaks((current) => [...current, { key: key(), windowKey: item.key, label: "Break", startsAt: item.startsAt, endsAt: item.startsAt }])}>+ Add break</button></div>{breaks.filter((entry) => entry.windowKey === item.key).map((entry) => <div className="schedule-break-row" key={entry.key}><input value={entry.label} aria-label="Break label" onChange={(event) => updateBreak(entry.key, { label: event.target.value })} /><input type="datetime-local" value={entry.startsAt} aria-label="Break starts" onChange={(event) => updateBreak(entry.key, { startsAt: event.target.value })} /><input type="datetime-local" value={entry.endsAt} aria-label="Break ends" onChange={(event) => updateBreak(entry.key, { endsAt: event.target.value })} /><button type="button" onClick={() => removeBreak(entry)}>Remove</button></div>)}</div>
             </article>
           ))}
@@ -918,7 +1114,7 @@ export default function SchedulePage() {
       </section>
 
       <section className="schedule-panel schedule-generation-panel">
-        <div><span>STEP 3</span><h2>Save or generate</h2><p>The engine fills event windows chronologically, skips breaks, follows the matches-per-turn rotation, and enforces division heat restrictions.</p></div>
+        <div><span>STEP 3</span><h2>Save or generate</h2><p>All divisions finish their league/group fixtures first. Only then are each division's playoffs and separate final scheduled, while day availability, breaks and heat restrictions remain enforced.</p></div>
         <label className="schedule-checkbox"><input type="checkbox" checked={publishGenerated} onChange={(event) => setPublishGenerated(event.target.checked)} /><span><strong>Publish generated matches</strong></span></label>
         <div><button type="button" className="schedule-secondary-button" disabled={saving} onClick={saveConfigurationOnly}>Save configuration only</button><button type="button" className="schedule-primary-button" disabled={saving} onClick={generateSchedule}>{saving ? "Working…" : "Generate mixed schedule"}</button></div>
       </section>
@@ -928,7 +1124,7 @@ export default function SchedulePage() {
         {matches.length === 0 ? <div className="schedule-empty">No matches created yet.</div> : <div className="schedule-match-list">{matches.map((match) => { const firstLogo = getTeamLogoUrl(match.team_one?.logo_path ?? null); const secondLogo = getTeamLogoUrl(match.team_two?.logo_path ?? null); return <article className="schedule-match-card" key={match.id}><div className="schedule-match-number"><small>MATCH</small><strong>{match.match_number}</strong><span>{stageLabel(match.stage)}</span></div><div className="schedule-division-badge" style={{ "--division-color": match.division?.division_color ?? "#2f72ff" } as CSSProperties}>{match.division?.short_name ?? "DIV"}</div><div className="schedule-match-team">{firstLogo ? <img src={firstLogo} alt="" /> : <span>{match.team_one?.short_name ?? "TBD"}</span>}<strong>{teamName(match, "one")}</strong></div><b className="schedule-versus">VS</b><div className="schedule-match-team">{secondLogo ? <img src={secondLogo} alt="" /> : <span>{match.team_two?.short_name ?? "TBD"}</span>}<strong>{teamName(match, "two")}</strong></div><div className="schedule-match-details"><strong>{formatDate(match.scheduled_at)}</strong><span>{match.venue || "Venue TBA"}</span><small>{match.overs_per_innings} overs · {match.balls_per_over} balls/over</small></div><div className="schedule-match-actions"><button type="button" disabled={saving} onClick={() => togglePublished(match)}>{match.is_published ? "Published" : "Hidden"}</button><button type="button" disabled={match.status !== "scheduled" || saving} onClick={() => setEditableMatch(fromMatch(match))}>Edit</button><button type="button" className="schedule-delete-button" disabled={match.status !== "scheduled" || saving} onClick={() => removeMatch(match)}>Delete</button></div></article>; })}</div>}
       </section>
 
-      {editableMatch && <div className="schedule-modal-overlay"><form className="schedule-match-form" onSubmit={saveManualMatch}><div className="schedule-panel-heading"><div><span>MANUAL CONTROL</span><h2>{editableMatch.id ? "Edit match" : "Add match"}</h2></div><button type="button" onClick={() => setEditableMatch(null)}>Close</button></div><div className="schedule-form-grid"><label>Match number<input type="number" min="1" value={editableMatch.matchNumber} onChange={(event) => setEditableMatch({ ...editableMatch, matchNumber: event.target.value })} /></label><label>Division<select value={editableMatch.divisionId} onChange={(event) => { const division = savedDivisions.find((item) => item.id === event.target.value); setEditableMatch({ ...editableMatch, divisionId: event.target.value, teamOneId: "", teamTwoId: "", overs: String(division?.default_overs ?? editableMatch.overs), ballsPerOver: String(division?.default_balls_per_over ?? editableMatch.ballsPerOver), wickets: String(division?.default_wickets_per_innings ?? editableMatch.wickets) }); }}>{savedDivisions.map((division) => <option value={division.id} key={division.id}>{division.name}</option>)}</select></label><label>Event window<select value={editableMatch.scheduleWindowId} onChange={(event) => { const selected = savedWindows.find((item) => item.id === event.target.value); setEditableMatch({ ...editableMatch, scheduleWindowId: event.target.value, scheduledAt: toLocalDateTime(selected?.starts_at) || editableMatch.scheduledAt, venue: selected?.venue ?? editableMatch.venue }); }}><option value="">No window</option>{savedWindows.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label><label>Stage<select value={editableMatch.stage} onChange={(event) => setEditableMatch({ ...editableMatch, stage: event.target.value as MatchStage })}>{stageOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label><label>Team one<select value={editableMatch.teamOneId} onChange={(event) => setEditableMatch({ ...editableMatch, teamOneId: event.target.value })}><option value="">Use placeholder</option>{manualTeams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}</select></label>{!editableMatch.teamOneId && <label>Team one placeholder<input value={editableMatch.teamOnePlaceholder} onChange={(event) => setEditableMatch({ ...editableMatch, teamOnePlaceholder: event.target.value })} /></label>}<label>Team two<select value={editableMatch.teamTwoId} onChange={(event) => setEditableMatch({ ...editableMatch, teamTwoId: event.target.value })}><option value="">Use placeholder</option>{manualTeams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}</select></label>{!editableMatch.teamTwoId && <label>Team two placeholder<input value={editableMatch.teamTwoPlaceholder} onChange={(event) => setEditableMatch({ ...editableMatch, teamTwoPlaceholder: event.target.value })} /></label>}<label>Date and time<input type="datetime-local" value={editableMatch.scheduledAt} onChange={(event) => setEditableMatch({ ...editableMatch, scheduledAt: event.target.value })} /></label><label>Venue<input value={editableMatch.venue} onChange={(event) => setEditableMatch({ ...editableMatch, venue: event.target.value })} /></label><label>Overs<input type="number" min="1" value={editableMatch.overs} onChange={(event) => setEditableMatch({ ...editableMatch, overs: event.target.value })} /></label><label>Balls per over<input type="number" min="1" max="12" value={editableMatch.ballsPerOver} onChange={(event) => setEditableMatch({ ...editableMatch, ballsPerOver: event.target.value })} /></label><label>Wickets<input type="number" min="1" value={editableMatch.wickets} onChange={(event) => setEditableMatch({ ...editableMatch, wickets: event.target.value })} /></label><label className="schedule-checkbox"><input type="checkbox" checked={editableMatch.isPublished} onChange={(event) => setEditableMatch({ ...editableMatch, isPublished: event.target.checked })} /><span><strong>Publish match</strong></span></label></div><div className="schedule-modal-actions"><button type="button" onClick={() => setEditableMatch(null)}>Cancel</button><button type="submit" className="schedule-primary-button" disabled={saving}>{saving ? "Saving…" : "Save match"}</button></div></form></div>}
+      {editableMatch && <div className="schedule-modal-overlay"><form className="schedule-match-form" onSubmit={saveManualMatch}><div className="schedule-panel-heading"><div><span>MANUAL CONTROL</span><h2>{editableMatch.id ? "Edit match" : "Add match"}</h2></div><button type="button" onClick={() => setEditableMatch(null)}>Close</button></div><div className="schedule-form-grid"><label>Match number<input type="number" min="1" value={editableMatch.matchNumber} onChange={(event) => setEditableMatch({ ...editableMatch, matchNumber: event.target.value })} /></label><label>Division<select value={editableMatch.divisionId} onChange={(event) => { const division = savedDivisions.find((item) => item.id === event.target.value); setEditableMatch({ ...editableMatch, divisionId: event.target.value, scheduleWindowId: "", teamOneId: "", teamTwoId: "", overs: String(division?.default_overs ?? editableMatch.overs), ballsPerOver: String(division?.default_balls_per_over ?? editableMatch.ballsPerOver), wickets: String(division?.default_wickets_per_innings ?? editableMatch.wickets) }); }}>{savedDivisions.map((division) => <option value={division.id} key={division.id}>{division.name}</option>)}</select></label><label>Event window<select value={editableMatch.scheduleWindowId} onChange={(event) => { const selected = savedWindows.find((item) => item.id === event.target.value); setEditableMatch({ ...editableMatch, scheduleWindowId: event.target.value, scheduledAt: toLocalDateTime(selected?.starts_at) || editableMatch.scheduledAt, venue: selected?.venue ?? editableMatch.venue }); }}><option value="">No window</option>{manualWindows.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select><small>Only days that allow the selected division are listed.</small></label><label>Stage<select value={editableMatch.stage} onChange={(event) => setEditableMatch({ ...editableMatch, stage: event.target.value as MatchStage })}>{stageOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label><label>Team one<select value={editableMatch.teamOneId} onChange={(event) => setEditableMatch({ ...editableMatch, teamOneId: event.target.value })}><option value="">Use placeholder</option>{manualTeams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}</select></label>{!editableMatch.teamOneId && <label>Team one placeholder<input value={editableMatch.teamOnePlaceholder} onChange={(event) => setEditableMatch({ ...editableMatch, teamOnePlaceholder: event.target.value })} /></label>}<label>Team two<select value={editableMatch.teamTwoId} onChange={(event) => setEditableMatch({ ...editableMatch, teamTwoId: event.target.value })}><option value="">Use placeholder</option>{manualTeams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}</select></label>{!editableMatch.teamTwoId && <label>Team two placeholder<input value={editableMatch.teamTwoPlaceholder} onChange={(event) => setEditableMatch({ ...editableMatch, teamTwoPlaceholder: event.target.value })} /></label>}<label>Date and time<input type="datetime-local" value={editableMatch.scheduledAt} onChange={(event) => setEditableMatch({ ...editableMatch, scheduledAt: event.target.value })} /></label><label>Venue<input value={editableMatch.venue} onChange={(event) => setEditableMatch({ ...editableMatch, venue: event.target.value })} /></label><label>Overs<input type="number" min="1" value={editableMatch.overs} onChange={(event) => setEditableMatch({ ...editableMatch, overs: event.target.value })} /></label><label>Balls per over<input type="number" min="1" max="12" value={editableMatch.ballsPerOver} onChange={(event) => setEditableMatch({ ...editableMatch, ballsPerOver: event.target.value })} /></label><label>Wickets<input type="number" min="1" value={editableMatch.wickets} onChange={(event) => setEditableMatch({ ...editableMatch, wickets: event.target.value })} /></label><label className="schedule-checkbox"><input type="checkbox" checked={editableMatch.isPublished} onChange={(event) => setEditableMatch({ ...editableMatch, isPublished: event.target.checked })} /><span><strong>Publish match</strong></span></label></div><div className="schedule-modal-actions"><button type="button" onClick={() => setEditableMatch(null)}>Cancel</button><button type="submit" className="schedule-primary-button" disabled={saving}>{saving ? "Saving…" : "Save match"}</button></div></form></div>}
 
       {posterPages.length > 0 && <section className="schedule-poster-area"><div className="schedule-panel-heading"><div><span>SOCIAL MEDIA</span><h2>Downloadable schedule</h2><p>Breaks are shown in sequence and each page now stretches its fixture area to remove unused bottom space.</p></div></div><div className="schedule-poster-pages">{posterPages.map((items, index) => <SchedulePoster key={index} tournament={tournament} items={items} pageNumber={index + 1} totalPages={posterPages.length} />)}</div></section>}
     </main>

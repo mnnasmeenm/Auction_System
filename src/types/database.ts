@@ -286,6 +286,16 @@ export interface TournamentScheduleWindow {
   updated_at?: string;
 }
 
+export interface TournamentScheduleWindowDivision {
+  id: string;
+  tournament_id: string;
+  schedule_window_id: string;
+  division_id: string;
+  is_available: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface TournamentScheduleBreak {
   id: string;
   tournament_id: string;

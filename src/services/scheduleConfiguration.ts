@@ -6,7 +6,8 @@ import type {
   TournamentGroup,
   TournamentGroupTeam,
   TournamentScheduleBreak,
-  TournamentScheduleWindow
+  TournamentScheduleWindow,
+  TournamentScheduleWindowDivision
 } from "../types/database";
 
 export interface DivisionInput {
@@ -324,6 +325,43 @@ export async function saveScheduleWindow(
   }
 
   return data as TournamentScheduleWindow;
+}
+
+export async function getScheduleWindowDivisions(
+  tournamentId: string
+): Promise<TournamentScheduleWindowDivision[]> {
+  const { data, error } = await supabase
+    .from("tournament_schedule_window_divisions")
+    .select("*")
+    .eq("tournament_id", tournamentId)
+    .order("schedule_window_id");
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as TournamentScheduleWindowDivision[];
+}
+
+export async function replaceScheduleWindowDivisions(
+  scheduleWindowId: string,
+  availability: Array<{
+    divisionId: string;
+    isAvailable: boolean;
+  }>
+): Promise<void> {
+  const { error } = await supabase.rpc(
+    "replace_schedule_window_divisions",
+    {
+      p_schedule_window_id: scheduleWindowId,
+      p_division_ids: availability.map((item) => item.divisionId),
+      p_is_available: availability.map((item) => item.isAvailable)
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function deleteScheduleWindow(
