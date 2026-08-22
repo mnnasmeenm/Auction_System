@@ -1,21 +1,21 @@
 import { supabase } from "./supabase";
 
+import {
+  getBidIncrementRules,
+  replaceBidIncrementRules,
+  type BidIncrementRule,
+  type BidIncrementRuleInput
+} from "./bidRules";
+
 import type {
   PlayerCategory,
   Tournament
 } from "../types/database";
 
-export interface SettingsBidIncrement {
-  id: string;
-  tournament_id: string;
-  amount: number;
-  display_order: number;
-}
-
 export interface TournamentConfiguration {
   tournament: Tournament;
   categories: PlayerCategory[];
-  bidIncrements: SettingsBidIncrement[];
+  bidIncrementRules: BidIncrementRule[];
 }
 
 export interface TournamentConfigurationInput {
@@ -30,7 +30,7 @@ export interface TournamentConfigurationInput {
   maximumSquadSize: number;
   allowSaleRevocation: boolean;
   requireRevocationReason: boolean;
-  bidIncrements: number[];
+  bidIncrementRules: BidIncrementRuleInput[];
   applyDefaultsToUnusedTeams: boolean;
 }
 
@@ -48,7 +48,7 @@ export async function getTournamentConfiguration(
   const [
     tournamentResponse,
     categoryResponse,
-    incrementResponse
+    incrementRules
   ] = await Promise.all([
     supabase
       .from("tournaments")
@@ -62,11 +62,7 @@ export async function getTournamentConfiguration(
       .eq("tournament_id", tournamentId)
       .order("display_order"),
 
-    supabase
-      .from("bid_increments")
-      .select("*")
-      .eq("tournament_id", tournamentId)
-      .order("display_order")
+        getBidIncrementRules(tournamentId)
   ]);
 
   if (tournamentResponse.error) {
@@ -77,10 +73,6 @@ export async function getTournamentConfiguration(
     throw categoryResponse.error;
   }
 
-  if (incrementResponse.error) {
-    throw incrementResponse.error;
-  }
-
   return {
     tournament:
       tournamentResponse.data as Tournament,
@@ -88,15 +80,21 @@ export async function getTournamentConfiguration(
     categories:
       (categoryResponse.data ?? []) as PlayerCategory[],
 
-    bidIncrements:
-      (incrementResponse.data ??
-        []) as SettingsBidIncrement[]
+    bidIncrementRules: incrementRules
   };
 }
 
 export async function updateTournamentConfiguration(
   input: TournamentConfigurationInput
 ): Promise<void> {
+  const legacyIncrements = [
+    ...new Set(
+      input.bidIncrementRules.map(
+        (rule) => rule.incrementAmount
+      )
+    )
+  ].sort((first, second) => first - second);
+
   const { error } = await supabase.rpc(
     "update_tournament_configuration",
     {
@@ -109,7 +107,7 @@ export async function updateTournamentConfiguration(
         input.allowSaleRevocation,
       p_require_revocation_reason:
         input.requireRevocationReason,
-      p_bid_increments: input.bidIncrements,
+      p_bid_increments: legacyIncrements,
       p_apply_defaults_to_unused_teams:
         input.applyDefaultsToUnusedTeams
     }
@@ -118,6 +116,11 @@ export async function updateTournamentConfiguration(
   if (error) {
     throw error;
   }
+
+  await replaceBidIncrementRules(
+    input.tournamentId,
+    input.bidIncrementRules
+  );
 
   const { error: brandingError } = await supabase
     .from("tournaments")

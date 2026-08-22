@@ -217,7 +217,6 @@ export async function getMatchScoringBundle(
   const [
     inningsResponse,
     liveResponse,
-    eventsResponse,
     playersResponse,
     fieldingResponse
   ] = await Promise.all([
@@ -237,12 +236,6 @@ export async function getMatchScoringBundle(
       .eq("match_id", matchId)
       .maybeSingle(),
     supabase
-      .from("match_ball_events")
-      .select("*")
-      .eq("match_id", matchId)
-      .order("sequence_number", { ascending: false })
-      .limit(18),
-    supabase
       .from("players")
       .select("*")
       .eq("tournament_id", tournamentId)
@@ -257,7 +250,6 @@ export async function getMatchScoringBundle(
   const error =
     inningsResponse.error ||
     liveResponse.error ||
-    eventsResponse.error ||
     playersResponse.error ||
     fieldingResponse.error;
 
@@ -265,11 +257,37 @@ export async function getMatchScoringBundle(
     throw error;
   }
 
+  const innings =
+    (inningsResponse.data ?? []) as unknown as MatchInnings[];
+  const liveState = liveResponse.data as MatchLiveState | null;
+  const activeInningsId =
+    liveState?.current_innings_id ??
+    innings.at(-1)?.id ??
+    null;
+
+  let recentEvents: MatchBallEvent[] = [];
+
+  if (activeInningsId) {
+    const eventsResponse = await supabase
+      .from("match_ball_events")
+      .select("*")
+      .eq("innings_id", activeInningsId)
+      .order("sequence_number", { ascending: false })
+      .limit(18);
+
+    if (eventsResponse.error) {
+      throw eventsResponse.error;
+    }
+
+    recentEvents =
+      (eventsResponse.data ?? []) as MatchBallEvent[];
+  }
+
   return {
     match,
-    innings: (inningsResponse.data ?? []) as unknown as MatchInnings[],
-    liveState: liveResponse.data as MatchLiveState | null,
-    recentEvents: (eventsResponse.data ?? []) as MatchBallEvent[],
+    innings,
+    liveState,
+    recentEvents,
     players: (playersResponse.data ?? []) as Player[],
     fielding: (fieldingResponse.data ?? []) as FieldingScorecard[]
   };
@@ -334,6 +352,25 @@ export async function saveManualInningsScore(
   if (error) throw error;
 }
 
+export async function correctCompletedMatchInnings(
+  matchId: string,
+  inningsId: string,
+  score: ManualInningsScoreInput,
+  reason: string
+): Promise<void> {
+  const { error } = await supabase.rpc(
+    "correct_completed_match_innings",
+    {
+      p_match_id: matchId,
+      p_innings_id: inningsId,
+      p_score: mapManualScore(score),
+      p_reason: reason.trim()
+    }
+  );
+
+  if (error) throw error;
+}
+
 export async function completeCurrentInnings(
   matchId: string,
   expectedRevision: number
@@ -354,6 +391,21 @@ export async function startSecondInnings(
     p_match_id: matchId,
     p_expected_revision: expectedRevision
   });
+
+  if (error) throw error;
+}
+
+export async function resetMatchScoringData(
+  matchId: string,
+  confirmation: string
+): Promise<void> {
+  const { error } = await supabase.rpc(
+    "reset_match_scoring_data",
+    {
+      p_match_id: matchId,
+      p_confirmation: confirmation
+    }
+  );
 
   if (error) throw error;
 }

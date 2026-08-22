@@ -13,6 +13,7 @@ import {
   formatCricketOvers,
   getMatchScoringBundle,
   recordMatchBall,
+  resetMatchScoringData,
   saveManualInningsScore,
   setMatchPlayerOfMatch,
   startMatchScoring,
@@ -26,6 +27,9 @@ import {
 
 import MatchSummaryCard from
   "../components/scoring/MatchSummaryCard";
+
+import CompletedScoreCorrection from
+  "../components/scoring/CompletedScoreCorrection";
 
 import ScorecardTables from
   "../components/scoring/ScorecardTables";
@@ -155,6 +159,7 @@ export default function ScoreControlPage() {
   const [undoReason, setUndoReason] = useState("");
   const [playerOfMatchId, setPlayerOfMatchId] = useState("");
   const [playerOfMatchReason, setPlayerOfMatchReason] = useState("");
+  const [resetConfirmation, setResetConfirmation] = useState("");
 
   const [manualRuns, setManualRuns] = useState("0");
   const [manualWickets, setManualWickets] = useState("0");
@@ -311,6 +316,22 @@ export default function ScoreControlPage() {
     [bundle, currentInnings]
   );
 
+  const dismissedBatterIds = useMemo(
+    () => new Set(
+      (currentInnings?.fall_of_wickets ?? [])
+        .map((wicket) => wicket.player_id)
+        .filter((id): id is string => Boolean(id))
+    ),
+    [currentInnings]
+  );
+
+  const availableLiveBatters = useMemo(
+    () => battingPlayers.filter(
+      (player) => !dismissedBatterIds.has(player.id)
+    ),
+    [battingPlayers, dismissedBatterIds]
+  );
+
   const strikerScore = useMemo(
     () => currentInnings?.batting_scorecards?.find(
       (row) => row.player_id === batterId
@@ -389,6 +410,16 @@ export default function ScoreControlPage() {
       return;
     }
 
+    if (
+      dismissedBatterIds.has(batterId) ||
+      dismissedBatterIds.has(nonStrikerId)
+    ) {
+      setErrorMessage(
+        "A dismissed player cannot be selected again in this innings."
+      );
+      return;
+    }
+
     await runAction(
       () => recordMatchBall(bundle.match.id, bundle.liveState!.revision, {
         batterPlayerId: batterId,
@@ -443,6 +474,26 @@ export default function ScoreControlPage() {
       ),
       "Player of the match saved."
     );
+  }
+
+  async function handleResetScoring() {
+    if (!bundle || resetConfirmation !== "RESET") {
+      setErrorMessage("Type RESET exactly before deleting the test score data.");
+      return;
+    }
+
+    const accepted = window.confirm(
+      "Delete all scoring data and score history for this match? " +
+      "The scheduled match, teams and players will remain."
+    );
+
+    if (!accepted) return;
+
+    await runAction(
+      () => resetMatchScoringData(bundle.match.id, resetConfirmation),
+      "Test scoring data deleted. The match is ready to score again."
+    );
+    setResetConfirmation("");
   }
 
   async function handleManualSave(event: FormEvent) {
@@ -617,7 +668,7 @@ export default function ScoreControlPage() {
                         disabled={Boolean(bundle.liveState.striker_player_id)}
                       >
                         <option value="">Select striker</option>
-                        {battingPlayers
+                        {availableLiveBatters
                           .filter((player) => player.id !== nonStrikerId)
                           .map((player) => (
                             <option key={player.id} value={player.id}>
@@ -637,7 +688,7 @@ export default function ScoreControlPage() {
                         disabled={Boolean(bundle.liveState.non_striker_player_id)}
                       >
                         <option value="">Select non-striker</option>
-                        {battingPlayers
+                        {availableLiveBatters
                           .filter((player) => player.id !== batterId)
                           .map((player) => (
                             <option key={player.id} value={player.id}>{player.full_name}</option>
@@ -748,7 +799,7 @@ export default function ScoreControlPage() {
                   <label className="score-check"><input type="checkbox" checked={isWicket} onChange={(e) => setIsWicket(e.target.checked)} /><span>Wicket on this delivery</span></label>
                   {isWicket && <div className="score-wicket-box">
                     <label>Dismissal<select value={dismissalType} onChange={(e) => setDismissalType(e.target.value as DismissalType)}>{dismissalOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-                    <label>Dismissed player<select value={dismissedPlayerId} onChange={(e) => setDismissedPlayerId(e.target.value)}><option value="">Use striker</option>{battingPlayers.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}</select></label>
+                    <label>Dismissed player<select value={dismissedPlayerId} onChange={(e) => setDismissedPlayerId(e.target.value)}><option value="">Use striker</option>{availableLiveBatters.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}</select></label>
                     <label>Fielder<select value={fielderId} onChange={(e) => setFielderId(e.target.value)}><option value="">No fielder</option>{bowlingPlayers.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}</select></label>
                     {dismissalType === "run_out" && (
                       <label>Run-out type<select value={runOutKind} onChange={(event) => setRunOutKind(event.target.value as "direct" | "assisted")}><option value="direct">Direct run-out</option><option value="assisted">Assisted run-out</option></select></label>
@@ -827,6 +878,11 @@ export default function ScoreControlPage() {
                 <div>{bundle.innings.map((innings) => <article key={innings.id}><strong>{teamName(bundle.match, innings.batting_team_id)}</strong><b>{innings.runs}/{innings.wickets}</b><small>{formatCricketOvers(innings.legal_balls, innings.balls_per_over)} overs</small></article>)}</div>
               </section>
 
+              <CompletedScoreCorrection
+                bundle={bundle}
+                onCorrected={loadPage}
+              />
+
               <form className="score-panel score-pom-form" onSubmit={savePlayerOfMatch}>
                 <div>
                   <span>POST-MATCH AWARD</span>
@@ -849,6 +905,42 @@ export default function ScoreControlPage() {
                 <button className="score-primary-button" disabled={working || !playerOfMatchId}>Save award</button>
               </form>
             </>
+          )}
+
+          {bundle.innings.length > 0 && (
+            <section className="score-panel score-reset-panel">
+              <div>
+                <span>TESTING CLEANUP</span>
+                <h2>Reset this match’s scoring data</h2>
+                <p>
+                  Deletes both innings, deliveries, scorecards and score audit
+                  history. The scheduled match, teams and registered players
+                  are not deleted.
+                </p>
+              </div>
+
+              <div className="score-reset-confirmation">
+                <label>
+                  Type RESET to confirm
+                  <input
+                    value={resetConfirmation}
+                    onChange={(event) =>
+                      setResetConfirmation(event.target.value)
+                    }
+                    placeholder="RESET"
+                    autoComplete="off"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  disabled={working || resetConfirmation !== "RESET"}
+                  onClick={() => void handleResetScoring()}
+                >
+                  Delete test score data
+                </button>
+              </div>
+            </section>
           )}
 
           {bundle.innings.length > 0 && (

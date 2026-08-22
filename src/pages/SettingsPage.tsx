@@ -33,10 +33,32 @@ interface EditableCategory {
   minimumRequired: string;
 }
 
-const DEFAULT_BID_INCREMENTS = [
-  "100",
-  "250",
-  "500"
+interface EditableBidRule {
+  key: string;
+  fromAmount: string;
+  toAmount: string;
+  incrementAmount: string;
+}
+
+const DEFAULT_BID_RULES: EditableBidRule[] = [
+  {
+    key: "rule-1",
+    fromAmount: "0",
+    toAmount: "50000",
+    incrementAmount: "5000"
+  },
+  {
+    key: "rule-2",
+    fromAmount: "50000",
+    toAmount: "200000",
+    incrementAmount: "10000"
+  },
+  {
+    key: "rule-3",
+    fromAmount: "200000",
+    toAmount: "",
+    incrementAmount: "20000"
+  }
 ];
 
 function createKey() {
@@ -102,8 +124,8 @@ export default function SettingsPage() {
   const [originalCategoryIds, setOriginalCategoryIds] =
     useState<string[]>([]);
 
-  const [bidIncrements, setBidIncrements] =
-    useState<string[]>(DEFAULT_BID_INCREMENTS);
+  const [bidRules, setBidRules] =
+    useState<EditableBidRule[]>(DEFAULT_BID_RULES);
 
   const [loading, setLoading] =
     useState(true);
@@ -203,19 +225,20 @@ export default function SettingsPage() {
         )
       );
 
-      const loadedBidIncrements =
-        configuration.bidIncrements
-          .map((increment) =>
-            String(increment.amount)
-          )
-          .filter((increment) =>
-            Number(increment) > 0
-          );
-
-      setBidIncrements(
-        loadedBidIncrements.length > 0
-          ? loadedBidIncrements
-          : DEFAULT_BID_INCREMENTS
+      setBidRules(
+        configuration.bidIncrementRules.length > 0
+          ? configuration.bidIncrementRules.map((rule) => ({
+              key: rule.id,
+              fromAmount: String(rule.from_amount),
+              toAmount: rule.to_amount === null
+                ? ""
+                : String(rule.to_amount),
+              incrementAmount: String(rule.increment_amount)
+            }))
+          : DEFAULT_BID_RULES.map((rule) => ({
+              ...rule,
+              key: createKey()
+            }))
       );
     } catch (error) {
       console.error(
@@ -270,33 +293,35 @@ export default function SettingsPage() {
     );
   }
 
-  function addIncrement() {
-    setBidIncrements((current) => [
+  function addBidRule() {
+    setBidRules((current) => [
       ...current,
-      ""
+      {
+        key: createKey(),
+        fromAmount: current.at(-1)?.toAmount ?? "",
+        toAmount: "",
+        incrementAmount: ""
+      }
     ]);
   }
 
-  function updateIncrement(
-    index: number,
+  function updateBidRule(
+    key: string,
+    field: "fromAmount" | "toAmount" | "incrementAmount",
     value: string
   ) {
-    setBidIncrements((current) =>
-      current.map(
-        (increment, incrementIndex) =>
-          incrementIndex === index
-            ? value
-            : increment
+    setBidRules((current) =>
+      current.map((rule) =>
+        rule.key === key
+          ? { ...rule, [field]: value }
+          : rule
       )
     );
   }
 
-  function removeIncrement(index: number) {
-    setBidIncrements((current) =>
-      current.filter(
-        (_, incrementIndex) =>
-          incrementIndex !== index
-      )
+  function removeBidRule(key: string) {
+    setBidRules((current) =>
+      current.filter((rule) => rule.key !== key)
     );
   }
 
@@ -392,16 +417,48 @@ export default function SettingsPage() {
       );
     }
 
-    const validIncrements =
-      bidIncrements
-        .map(Number)
-        .filter(
-          (increment) =>
-            increment > 0
-        );
+    if (bidRules.length === 0) {
+      return "At least one automatic bid rule is required.";
+    }
 
-    if (validIncrements.length === 0) {
-      return "At least one bid increment is required.";
+    for (let index = 0; index < bidRules.length; index += 1) {
+      const rule = bidRules[index];
+      const fromAmount = Number(rule.fromAmount);
+      const toAmount = rule.toAmount === ""
+        ? null
+        : Number(rule.toAmount);
+      const incrementAmount = Number(rule.incrementAmount);
+
+      if (!Number.isFinite(fromAmount) || fromAmount < 0) {
+        return `Rule ${index + 1} requires a valid starting amount.`;
+      }
+
+      if (!Number.isFinite(incrementAmount) || incrementAmount <= 0) {
+        return `Rule ${index + 1} requires an increment greater than zero.`;
+      }
+
+      if (toAmount !== null && toAmount <= fromAmount) {
+        return `Rule ${index + 1} must end above its starting amount.`;
+      }
+
+      if (index === 0 && fromAmount !== 0) {
+        return "The first automatic bid rule must start at zero.";
+      }
+
+      if (
+        index > 0 &&
+        fromAmount !== Number(bidRules[index - 1].toAmount)
+      ) {
+        return "Automatic bid rules must be continuous without gaps.";
+      }
+
+      if (index < bidRules.length - 1 && toAmount === null) {
+        return "Only the final automatic bid rule may have no upper limit.";
+      }
+
+      if (index === bidRules.length - 1 && toAmount !== null) {
+        return "Leave the final rule upper limit empty to cover all higher bids.";
+      }
     }
 
     return null;
@@ -427,20 +484,6 @@ export default function SettingsPage() {
     try {
       await validateCategoryDeletion(
         deletedCategoryIds
-      );
-
-      const uniqueIncrements = [
-        ...new Set(
-          bidIncrements
-            .map(Number)
-            .filter(
-              (increment) =>
-                increment > 0
-            )
-        )
-      ].sort(
-        (first, second) =>
-          first - second
       );
 
       let nextSocietyLogoPath = societyLogoPath;
@@ -480,8 +523,13 @@ export default function SettingsPage() {
         requireRevocationReason:
           allowSaleRevocation &&
           requireRevocationReason,
-        bidIncrements:
-          uniqueIncrements,
+        bidIncrementRules: bidRules.map((rule) => ({
+          fromAmount: Number(rule.fromAmount),
+          toAmount: rule.toAmount === ""
+            ? null
+            : Number(rule.toAmount),
+          incrementAmount: Number(rule.incrementAmount)
+        })),
         applyDefaultsToUnusedTeams
       });
 
@@ -924,50 +972,82 @@ export default function SettingsPage() {
         <section className="settings-panel">
           <div className="settings-section-heading">
             <div>
-              <h2>Bid increments</h2>
+              <h2>Automatic bid rules</h2>
 
               <p>
-                Available to the administrator during player
-                allocation.
+                The auction selects an increment from the current
+                bid range automatically.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={addIncrement}
+              onClick={addBidRule}
             >
-              + Add increment
+              + Add automatic rule
             </button>
           </div>
 
-          <div className="settings-increment-list">
-            {bidIncrements.map(
-              (increment, index) => (
-                <div key={index}>
+          <div className="settings-bid-rule-list">
+            {bidRules.map((rule, index) => (
+              <div className="settings-bid-rule-row" key={rule.key}>
+                <span className="settings-rule-number">
+                  Rule {index + 1}
+                </span>
+
+                <label>
+                  From bid (inclusive)
+                  <input
+                    type="number"
+                    min="0"
+                    value={rule.fromAmount}
+                    onChange={(event) => updateBidRule(
+                      rule.key,
+                      "fromAmount",
+                      event.target.value
+                    )}
+                  />
+                </label>
+
+                <label>
+                  Up to (exclusive)
                   <input
                     type="number"
                     min="1"
-                    value={increment}
-                    onChange={(event) =>
-                      updateIncrement(
-                        index,
-                        event.target.value
-                      )
-                    }
+                    value={rule.toAmount}
+                    placeholder="No limit for final rule"
+                    onChange={(event) => updateBidRule(
+                      rule.key,
+                      "toAmount",
+                      event.target.value
+                    )}
                   />
+                </label>
 
-                  <button
-                    type="button"
-                    className="settings-remove-button"
-                    onClick={() =>
-                      removeIncrement(index)
-                    }
-                  >
-                    Remove
-                  </button>
-                </div>
-              )
-            )}
+                <label>
+                  Increase each bid by
+                  <input
+                    type="number"
+                    min="1"
+                    value={rule.incrementAmount}
+                    onChange={(event) => updateBidRule(
+                      rule.key,
+                      "incrementAmount",
+                      event.target.value
+                    )}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  className="settings-remove-button"
+                  disabled={bidRules.length === 1}
+                  onClick={() => removeBidRule(rule.key)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
         </section>
 

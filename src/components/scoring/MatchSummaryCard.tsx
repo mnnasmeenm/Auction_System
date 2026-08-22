@@ -7,6 +7,8 @@ import { getTeamLogoUrl } from "../../services/teams";
 import { getTournamentBrandingUrl } from "../../services/tournamentBranding";
 
 import type {
+  BattingScorecard,
+  BowlingScorecard,
   MatchInnings,
   Player,
   Tournament,
@@ -34,6 +36,27 @@ function teamScore(innings: MatchInnings[], teamId: string | null) {
   return innings.find((record) => record.batting_team_id === teamId) ?? null;
 }
 
+function bestBatter(rows: BattingScorecard[] = []) {
+  return [...rows].sort((first, second) => {
+    if (second.runs !== first.runs) return second.runs - first.runs;
+    const firstRate = first.balls > 0 ? first.runs / first.balls : 0;
+    const secondRate = second.balls > 0 ? second.runs / second.balls : 0;
+    return secondRate - firstRate;
+  })[0] ?? null;
+}
+
+function bestBowler(rows: BowlingScorecard[] = []) {
+  return [...rows].sort((first, second) => {
+    if (second.wickets !== first.wickets) {
+      return second.wickets - first.wickets;
+    }
+    if (first.runs_conceded !== second.runs_conceded) {
+      return first.runs_conceded - second.runs_conceded;
+    }
+    return first.legal_balls - second.legal_balls;
+  })[0] ?? null;
+}
+
 export default function MatchSummaryCard({
   tournament,
   match,
@@ -51,6 +74,13 @@ export default function MatchSummaryCard({
   const tournamentLogo = getTournamentBrandingUrl(tournament.tournament_logo_path);
   const firstScore = teamScore(innings, match.team_one_id);
   const secondScore = teamScore(innings, match.team_two_id);
+  const inningsHighlights = [...innings]
+    .sort((first, second) => first.innings_number - second.innings_number)
+    .map((record) => ({
+      innings: record,
+      batter: bestBatter(record.batting_scorecards),
+      bowler: bestBowler(record.bowling_scorecards)
+    }));
 
   async function downloadCard() {
     if (!cardRef.current || downloading) return;
@@ -115,6 +145,39 @@ export default function MatchSummaryCard({
           </article>
         </main>
 
+        {inningsHighlights.length > 0 && (
+          <section className="match-summary-performances">
+            {inningsHighlights.map(({ innings: record, batter, bowler }) => (
+              <article key={record.id}>
+                <header>
+                  <span>INNINGS {record.innings_number}</span>
+                  <strong>{teamNameForInnings(match, record.batting_team_id)}</strong>
+                </header>
+
+                <div>
+                  <span>BEST BATTING</span>
+                  <strong>{batter?.player_name ?? "Not recorded"}</strong>
+                  <small>
+                    {batter
+                      ? `${batter.runs} RUNS · ${batter.balls} BALLS · ${batter.fours}×4 · ${batter.sixes}×6`
+                      : "—"}
+                  </small>
+                </div>
+
+                <div>
+                  <span>BEST BOWLING</span>
+                  <strong>{bowler?.player_name ?? "Not recorded"}</strong>
+                  <small>
+                    {bowler
+                      ? `${bowler.wickets}/${bowler.runs_conceded} · ${formatCricketOvers(bowler.legal_balls, record.balls_per_over)} OVERS`
+                      : "—"}
+                  </small>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
+
         <section className="match-summary-result">
           <span>{match.status === "completed" ? "MATCH RESULT" : "LIVE SCORE"}</span>
           <h1>{match.result_summary ?? "MATCH IN PROGRESS"}</h1>
@@ -133,4 +196,14 @@ export default function MatchSummaryCard({
       </button>
     </section>
   );
+}
+
+function teamNameForInnings(match: TournamentMatch, teamId: string) {
+  if (teamId === match.team_one_id) {
+    return match.team_one?.name ?? match.team_one_placeholder ?? "Team one";
+  }
+  if (teamId === match.team_two_id) {
+    return match.team_two?.name ?? match.team_two_placeholder ?? "Team two";
+  }
+  return "Team";
 }

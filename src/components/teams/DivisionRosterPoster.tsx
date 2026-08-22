@@ -5,6 +5,16 @@ import { getTournamentBrandingUrl } from "../../services/tournamentBranding";
 import type { TeamPosterData } from "../../services/teamPoster";
 import "./DivisionRosterPoster.css";
 
+function leadershipOrder(
+  playerId: string,
+  captainId: string | null,
+  viceCaptainId: string | null
+) {
+  if (playerId === captainId) return 0;
+  if (playerId === viceCaptainId) return 1;
+  return 2;
+}
+
 export default function DivisionRosterPoster({
   data
 }: {
@@ -13,6 +23,23 @@ export default function DivisionRosterPoster({
   const posterRef = useRef<HTMLDivElement | null>(null);
   const [downloading, setDownloading] = useState(false);
   const { tournament, division, team, players } = data;
+  const orderedPlayers = [...players].sort((first, second) => {
+    const leadershipDifference =
+      leadershipOrder(
+        first.id,
+        team.captain_player_id,
+        team.vice_captain_player_id
+      ) -
+      leadershipOrder(
+        second.id,
+        team.captain_player_id,
+        team.vice_captain_player_id
+      );
+
+    return leadershipDifference !== 0
+      ? leadershipDifference
+      : first.full_name.localeCompare(second.full_name);
+  });
   const societyLogo = getTournamentBrandingUrl(tournament.society_logo_path);
   const tournamentLogo = getTournamentBrandingUrl(
     tournament.tournament_logo_path
@@ -94,16 +121,16 @@ export default function DivisionRosterPoster({
               <small>HERE IS THE</small>
               <strong>{division.name.toUpperCase()} SQUAD</strong>
             </div>
-            <span>{players.length} PLAYERS</span>
+            <span>{orderedPlayers.length} PLAYERS</span>
           </div>
 
-          {players.length === 0 ? (
+          {orderedPlayers.length === 0 ? (
             <div className="division-roster-empty">
               Add players to this division squad.
             </div>
           ) : (
             <div className="division-roster-player-list">
-              {players.map((player, index) => {
+              {orderedPlayers.map((player, index) => {
                 const leadership = player.id === team.captain_player_id
                   ? "C"
                   : player.id === team.vice_captain_player_id

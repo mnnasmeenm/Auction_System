@@ -156,11 +156,35 @@
   border: 1px solid rgba(255, 111, 125, 0.45);
   border-radius: 8px;
 }
-.settings-increment-list { display: flex; flex-wrap: wrap; gap: 10px; }
-.settings-increment-list > div {
+.settings-bid-rule-list {
   display: grid;
-  grid-template-columns: 130px auto;
-  gap: 6px;
+  gap: 12px;
+}
+.settings-bid-rule-row {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(150px, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 15px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+.settings-bid-rule-row label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.settings-rule-number {
+  align-self: center;
+  padding: 6px 9px;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 .settings-submit-area { display: flex; justify-content: flex-end; }
 .settings-submit-area button {
@@ -185,7 +209,8 @@
   .settings-page { width: min(100% - 24px, 1120px); }
   .settings-form-grid,
   .settings-branding-grid,
-  .settings-category-row { grid-template-columns: 1fr; }
+  .settings-category-row,
+  .settings-bid-rule-row { grid-template-columns: 1fr; }
   .settings-section-heading {
     align-items: stretch;
     flex-direction: column;

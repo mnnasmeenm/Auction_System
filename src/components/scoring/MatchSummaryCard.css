@@ -6,8 +6,8 @@
   width: min(100%, 900px);
   aspect-ratio: 1 / 1;
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
-  gap: 20px;
+  grid-template-rows: auto 1fr auto auto auto;
+  gap: clamp(12px, 2vw, 20px);
   overflow: hidden;
   padding: clamp(24px, 4vw, 46px);
   color: white;
@@ -39,6 +39,64 @@
 .match-summary-team > strong { font-size: clamp(38px, 6vw, 66px); letter-spacing: -.06em; }
 .match-summary-team > small { color: #bdc9da; font-weight: 800; }
 .match-summary-versus { width: 55px; height: 55px; display: grid; place-items: center; background: #ffd166; color: #061126; border-radius: 50%; font-weight: 1000; box-shadow: 0 0 0 9px rgba(255,209,102,.14); }
+.match-summary-performances {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.match-summary-performances > article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background: rgba(3, 10, 23, .68);
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 15px;
+}
+.match-summary-performances article > header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, .11);
+}
+.match-summary-performances header span,
+.match-summary-performances div > span {
+  color: #ffd166;
+  font-size: clamp(6px, .8vw, 9px);
+  font-weight: 950;
+  letter-spacing: .11em;
+}
+.match-summary-performances header strong {
+  overflow: hidden;
+  font-size: clamp(8px, 1vw, 11px);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.match-summary-performances article > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.match-summary-performances div strong {
+  overflow: hidden;
+  font-size: clamp(9px, 1.25vw, 14px);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.match-summary-performances div small {
+  overflow: hidden;
+  color: #bdc9da;
+  font-size: clamp(6px, .75vw, 9px);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .match-summary-result { padding: 18px; text-align: center; background: rgba(3,10,23,.58); border: 1px solid rgba(255,255,255,.13); border-radius: 18px; }
 .match-summary-result span { color: #ffd166; font-size: 9px; font-weight: 900; letter-spacing: .16em; }
 .match-summary-result h1 { margin: 7px 0; font-size: clamp(20px, 3.5vw, 38px); text-transform: uppercase; }
@@ -52,4 +110,5 @@
   .match-summary-card header > strong { display: none; }
   .match-summary-card > main { gap: 8px; }
   .match-summary-versus { width: 37px; height: 37px; }
+  .match-summary-performances { grid-template-columns: 1fr; }
 }
