@@ -516,9 +516,11 @@ export default function SchedulePage() {
     );
   }
 
-  function validateConfiguration() {
+  function validateConfiguration(requireFixtureReadiness = true) {
     if (divisions.length === 0) return "Create at least one division.";
-    if (windows.length === 0) return "Create at least one event window.";
+    if (requireFixtureReadiness && windows.length === 0) {
+      return "Create at least one event window.";
+    }
 
     for (const division of divisions) {
       if (!division.name.trim() || !division.shortName.trim()) {
@@ -534,6 +536,7 @@ export default function SchedulePage() {
         return `Check the match rules for ${division.name}.`;
       }
       if (
+        requireFixtureReadiness &&
         division.isActive &&
         division.format !== "custom" &&
         division.teamIds.length < 2
@@ -541,6 +544,7 @@ export default function SchedulePage() {
         return `${division.name} needs at least two selected teams.`;
       }
       if (
+        requireFixtureReadiness &&
         division.isActive &&
         division.format !== "knockout" &&
         division.format !== "custom" &&
@@ -558,7 +562,7 @@ export default function SchedulePage() {
       if (division.avoidHeat && !division.avoidTimeFrom) {
         return `${division.name} requires a heat restriction start time.`;
       }
-      if (division.format === "groups") {
+      if (requireFixtureReadiness && division.format === "groups") {
         const counts = Array.from({ length: division.groupCount }, (_, index) =>
           division.teamIds.filter(
             (teamId) => (division.teamGroupIndexes[teamId] ?? 0) === index
@@ -593,7 +597,9 @@ export default function SchedulePage() {
       }
     }
 
-    for (const division of divisions.filter((item) => item.isActive)) {
+    for (const division of requireFixtureReadiness
+      ? divisions.filter((item) => item.isActive)
+      : []) {
       if (!windows.some((window) => window.divisionKeys.includes(division.key))) {
         return `${division.name} is blocked on every event day. Allow it on at least one day.`;
       }
@@ -743,7 +749,7 @@ export default function SchedulePage() {
   }
 
   async function saveConfigurationOnly() {
-    const validation = validateConfiguration();
+    const validation = validateConfiguration(false);
     if (validation) {
       setErrorMessage(validation);
       return;

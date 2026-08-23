@@ -28,10 +28,10 @@ function safeName(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function stateLabel(state: TeamQualificationAdvice["state"]) {
-  if (state === "qualified") return "QUALIFIED";
-  if (state === "eliminated") return "ELIMINATED";
-  return "IN CONTENTION";
+function stateLabel(advice: TeamQualificationAdvice) {
+  if (advice.state === "qualified") return "TARGET SECURED";
+  if (advice.state === "eliminated") return "TARGET UNREACHABLE";
+  return "TARGET POSSIBLE";
 }
 
 export default function QualificationAdvicePoster({
@@ -103,7 +103,7 @@ export default function QualificationAdvicePoster({
               {group ? ` · ${group.name}` : ""}
             </p>
           </div>
-          <strong>QUALIFICATION GUIDE</strong>
+          <strong>{advice.targetLabel}</strong>
         </header>
 
         <main>
@@ -117,7 +117,7 @@ export default function QualificationAdvicePoster({
               <small>TEAM POSITION {advice.row.position}</small>
               <h2>{advice.row.team_name}</h2>
               <span className="qualification-state">
-                {stateLabel(advice.state)}
+                {stateLabel(advice)}
               </span>
             </div>
           </section>
@@ -141,6 +141,41 @@ export default function QualificationAdvicePoster({
               <p key={action}>{action}</p>
             ))}
           </section>
+
+          {advice.dependencies.length > 0 && (
+            <section className="qualification-dependencies">
+              <header>
+                <div>
+                  <small>RESULT DEPENDENCY MAP</small>
+                  <h3>What must happen elsewhere</h3>
+                </div>
+                <strong>{advice.targetLabel}</strong>
+              </header>
+
+              <div>
+                {advice.dependencies.map((dependency, index) => (
+                  <article
+                    key={`${dependency.kind}-${dependency.title}-${index}`}
+                    className={`dependency-${dependency.kind}`}
+                  >
+                    <span>{index + 1}</span>
+                    <div>
+                      <small>
+                        {dependency.certainty === "required"
+                          ? "REQUIRED"
+                          : "CONDITIONAL NRR EXAMPLE"}
+                        {dependency.matchNumber
+                          ? ` · MATCH ${dependency.matchNumber}`
+                          : ""}
+                      </small>
+                      <h4>{dependency.title}</h4>
+                      <p>{dependency.requirement}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           {advice.scenario && (
             <section className="qualification-scenarios">

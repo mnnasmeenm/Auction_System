@@ -159,8 +159,7 @@ export default function PlayersPage() {
       setDivisionTeams(divisionTeamRecords);
       setForm((current) => ({
         ...current,
-        categoryId: current.categoryId || categoryRecords[0]?.id || "",
-        divisionId: current.divisionId || divisionRecords[0]?.id || ""
+        categoryId: current.categoryId || categoryRecords[0]?.id || ""
       }));
     } catch (error) {
       setErrorMessage(
@@ -186,7 +185,6 @@ export default function PlayersPage() {
 
   function validateForm() {
     if (!form.fullName.trim()) return "Enter the player’s full name.";
-    if (!form.divisionId) return "Select a tournament division.";
     if (form.allocationSource === "manual" && !form.assignedTeamId) {
       return "Select the team receiving this manually allocated player.";
     }
@@ -205,7 +203,7 @@ export default function PlayersPage() {
   function buildPlayerInput(): PlayerInput {
     return {
       tournamentId,
-      divisionId: form.divisionId,
+      divisionId: form.divisionId || null,
       allocationSource: form.allocationSource,
       assignedTeamId:
         form.allocationSource === "manual"
@@ -277,7 +275,7 @@ export default function PlayersPage() {
   function beginEditing(player: Player) {
     setEditingPlayer(player);
     setForm({
-      divisionId: player.division_id ?? divisions[0]?.id ?? "",
+      divisionId: player.division_id ?? "",
       allocationSource: player.allocation_source ?? "auction",
       assignedTeamId: player.sold_team_id ?? "",
       categoryId: player.category_id ?? "",
@@ -301,8 +299,7 @@ export default function PlayersPage() {
     setEditingPlayer(null);
     setForm({
       ...emptyForm,
-      categoryId: categories[0]?.id ?? "",
-      divisionId: divisions[0]?.id ?? ""
+      categoryId: categories[0]?.id ?? ""
     });
   }
 
@@ -343,27 +340,24 @@ export default function PlayersPage() {
     });
   }, [players, searchText, categoryFilter, divisionFilter]);
 
-  const availableTeamsForDivision = teams.filter((team) =>
-    divisionTeams.some(
-      (assignment) =>
-        assignment.division_id === form.divisionId &&
-        assignment.team_id === team.id
-    )
-  );
+  const availableTeamsForDivision = form.divisionId
+    ? teams.filter((team) =>
+        divisionTeams.some(
+          (assignment) =>
+            assignment.division_id === form.divisionId &&
+            assignment.team_id === team.id
+        )
+      )
+    : teams;
 
   const orderedDivisions = [...divisions].sort(
     (first, second) => first.display_order - second.display_order
   );
-  const auctionDivision = orderedDivisions[0] ?? null;
-  const nonAuctionDivisions = orderedDivisions.slice(1);
-
   function selectAuctionPool() {
-    if (!auctionDivision) return;
-
     setEditingPlayer(null);
     setForm({
       ...emptyForm,
-      divisionId: auctionDivision.id,
+      divisionId: form.divisionId,
       allocationSource: "auction",
       categoryId: categories[0]?.id ?? "",
       basePrice: "5000"
@@ -372,11 +366,11 @@ export default function PlayersPage() {
     setSuccessMessage("");
   }
 
-  function selectNonAuctionDivision(divisionId: string) {
+  function selectManualPool() {
     setEditingPlayer(null);
     setForm({
       ...emptyForm,
-      divisionId,
+      divisionId: form.divisionId,
       allocationSource: "manual",
       assignedTeamId: "",
       categoryId: "",
@@ -446,32 +440,51 @@ export default function PlayersPage() {
             >
               <strong>Auction pool</strong>
               <span>
-                {auctionDivision?.name ?? "Primary division"} · Full player
-                registration
+                Register players for bidding and auction allocation.
               </span>
             </button>
 
-            {nonAuctionDivisions.map((division) => (
-              <button
-                type="button"
-                key={division.id}
-                className={
-                  form.allocationSource === "manual" &&
-                  form.divisionId === division.id
-                    ? "selected-registration-pool"
-                    : ""
-                }
-                onClick={() => selectNonAuctionDivision(division.id)}
-                disabled={
-                  editingPlayer?.allocation_source !== "manual" &&
-                  editingPlayer?.status === "sold"
-                }
-              >
-                <strong>{division.name}</strong>
-                <span>Non-auction pool · Direct team entry</span>
-              </button>
-            ))}
+            <button
+              type="button"
+              className={
+                form.allocationSource === "manual"
+                  ? "selected-registration-pool"
+                  : ""
+              }
+              onClick={selectManualPool}
+              disabled={
+                editingPlayer?.allocation_source !== "manual" &&
+                editingPlayer?.status === "sold"
+              }
+            >
+              <strong>Direct team assignment</strong>
+              <span>Add a name and place the player directly in a team.</span>
+            </button>
           </div>
+
+          <label className="player-wide-field">
+            Tournament division (optional)
+            <select
+              value={form.divisionId}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  divisionId: event.target.value,
+                  assignedTeamId: ""
+                }))
+              }
+            >
+              <option value="">No division / whole tournament</option>
+              {orderedDivisions.map((division) => (
+                <option value={division.id} key={division.id}>
+                  {division.name}
+                </option>
+              ))}
+            </select>
+            <small>
+              Use this only when the tournament has separate competitions.
+            </small>
+          </label>
 
           {form.allocationSource === "manual" && (
             <>
@@ -505,7 +518,9 @@ export default function PlayersPage() {
                   ))}
                 </select>
                 <small>
-                  Only teams assigned to this division are shown.
+                  {form.divisionId
+                    ? "Only teams assigned to this division are shown."
+                    : "All active tournament teams are shown."}
                 </small>
               </label>
 

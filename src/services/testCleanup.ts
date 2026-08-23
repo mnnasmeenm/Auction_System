@@ -48,3 +48,21 @@ export async function cleanupTestingTournament(input: {
 
   return data as CleanupResult;
 }
+
+export async function resetTournamentMatchTestingData(
+  tournamentId: string
+): Promise<number> {
+  const { data, error } = await supabase.rpc(
+    "reset_tournament_match_testing_data",
+    {
+      p_tournament_id: tournamentId,
+      p_confirmation: "RESET MATCHES"
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return Number(data ?? 0);
+}

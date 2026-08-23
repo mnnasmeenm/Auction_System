@@ -100,15 +100,6 @@ export default function TeamsPage() {
       setTeams(teamRecords);
       setDivisions(divisionRecords.filter((division) => division.is_active));
       setDivisionTeams(assignmentRecords);
-      setForm((current) => ({
-        ...current,
-        divisionIds:
-          current.divisionIds.length > 0
-            ? current.divisionIds
-            : divisionRecords[0]
-              ? [divisionRecords[0].id]
-              : []
-      }));
     } catch (error) {
       console.error("Team loading error:", error);
 
@@ -162,10 +153,6 @@ export default function TeamsPage() {
       return "The squad limit must be greater than zero.";
     }
 
-    if (form.divisionIds.length === 0) {
-      return "Select at least one tournament division.";
-    }
-
     return null;
   }
 
@@ -203,26 +190,38 @@ export default function TeamsPage() {
 
       if (editingTeamId) {
         await updateTeam(editingTeamId, input);
-        await setTeamDivisionAssignments(
-          tournamentId,
-          editingTeamId,
-          form.divisionIds
-        );
+        const existingDivisionIds = divisionTeams
+          .filter((assignment) => assignment.team_id === editingTeamId)
+          .map((assignment) => assignment.division_id)
+          .sort();
+        const selectedDivisionIds = [...form.divisionIds].sort();
+
+        if (
+          existingDivisionIds.length !== selectedDivisionIds.length ||
+          existingDivisionIds.some(
+            (divisionId, index) => divisionId !== selectedDivisionIds[index]
+          )
+        ) {
+          await setTeamDivisionAssignments(
+            tournamentId,
+            editingTeamId,
+            form.divisionIds
+          );
+        }
         setSuccessMessage("Team updated successfully.");
       } else {
         const createdTeam = await createTeam(input);
-        await setTeamDivisionAssignments(
-          tournamentId,
-          createdTeam.id,
-          form.divisionIds
-        );
+        if (form.divisionIds.length > 0) {
+          await setTeamDivisionAssignments(
+            tournamentId,
+            createdTeam.id,
+            form.divisionIds
+          );
+        }
         setSuccessMessage("Team created successfully.");
       }
 
-      setForm({
-        ...emptyForm,
-        divisionIds: divisions[0] ? [divisions[0].id] : []
-      });
+      setForm(emptyForm);
       setEditingTeamId(null);
 
       await loadTeams();
@@ -266,10 +265,7 @@ export default function TeamsPage() {
 
   function cancelEditing() {
     setEditingTeamId(null);
-    setForm({
-      ...emptyForm,
-      divisionIds: divisions[0] ? [divisions[0].id] : []
-    });
+    setForm(emptyForm);
     setErrorMessage("");
   }
 
@@ -383,8 +379,8 @@ export default function TeamsPage() {
             </h2>
 
             <p>
-              Create auction or manual-squad teams and assign
-              them to one or more tournament divisions.
+              Create the team first. Division assignment is optional and can
+              be completed later from scheduling.
             </p>
           </div>
 
@@ -518,12 +514,18 @@ export default function TeamsPage() {
           </label>
 
           <fieldset className="team-division-field">
-            <legend>Tournament divisions</legend>
+            <legend>Tournament divisions (optional)</legend>
             <p>
-              Select every division in which this team participates.
+              Leave this empty when the tournament does not use divisions, or
+              when you want to create all teams before configuring divisions.
             </p>
 
             <div>
+              {divisions.length === 0 && (
+                <small>
+                  No divisions exist yet. This team can still be created.
+                </small>
+              )}
               {divisions.map((division) => {
                 const checked = form.divisionIds.includes(division.id);
 

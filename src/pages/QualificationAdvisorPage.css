@@ -104,7 +104,7 @@
 
 .qualification-controls {
   display: grid;
-  grid-template-columns: 1fr 1fr 230px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 210px;
   gap: 13px;
   padding: 18px;
   margin-bottom: 18px;

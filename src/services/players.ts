@@ -11,7 +11,7 @@ import type {
 
 export interface PlayerInput {
   tournamentId: string;
-  divisionId: string;
+  divisionId: string | null;
   allocationSource: "auction" | "manual";
   assignedTeamId: string | null;
   categoryId: string | null;

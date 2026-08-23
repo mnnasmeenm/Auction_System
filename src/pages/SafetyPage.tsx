@@ -26,7 +26,8 @@ import {
 } from "../services/systemSafety";
 
 import {
-  cleanupTestingTournament
+  cleanupTestingTournament,
+  resetTournamentMatchTestingData
 } from "../services/testCleanup";
 
 import "./SafetyPage.css";
@@ -288,6 +289,50 @@ export default function SafetyPage() {
     }
   }
 
+  async function resetMatchTestingData() {
+    if (!tournament) return;
+
+    if (tournament.status !== "paused") {
+      setErrorMessage(
+        "Pause the tournament before resetting match testing data."
+      );
+      return;
+    }
+
+    const confirmation = window.prompt(
+      "Type RESET MATCHES to permanently remove every schedule and scoring record while keeping teams and players."
+    );
+
+    if (confirmation?.trim().toUpperCase() !== "RESET MATCHES") return;
+    if (!window.confirm("Download a backup and reset all match data?")) return;
+
+    setWorking(true);
+    setErrorMessage("");
+    setSuccessMessage("Creating backup before match reset…");
+
+    try {
+      const backupContents = await createTournamentBackup(tournament.id);
+      downloadBackup(backupContents, tournament.tournament_name);
+      const deletedMatches = await resetTournamentMatchTestingData(
+        tournament.id
+      );
+
+      setSuccessMessage(
+        `${deletedMatches} matches and their scoring data were removed. Teams and players were preserved.`
+      );
+      await loadPage();
+    } catch (error) {
+      setSuccessMessage("");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Match testing data could not be reset."
+      );
+    } finally {
+      setWorking(false);
+    }
+  }
+
   if (!tournamentId) {
     return (
       <main className="safety-page">
@@ -424,6 +469,31 @@ export default function SafetyPage() {
             <span>{item}</span>
           </label>
         ))}
+      </section>
+
+      <section className="safety-card match-testing-reset">
+        <div>
+          <span>TESTING TOOL</span>
+          <h2>Reset schedule and scoring data</h2>
+          <p>
+            Removes scheduled, live and completed matches with their innings,
+            deliveries and scorecards. Teams, players, divisions and auction
+            records remain available.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={working || tournament?.status !== "paused"}
+          onClick={resetMatchTestingData}
+        >
+          {working ? "Resetting…" : "Backup and reset match data"}
+        </button>
+
+        <small>
+          Pause first. After resetting, team assignments and schedule
+          generation are available again.
+        </small>
       </section>
 
       <section className="safety-card">

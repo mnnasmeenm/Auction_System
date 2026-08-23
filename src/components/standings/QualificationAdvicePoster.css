@@ -9,7 +9,7 @@
   --qualification-division: #ffd166;
   position: relative;
   width: min(100%, 900px);
-  min-height: 900px;
+  min-height: 980px;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 28px;
@@ -180,7 +180,8 @@
 
 .qualification-stat-grid article,
 .qualification-summary,
-.qualification-scenarios {
+.qualification-scenarios,
+.qualification-dependencies {
   background: rgba(2, 10, 25, .72);
   border: 1px solid rgba(255, 255, 255, .13);
   backdrop-filter: blur(8px);
@@ -210,13 +211,15 @@
 }
 
 .qualification-summary,
-.qualification-scenarios {
+.qualification-scenarios,
+.qualification-dependencies {
   padding: 20px;
   border-radius: 18px;
 }
 
 .qualification-summary h3,
-.qualification-scenarios h3 {
+.qualification-scenarios h3,
+.qualification-dependencies h3 {
   margin: 0;
 }
 
@@ -276,6 +279,73 @@
   text-transform: none;
 }
 
+.qualification-dependencies > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.qualification-dependencies > header small,
+.qualification-dependencies article small {
+  color: #9ab8e5;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+
+.qualification-dependencies > header > strong {
+  color: #ffd166;
+  font-size: 11px;
+  letter-spacing: .1em;
+}
+
+.qualification-dependencies > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.qualification-dependencies article {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 12px;
+}
+
+.qualification-dependencies article > span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #07101e;
+  background: var(--qualification-team);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 1000;
+}
+
+.qualification-dependencies article h4 {
+  margin: 3px 0 5px;
+  color: white;
+  font-size: 12px;
+}
+
+.qualification-dependencies article p {
+  margin: 0;
+  color: #d7e5f8;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.qualification-dependencies .dependency-nrr > span {
+  background: #ffd166;
+}
+
 .qualification-poster > footer {
   display: flex;
   justify-content: space-between;
@@ -328,5 +398,9 @@
 
   .qualification-stat-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .qualification-dependencies > div {
+    grid-template-columns: 1fr;
   }
 }

@@ -7,7 +7,8 @@ import QualificationAdvicePoster from
 
 import {
   getQualificationAdvice,
-  type QualificationAdviceSection
+  type QualificationAdviceSection,
+  type QualificationGoal
 } from "../services/qualificationAdvisor";
 import { getTournament } from "../services/tournaments";
 
@@ -23,6 +24,7 @@ export default function QualificationAdvisorPage() {
   const [sections, setSections] = useState<QualificationAdviceSection[]>([]);
   const [selectedSectionKey, setSelectedSectionKey] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState("");
+  const [goal, setGoal] = useState<QualificationGoal>("qualify");
   const [referenceRuns, setReferenceRuns] = useState("50");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -54,7 +56,7 @@ export default function QualificationAdvisorPage() {
       const planningRuns = Math.max(1, Number(referenceRuns) || 50);
       const [tournamentRecord, adviceSections] = await Promise.all([
         getTournament(tournamentId),
-        getQualificationAdvice(tournamentId, planningRuns)
+        getQualificationAdvice(tournamentId, planningRuns, goal)
       ]);
 
       setTournament(tournamentRecord);
@@ -73,7 +75,7 @@ export default function QualificationAdvisorPage() {
     } finally {
       setLoading(false);
     }
-  }, [referenceRuns, tournamentId]);
+  }, [goal, referenceRuns, tournamentId]);
 
   useEffect(() => {
     void load();
@@ -201,6 +203,23 @@ export default function QualificationAdvisorPage() {
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label>
+              Planning goal
+              <select
+                value={goal}
+                onChange={(event) =>
+                  setGoal(event.target.value as QualificationGoal)
+                }
+              >
+                <option value="qualify">Qualify for next stage</option>
+                <option value="top_two">Reach the top two</option>
+                <option value="first">Finish first</option>
+              </select>
+              <small>
+                Rebuilds the cutoff and rival dependencies for this target.
+              </small>
             </label>
 
             <label>
