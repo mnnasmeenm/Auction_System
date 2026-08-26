@@ -168,6 +168,31 @@
 .score-live-player > p { margin: 0; color: #91a3bd; font-size: 10px; }
 .score-live-player select:disabled { opacity: 1; color: white; cursor: default; }
 
+.score-strike-override {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -4px 0 17px;
+  padding: 12px 14px;
+  background: rgba(26, 81, 151, .12);
+  border: 1px solid #2c527e;
+  border-radius: 11px;
+}
+.score-strike-override > div { display: grid; gap: 3px; }
+.score-strike-override strong { color: white; font-size: 12px; }
+.score-strike-override small { color: #91a7c5; }
+.score-strike-override button {
+  min-height: 39px;
+  padding: 8px 13px;
+  color: #dcecff;
+  background: #102a4c;
+  border: 1px solid #3d6b9e;
+  border-radius: 8px;
+  font-weight: 900;
+}
+.score-strike-override button:disabled { opacity: .42; cursor: not-allowed; }
+
 .score-primary-button,
 .score-complete-button {
   min-height: 44px;
@@ -222,6 +247,40 @@
 }
 .score-run-picker button.selected { color: #07101f; background: var(--accent); border-color: var(--accent); }
 .score-run-picker button:disabled { opacity: .32; }
+.score-no-ball-source {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 15px;
+  padding: 13px;
+  border: 1px solid rgba(255, 138, 50, .45);
+  border-radius: 11px;
+}
+.score-no-ball-source legend {
+  padding: 0 8px;
+  color: #ffbc82;
+  font-size: 11px;
+  font-weight: 900;
+}
+.score-no-ball-source button {
+  min-height: 42px;
+  color: #d8e4f4;
+  background: #0c1d37;
+  border: 1px solid #36506f;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 900;
+}
+.score-no-ball-source button.selected {
+  color: #07101f;
+  background: #ff9b42;
+  border-color: #ff9b42;
+}
+.score-no-ball-source > small {
+  grid-column: 1 / -1;
+  color: #9cabbd;
+  line-height: 1.45;
+}
 .score-extra-picker {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -260,6 +319,7 @@
 .score-extra-total > strong { text-align: center; color: #ffd166; font-size: 23px; }
 .score-delivery-total { padding: 10px 13px; color: #afbdd0; background: rgba(3, 11, 25, .55); border-radius: 9px; }
 .score-delivery-total strong { color: #ffd166; font-size: 18px; }
+.score-delivery-total b { color: var(--accent); }
 .score-operator-note { display: grid; gap: 6px; margin-bottom: 13px; color: var(--muted); font-size: 11px; font-weight: 800; }
 
 .score-check { display: inline-flex; align-items: center; gap: 9px; color: white; font-size: 12px; font-weight: 800; }
@@ -301,6 +361,60 @@
 .score-undo-row button { min-height: 42px; color: #ffd1d6; background: rgba(127, 19, 34, .2); border: 1px solid #8b3d49; border-radius: 9px; white-space: nowrap; }
 .score-complete-button { background: #ffcc4d; }
 
+.score-reset-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+  gap: 24px;
+  align-items: end;
+  border-color: rgba(222, 73, 91, .58);
+  background:
+    linear-gradient(120deg, rgba(125, 20, 39, .2), transparent 48%),
+    linear-gradient(145deg, rgba(13, 30, 58, .96), rgba(5, 15, 33, .98));
+}
+.score-reset-panel > div:first-child > span {
+  color: #ff8794;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .16em;
+}
+.score-reset-panel h2 {
+  margin: 6px 0;
+  color: white;
+}
+.score-reset-panel p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.score-reset-confirmation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+.score-reset-confirmation label {
+  display: grid;
+  gap: 6px;
+  color: #ffb4bc;
+  font-size: 10px;
+  font-weight: 850;
+}
+.score-reset-confirmation button {
+  min-height: 42px;
+  padding: 9px 14px;
+  color: white;
+  background: #a52238;
+  border: 1px solid #e05a6d;
+  border-radius: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.score-reset-confirmation button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
 .score-event-list { display: grid; gap: 7px; }
 .score-event-list article { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; background: rgba(5, 14, 30, .72); border-radius: 8px; }
 .score-event-list article strong { color: #72a8ff; }
@@ -335,6 +449,7 @@
   .score-total-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .score-entry-row { overflow-x: auto; grid-template-columns: 180px repeat(5, 85px) 36px; }
   .score-operator-protection { flex-direction: column; }
+  .score-reset-panel { grid-template-columns: 1fr; }
   .score-undo-row { width: 100%; }
   .score-extra-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .score-pom-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -352,10 +467,13 @@
   .score-form-grid,
   .score-wicket-box { grid-template-columns: 1fr; }
   .score-live-players { grid-template-columns: 1fr; }
+  .score-strike-override { align-items: stretch; flex-direction: column; }
+  .score-no-ball-source { grid-template-columns: 1fr; }
   .score-extra-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .score-section-title p { text-align: left; }
   .score-live-summary > strong { order: -1; }
   .score-undo-row { align-items: stretch; flex-direction: column; }
+  .score-reset-confirmation { grid-template-columns: 1fr; }
   .score-result-panel > div { flex-direction: column; }
   .score-pom-form { grid-template-columns: 1fr; }
 }

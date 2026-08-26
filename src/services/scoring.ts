@@ -324,6 +324,20 @@ export async function recordMatchBall(
   if (error) throw error;
 }
 
+export async function swapMatchStrike(
+  matchId: string,
+  expectedRevision: number,
+  reason = "Manual strike correction"
+): Promise<void> {
+  const { error } = await supabase.rpc("swap_match_strike", {
+    p_match_id: matchId,
+    p_expected_revision: expectedRevision,
+    p_reason: reason.trim()
+  });
+
+  if (error) throw error;
+}
+
 export async function undoLastMatchBall(
   matchId: string,
   expectedRevision: number,

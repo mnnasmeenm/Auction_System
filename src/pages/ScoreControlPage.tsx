@@ -18,6 +18,7 @@ import {
   setMatchPlayerOfMatch,
   startMatchScoring,
   startSecondInnings,
+  swapMatchStrike,
   undoLastMatchBall,
   type ManualBattingInput,
   type ManualBowlingInput,
@@ -148,6 +149,7 @@ export default function ScoreControlPage() {
   const [runsOffBat, setRunsOffBat] = useState(0);
   const [extraType, setExtraType] = useState<BallExtraType | "">("");
   const [extraRuns, setExtraRuns] = useState("0");
+  const [noBallRunsFromBat, setNoBallRunsFromBat] = useState(true);
   const [isWicket, setIsWicket] = useState(false);
   const [dismissalType, setDismissalType] = useState<DismissalType>("bowled");
   const [dismissedPlayerId, setDismissedPlayerId] = useState("");
@@ -211,6 +213,25 @@ export default function ScoreControlPage() {
     } finally {
       setLoading(false);
     }
+  }, [selectedMatchId, tournamentId]);
+
+  const refreshScoringBundle = useCallback(async () => {
+    if (!tournamentId || !selectedMatchId) {
+      setBundle(null);
+      return;
+    }
+
+    const scoringBundle = await getMatchScoringBundle(
+      tournamentId,
+      selectedMatchId
+    );
+
+    setBundle(scoringBundle);
+    setMatches((current) => current.map((match) =>
+      match.id === scoringBundle.match.id
+        ? scoringBundle.match
+        : match
+    ));
   }, [selectedMatchId, tournamentId]);
 
   useEffect(() => {
@@ -353,6 +374,26 @@ export default function ScoreControlPage() {
     [bowlerId, currentInnings]
   );
 
+  const strikeRotationRuns = useMemo(() => {
+    const recordedBatRuns =
+      extraType === "no_ball" && !noBallRunsFromBat
+        ? 0
+        : runsOffBat;
+    const recordedExtras = numeric(extraRuns);
+
+    if (extraType === "wide") {
+      return Math.max(0, recordedExtras - 1);
+    }
+    if (extraType === "no_ball") {
+      return recordedBatRuns + Math.max(0, recordedExtras - 1);
+    }
+    if (extraType === "bye" || extraType === "leg_bye") {
+      return recordedExtras;
+    }
+    if (extraType === "penalty") return 0;
+    return runsOffBat;
+  }, [extraRuns, extraType, noBallRunsFromBat, runsOffBat]);
+
   const selectedPlayerOfMatch = useMemo(
     () => bundle?.players.find((player) => player.id === bundle.match.player_of_match_id) ?? null,
     [bundle]
@@ -372,7 +413,7 @@ export default function ScoreControlPage() {
     try {
       await action();
       setSuccessMessage(success);
-      await loadPage();
+      await refreshScoringBundle();
     } catch (error) {
       console.error("Scoring action error:", error);
       setErrorMessage(
@@ -420,6 +461,11 @@ export default function ScoreControlPage() {
       return;
     }
 
+    const recordedRunsOffBat =
+      extraType === "no_ball" && !noBallRunsFromBat
+        ? 0
+        : runsOffBat;
+
     await runAction(
       () => recordMatchBall(bundle.match.id, bundle.liveState!.revision, {
         batterPlayerId: batterId,
@@ -428,7 +474,7 @@ export default function ScoreControlPage() {
         nonStrikerName: playerName(battingPlayers, nonStrikerId) || null,
         bowlerPlayerId: bowlerId,
         bowlerName: playerName(bowlingPlayers, bowlerId),
-        runsOffBat,
+        runsOffBat: recordedRunsOffBat,
         extraType: extraType || null,
         extraRuns: numeric(extraRuns),
         isWicket,
@@ -449,6 +495,7 @@ export default function ScoreControlPage() {
     setRunsOffBat(0);
     setExtraType("");
     setExtraRuns("0");
+    setNoBallRunsFromBat(true);
     setIsWicket(false);
     setBallNote("");
   }
@@ -456,7 +503,24 @@ export default function ScoreControlPage() {
   function chooseExtra(type: BallExtraType | "") {
     setExtraType(type);
     setRunsOffBat(0);
+    setNoBallRunsFromBat(true);
     setExtraRuns(type === "wide" || type === "no_ball" ? "1" : "0");
+  }
+
+  async function handleSwapStrike() {
+    if (!bundle?.liveState || !batterId || !nonStrikerId) {
+      setErrorMessage("Select both batters before swapping strike.");
+      return;
+    }
+
+    await runAction(
+      () => swapMatchStrike(
+        bundle.match.id,
+        bundle.liveState!.revision,
+        "Administrator manually swapped strike"
+      ),
+      "Strike swapped successfully."
+    );
   }
 
   async function savePlayerOfMatch(event: FormEvent) {
@@ -564,7 +628,7 @@ export default function ScoreControlPage() {
           <h1>Score control</h1>
           <p>{tournament?.tournament_name}</p>
         </div>
-        <button type="button" onClick={() => void loadPage()} disabled={working}>
+        <button type="button" onClick={() => void refreshScoringBundle()} disabled={working}>
           Refresh scores
         </button>
       </header>
@@ -728,20 +792,69 @@ export default function ScoreControlPage() {
                     </article>
                   </div>
 
+                  <div className="score-strike-override">
+                    <div>
+                      <strong>Manual strike control</strong>
+                      <small>
+                        Use only when the automatic strike position needs an operator correction.
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={working || !batterId || !nonStrikerId}
+                      onClick={() => void handleSwapStrike()}
+                    >
+                      Swap striker ↔ non-striker
+                    </button>
+                  </div>
+
                   <fieldset className="score-run-picker">
-                    <legend>Runs from the bat</legend>
+                    <legend>
+                      {extraType === "no_ball"
+                        ? "Runs credited to the batter"
+                        : "Runs from the bat"}
+                    </legend>
                     {[0, 1, 2, 3, 4, 5, 6].map((run) => (
                       <button
                         key={run}
                         type="button"
                         className={runsOffBat === run ? "selected" : ""}
-                        disabled={extraType !== "" && extraType !== "no_ball"}
+                        disabled={
+                          (extraType !== "" && extraType !== "no_ball") ||
+                          (extraType === "no_ball" && !noBallRunsFromBat)
+                        }
                         onClick={() => setRunsOffBat(run)}
                       >
                         {run}
                       </button>
                     ))}
                   </fieldset>
+
+                  {extraType === "no_ball" && (
+                    <fieldset className="score-no-ball-source">
+                      <legend>How were the completed no-ball runs scored?</legend>
+                      <button
+                        type="button"
+                        className={noBallRunsFromBat ? "selected" : ""}
+                        onClick={() => setNoBallRunsFromBat(true)}
+                      >
+                        Off the bat
+                      </button>
+                      <button
+                        type="button"
+                        className={!noBallRunsFromBat ? "selected" : ""}
+                        onClick={() => {
+                          setNoBallRunsFromBat(false);
+                          setRunsOffBat(0);
+                        }}
+                      >
+                        Missed bat / running extras
+                      </button>
+                      <small>
+                        Off the bat credits the selected runs to the striker. Missed bat credits completed runs only to no-ball extras.
+                      </small>
+                    </fieldset>
+                  )}
 
                   <fieldset className="score-extra-picker">
                     <legend>Extras</legend>
@@ -769,9 +882,13 @@ export default function ScoreControlPage() {
                       <div>
                         <span>Total {extraType.replace("_", " ")} extras</span>
                         <small>
-                          {extraType === "wide" || extraType === "no_ball"
-                            ? "The automatic one run is already included."
-                            : "Enter all completed extra runs."}
+                          {extraType === "wide"
+                            ? "Includes 1 automatic wide plus any completed running runs. Example: wide + one run completed = 2."
+                            : extraType === "no_ball"
+                              ? noBallRunsFromBat
+                                ? "Keep 1 for the automatic no-ball unless there are additional non-bat extras."
+                                : "Includes 1 automatic no-ball plus every completed running extra."
+                              : "Enter all completed extra runs."}
                         </small>
                       </div>
                       <button
@@ -786,9 +903,23 @@ export default function ScoreControlPage() {
                     </div>
                   )}
 
-                  {extraType === "no_ball" && (
+                  {(extraType === "wide" || extraType === "no_ball") && (
                     <p className="score-delivery-total">
-                      Delivery total: <strong>{runsOffBat + numeric(extraRuns)}</strong> — batter {runsOffBat}, extras {numeric(extraRuns)}
+                      Delivery total: <strong>{
+                        (extraType === "no_ball" && noBallRunsFromBat
+                          ? runsOffBat
+                          : 0) + numeric(extraRuns)
+                      }</strong>
+                      {" — batter "}
+                      {extraType === "no_ball" && noBallRunsFromBat
+                        ? runsOffBat
+                        : 0}, extras {numeric(extraRuns)}.
+                      {" "}
+                      <b>
+                        {strikeRotationRuns % 2 === 1
+                          ? "Strike will rotate."
+                          : "Strike will remain."}
+                      </b>
                     </p>
                   )}
 
@@ -880,7 +1011,7 @@ export default function ScoreControlPage() {
 
               <CompletedScoreCorrection
                 bundle={bundle}
-                onCorrected={loadPage}
+                onCorrected={refreshScoringBundle}
               />
 
               <form className="score-panel score-pom-form" onSubmit={savePlayerOfMatch}>
