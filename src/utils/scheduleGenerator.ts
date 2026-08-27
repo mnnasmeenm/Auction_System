@@ -56,6 +56,26 @@ function createRoundRobinPairings(teamIds: string[]): Pairing[] {
     return [];
   }
 
+  // Keep the six-team fixture-number pattern predictable for administrators:
+  // R1: 1-2, 3-4, 5-6; R2: 1-3, 2-6, 4-5; and so on.
+  if (teamIds.length === 6) {
+    const rounds = [
+      [[1, 2], [3, 4], [5, 6]],
+      [[1, 3], [2, 6], [4, 5]],
+      [[1, 4], [2, 5], [3, 6]],
+      [[1, 5], [2, 3], [4, 6]],
+      [[1, 6], [2, 4], [3, 5]]
+    ];
+
+    return rounds.flatMap((round, roundIndex) =>
+      round.map(([firstNumber, secondNumber]) => ({
+        firstTeamId: teamIds[firstNumber - 1],
+        secondTeamId: teamIds[secondNumber - 1],
+        roundNumber: roundIndex + 1
+      }))
+    );
+  }
+
   const participants = [...teamIds];
 
   if (participants.length % 2 !== 0) {

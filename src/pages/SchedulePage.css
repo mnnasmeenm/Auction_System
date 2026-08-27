@@ -291,6 +291,13 @@
   margin-top: 17px;
 }
 
+.schedule-team-selector > p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .schedule-team-selector > div {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -346,6 +353,28 @@
   background: var(--surface-strong, #fff);
   border: 1px solid var(--border);
   border-radius: 7px;
+}
+
+.schedule-team-selector label > .schedule-fixture-number {
+  grid-column: 2 / -1;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  background: transparent;
+  border-radius: 0;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.schedule-team-selector .schedule-fixture-number select {
+  width: 74px;
+  min-height: 34px;
+  padding: 6px 9px;
+  font-weight: 900;
 }
 
 .schedule-window-card {

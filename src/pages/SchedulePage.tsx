@@ -166,6 +166,33 @@ function groupNames(count: number, existing: string[] = []) {
   );
 }
 
+function moveTeamToFixtureNumber(
+  teamIds: string[],
+  teamId: string,
+  requestedNumber: number
+) {
+  const currentIndex = teamIds.indexOf(teamId);
+  if (currentIndex < 0) return teamIds;
+
+  const targetIndex = Math.min(
+    teamIds.length - 1,
+    Math.max(0, requestedNumber - 1)
+  );
+
+  const next = [...teamIds];
+  next.splice(currentIndex, 1);
+  next.splice(targetIndex, 0, teamId);
+  return next;
+}
+
+function teamsInFixtureOrder(allTeams: Team[], teamIds: string[]) {
+  const teamById = new Map(allTeams.map((team) => [team.id, team]));
+
+  return teamIds
+    .map((teamId) => teamById.get(teamId))
+    .filter((team): team is Team => Boolean(team));
+}
+
 function stageLabel(stage: MatchStage) {
   return stageOptions.find((item) => item.value === stage)?.label ?? stage;
 }
@@ -627,6 +654,7 @@ export default function SchedulePage() {
 
     for (let index = 0; index < divisions.length; index += 1) {
       const draft = divisions[index];
+      const orderedTeams = teamsInFixtureOrder(teams, draft.teamIds);
       const saved = await saveTournamentDivision({
         id: draft.id,
         tournamentId,
@@ -667,9 +695,8 @@ export default function SchedulePage() {
 
         groups = savedGroupRecords.map((group, groupIndex) => ({
           group,
-          teams: teams.filter(
+          teams: orderedTeams.filter(
             (team) =>
-              draft.teamIds.includes(team.id) &&
               (draft.teamGroupIndexes[team.id] ?? 0) === groupIndex
           )
         }));
@@ -677,7 +704,7 @@ export default function SchedulePage() {
 
       savedDivisionInputs.push({
         division: saved,
-        teams: teams.filter((team) => draft.teamIds.includes(team.id)),
+        teams: orderedTeams,
         groups
       });
     }
@@ -1053,7 +1080,7 @@ export default function SchedulePage() {
 
               {division.format === "groups" && <div className="schedule-group-names">{division.groupNames.map((name, index) => <label key={index}>Group {index + 1}<input value={name} onChange={(event) => updateDivision(division.key, { groupNames: division.groupNames.map((item, itemIndex) => itemIndex === index ? event.target.value : item) })} /></label>)}</div>}
 
-              <div className="schedule-team-selector"><h4>Teams participating in {division.name}</h4><div>{teams.map((team) => { const checked = division.teamIds.includes(team.id); const logo = getTeamLogoUrl(team.logo_path); return <label key={team.id} className={checked ? "selected" : ""}><input type="checkbox" checked={checked} onChange={(event) => { const teamIds = event.target.checked ? [...division.teamIds, team.id] : division.teamIds.filter((id) => id !== team.id); updateDivision(division.key, { teamIds }); }} />{logo ? <img src={logo} alt="" /> : <span>{team.short_name}</span>}<strong>{team.name}</strong>{division.format === "groups" && checked && <select value={division.teamGroupIndexes[team.id] ?? 0} onClick={(event) => event.stopPropagation()} onChange={(event) => updateDivision(division.key, { teamGroupIndexes: { ...division.teamGroupIndexes, [team.id]: Number(event.target.value) } })}>{division.groupNames.map((name, index) => <option key={index} value={index}>{name}</option>)}</select>}</label>; })}</div></div>
+              <div className="schedule-team-selector"><h4>Teams participating in {division.name}</h4><p>After selecting teams, manually assign their fixture numbers. These numbers control the league pairing order separately inside this division.</p><div>{teams.map((team) => { const checked = division.teamIds.includes(team.id); const fixtureNumber = division.teamIds.indexOf(team.id) + 1; const logo = getTeamLogoUrl(team.logo_path); return <label key={team.id} className={checked ? "selected" : ""}><input type="checkbox" checked={checked} onChange={(event) => { const teamIds = event.target.checked ? [...division.teamIds, team.id] : division.teamIds.filter((id) => id !== team.id); updateDivision(division.key, { teamIds }); }} />{logo ? <img src={logo} alt="" /> : <span>{team.short_name}</span>}<strong>{team.name}</strong>{checked && <span className="schedule-fixture-number"><small>Fixture number</small><select aria-label={`Fixture number for ${team.name}`} value={fixtureNumber} onClick={(event) => event.stopPropagation()} onChange={(event) => updateDivision(division.key, { teamIds: moveTeamToFixtureNumber(division.teamIds, team.id, Number(event.target.value)) })}>{division.teamIds.map((_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select></span>}{division.format === "groups" && checked && <select value={division.teamGroupIndexes[team.id] ?? 0} onClick={(event) => event.stopPropagation()} onChange={(event) => updateDivision(division.key, { teamGroupIndexes: { ...division.teamGroupIndexes, [team.id]: Number(event.target.value) } })}>{division.groupNames.map((name, index) => <option key={index} value={index}>{name}</option>)}</select>}</label>; })}</div></div>
             </article>
           ))}
         </div>
