@@ -301,6 +301,206 @@
 .public-qualification-poster > .qualification-poster-showcase {
   margin-top: 18px;
 }
+.public-honours-section {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid #29466c;
+}
+.public-honours-section > header { align-items: flex-end; }
+.public-honours-section > header p {
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: #9fadc1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.public-honours-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) repeat(3, 170px);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.public-honours-controls label,
+.public-honours-controls article {
+  padding: 14px;
+  background: rgba(8, 24, 50, .92);
+  border: 1px solid #29466c;
+  border-radius: 13px;
+}
+.public-honours-controls label {
+  display: grid;
+  gap: 7px;
+  color: #8fa6c6;
+  font-size: 10px;
+  font-weight: 900;
+}
+.public-honours-controls select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  color: #eef4ff;
+  background: #06142b;
+  border: 1px solid #345379;
+  border-radius: 9px;
+}
+.public-honours-controls article span,
+.public-honours-controls article strong { display: block; }
+.public-honours-controls article span {
+  color: #829abd;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.public-honours-controls article strong {
+  margin-top: 6px;
+  color: #b8f227;
+  font-size: 25px;
+}
+.public-honours-leaderboards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.public-honours-leaderboards > article,
+.public-tournament-mvp,
+.public-official-match-awards,
+.public-honour-awards {
+  overflow: hidden;
+  background: rgba(8, 24, 50, .92);
+  border: 1px solid #29466c;
+  border-radius: 15px;
+}
+.public-honours-leaderboards article > header,
+.public-official-match-awards > header,
+.public-honour-awards > header {
+  padding: 15px;
+  background: linear-gradient(120deg, rgba(47, 114, 255, .18), transparent);
+  border-bottom: 1px solid #29466c;
+}
+.public-honours-leaderboards header span,
+.public-official-match-awards > header span,
+.public-honour-awards > header span,
+.public-tournament-mvp span {
+  color: #73a8ff;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+.public-honours-leaderboards h3,
+.public-official-match-awards h3,
+.public-honour-awards h3,
+.public-tournament-mvp h3 {
+  margin: 4px 0 0;
+  color: white;
+}
+.public-honours-leaderboards article > div {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(74, 104, 146, .28);
+}
+.public-honours-leaderboards article > div > b {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: #07101e;
+  background: #b8f227;
+  border-radius: 50%;
+  font-size: 9px;
+}
+.public-honours-leaderboards article > div > span { min-width: 0; }
+.public-honours-leaderboards article > div strong,
+.public-honours-leaderboards article > div small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.public-honours-leaderboards article > div strong { color: white; font-size: 11px; }
+.public-honours-leaderboards article > div small { color: #8fa3c0; font-size: 8px; }
+.public-honours-leaderboards em {
+  color: #ffd166;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.public-tournament-mvp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 20px;
+  align-items: center;
+  padding: 20px;
+  margin-top: 14px;
+  background:
+    radial-gradient(circle at 90% 50%, rgba(184, 242, 39, .16), transparent 28%),
+    rgba(8, 24, 50, .95);
+  border-color: #55712b;
+}
+.public-tournament-mvp p {
+  margin: 7px 0 0;
+  color: #aebdd2;
+  line-height: 1.5;
+}
+.public-tournament-mvp > strong {
+  color: #b8f227;
+  font-size: clamp(23px, 4vw, 39px);
+  text-align: right;
+  text-transform: uppercase;
+}
+.public-tournament-mvp > small {
+  grid-column: 1 / -1;
+  color: #879bb8;
+  line-height: 1.45;
+}
+.public-official-match-awards,
+.public-honour-awards { margin-top: 14px; }
+.public-official-match-awards > div,
+.public-honour-awards > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 9px;
+  padding: 13px;
+}
+.public-official-match-awards article {
+  display: grid;
+  gap: 4px;
+  padding: 13px;
+  background: #06142b;
+  border: 1px solid #345379;
+  border-radius: 11px;
+}
+.public-official-match-awards article > span,
+.public-official-match-awards article > small {
+  color: #82a5d8;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.public-official-match-awards article > strong { color: #ffd166; text-transform: uppercase; }
+.public-official-match-awards article p { margin: 5px 0 0; color: #aebdd2; font-size: 10px; line-height: 1.45; }
+.public-honour-awards button {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  color: #eaf2ff;
+  text-align: left;
+  background: #06142b;
+  border: 1px solid #345379;
+  border-radius: 11px;
+}
+.public-honour-awards button.selected { background: rgba(47, 114, 255, .14); }
+.public-honour-awards button > span { width: 34px; height: 4px; border-radius: 999px; }
+.public-honour-awards button > small { color: #88a4cb; font-size: 8px; font-weight: 900; }
+.public-honour-awards button > strong { overflow: hidden; color: white; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
+.public-honour-awards button > b { color: #ffd166; font-size: 18px; }
+.public-honour-awards button > p { margin: 0; color: #95a8c3; font-size: 9px; line-height: 1.4; }
+.public-honour-poster > .award-poster-showcase { margin-top: 18px; }
 .public-score-header { grid-template-columns: auto auto 1fr auto; }
 .public-live-hero { width: min(1320px, 100%); margin: 0 auto 14px; display: grid; grid-template-columns: 1fr 1.3fr 1fr; align-items: center; gap: 22px; padding: clamp(22px, 4vw, 42px); background: radial-gradient(circle at 50% 120%, rgba(255,105,28,.3), transparent 42%), radial-gradient(circle at 50% 0%, rgba(37,94,194,.45), transparent 50%), #06142b; border: 1px solid #31527d; border-radius: 23px; box-shadow: 0 28px 75px rgba(0,0,0,.32); }
 .public-hero-team { display: grid; justify-items: center; text-align: center; }
@@ -393,6 +593,13 @@
   .public-dependency-grid { grid-template-columns: 1fr; }
   .public-qualification-result > header { flex-direction: column; }
   .public-qualification-result > header > b { grid-column: auto; grid-row: auto; justify-self: start; }
+  .public-honours-section { margin-top: 34px; padding-top: 24px; }
+  .public-honours-section > header { align-items: flex-start; flex-direction: column; }
+  .public-honours-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-honours-controls label { grid-column: 1 / -1; }
+  .public-honours-leaderboards { grid-template-columns: 1fr; }
+  .public-tournament-mvp { grid-template-columns: 1fr; }
+  .public-tournament-mvp > strong { text-align: left; }
 }
 
 @media (max-width: 520px) {
@@ -414,4 +621,8 @@
   .public-qualification-team-grid b { grid-column: 2; grid-row: 3; justify-self: start; }
   .public-qualification-result { padding: 13px; }
   .public-qualification-result section { padding: 12px; }
+  .public-honours-controls { grid-template-columns: 1fr; }
+  .public-honours-controls label { grid-column: auto; }
+  .public-official-match-awards > div,
+  .public-honour-awards > div { grid-template-columns: 1fr; }
 }

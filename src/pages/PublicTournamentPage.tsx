@@ -6,6 +6,8 @@ import PointsTable from "../components/standings/PointsTable";
 import PointsTablePoster from "../components/standings/PointsTablePoster";
 import QualificationAdvicePoster from
   "../components/standings/QualificationAdvicePoster";
+import TournamentAwardPoster from
+  "../components/analytics/TournamentAwardPoster";
 
 import {
   getPublicTournament,
@@ -24,10 +26,24 @@ import {
   type QualificationAdviceSection,
   type QualificationGoal
 } from "../services/qualificationAdvisor";
+import {
+  getTournamentAnalytics,
+  type TournamentAnalyticsSnapshot
+} from "../services/tournamentAnalytics";
 
 import type { Tournament, TournamentMatch } from "../types/database";
 
 import "./PublicScores.css";
+
+const EMPTY_HONOURS: TournamentAnalyticsSnapshot = {
+  players: [],
+  awards: [],
+  matchPlayerSuggestions: [],
+  playerOfTournament: null,
+  playerOfTournamentReason: "",
+  highestTeamScore: null,
+  scoredMatches: 0
+};
 
 function MatchTile({ match, slug }: { match: TournamentMatch; slug: string }) {
   const firstName = match.team_one?.name ?? match.team_one_placeholder ?? "TBA";
@@ -77,6 +93,12 @@ export default function PublicTournamentPage() {
   const [referenceRuns, setReferenceRuns] = useState("50");
   const [planningRuns, setPlanningRuns] = useState(50);
   const [qualificationLoading, setQualificationLoading] = useState(false);
+  const [honoursDivisionId, setHonoursDivisionId] = useState("");
+  const [honours, setHonours] =
+    useState<TournamentAnalyticsSnapshot>(EMPTY_HONOURS);
+  const [selectedHonourAwardId, setSelectedHonourAwardId] = useState("");
+  const [honoursLoading, setHonoursLoading] = useState(false);
+  const [honoursError, setHonoursError] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -97,6 +119,14 @@ export default function PublicTournamentPage() {
       setTournament(record);
       setMatches(fixtures);
       setStandings(standingSections);
+      const activeDivisionIds = Array.from(
+        new Set(standingSections.map((section) => section.division.id))
+      );
+      setHonoursDivisionId((current) =>
+        activeDivisionIds.includes(current)
+          ? current
+          : activeDivisionIds[0] ?? ""
+      );
       setQualificationSections(adviceSections);
       setSelectedQualificationKey((current) =>
         adviceSections.some((section) => section.key === current)
@@ -139,6 +169,68 @@ export default function PublicTournamentPage() {
     [selectedQualificationSection, selectedTeamId]
   );
 
+  const honourDivisions = useMemo(
+    () => Array.from(
+      new Map(
+        standings.map((section) => [section.division.id, section.division])
+      ).values()
+    ),
+    [standings]
+  );
+
+  const selectedHonoursDivision = useMemo(
+    () => honourDivisions.find(
+      (division) => division.id === honoursDivisionId
+    ) ?? honourDivisions[0] ?? null,
+    [honourDivisions, honoursDivisionId]
+  );
+
+  const selectedHonourAward = useMemo(
+    () => honours.awards.find(
+      (award) => award.id === selectedHonourAwardId
+    ) ?? honours.awards[0] ?? null,
+    [honours.awards, selectedHonourAwardId]
+  );
+
+  const officialMatchAwards = useMemo(
+    () => honours.matchPlayerSuggestions.filter(
+      (suggestion) => suggestion.confirmedPlayer
+    ),
+    [honours.matchPlayerSuggestions]
+  );
+
+  const loadHonours = useCallback(async () => {
+    if (!tournament?.id || !honoursDivisionId) {
+      setHonours(EMPTY_HONOURS);
+      return;
+    }
+
+    setHonoursLoading(true);
+    setHonoursError("");
+
+    try {
+      const snapshot = await getTournamentAnalytics(
+        tournament.id,
+        honoursDivisionId,
+        true
+      );
+      setHonours(snapshot);
+      setSelectedHonourAwardId((current) =>
+        snapshot.awards.some((award) => award.id === current)
+          ? current
+          : snapshot.awards[0]?.id ?? ""
+      );
+    } catch (error) {
+      setHonoursError(
+        error instanceof Error
+          ? error.message
+          : "Public honours could not be calculated."
+      );
+    } finally {
+      setHonoursLoading(false);
+    }
+  }, [honoursDivisionId, tournament?.id]);
+
   useEffect(() => {
     if (!selectedQualificationSection) {
       setSelectedTeamId("");
@@ -153,6 +245,15 @@ export default function PublicTournamentPage() {
         : selectedQualificationSection.advice[0]?.row.team_id ?? ""
     );
   }, [selectedQualificationSection]);
+
+  useEffect(() => {
+    void loadHonours();
+  }, [loadHonours]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => void loadHonours(), 15000);
+    return () => window.clearInterval(timer);
+  }, [loadHonours]);
 
   function calculateQualification() {
     const nextRuns = Math.max(1, Math.floor(Number(referenceRuns) || 50));
@@ -416,6 +517,180 @@ export default function PublicTournamentPage() {
                   advice={selectedAdvice}
                 />
               </details>
+            )}
+          </>
+        )}
+      </section>
+
+      <section className="public-match-section public-honours-section">
+        <header>
+          <div>
+            <span>TOURNAMENT HONOURS</span>
+            <h2>Leaders, records and awards</h2>
+            <p>
+              Public statistics are calculated separately for each division
+              using published match scorecards.
+            </p>
+          </div>
+          <span aria-live="polite">
+            {honoursLoading ? "UPDATING…" : "OFFICIAL STATISTICS"}
+          </span>
+        </header>
+
+        {honourDivisions.length === 0 ? (
+          <p className="public-no-matches">
+            Tournament honours will appear after a division has scored matches.
+          </p>
+        ) : (
+          <>
+            <div className="public-honours-controls">
+              <label>
+                Statistics division
+                <select
+                  value={selectedHonoursDivision?.id ?? ""}
+                  onChange={(event) => setHonoursDivisionId(event.target.value)}
+                >
+                  {honourDivisions.map((division) => (
+                    <option key={division.id} value={division.id}>
+                      {division.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <article><span>Scored matches</span><strong>{honours.scoredMatches}</strong></article>
+              <article><span>Players recorded</span><strong>{honours.players.length}</strong></article>
+              <article><span>Award categories</span><strong>{honours.awards.length}</strong></article>
+            </div>
+
+            {honoursError ? (
+              <p className="public-message public-error">{honoursError}</p>
+            ) : honoursLoading && honours.players.length === 0 ? (
+              <p className="public-no-matches">Calculating honours…</p>
+            ) : honours.players.length === 0 ? (
+              <p className="public-no-matches">
+                Score at least one published match in this division to generate honours.
+              </p>
+            ) : (
+              <>
+                <div className="public-honours-leaderboards">
+                  <article>
+                    <header><span>BATTING</span><h3>Run leaders</h3></header>
+                    {honours.players
+                      .filter((player) => player.runs > 0)
+                      .sort((a, b) => b.runs - a.runs || b.strikeRate - a.strikeRate)
+                      .slice(0, 5)
+                      .map((player, index) => (
+                        <div key={player.key}>
+                          <b>{index + 1}</b>
+                          <span><strong>{player.playerName}</strong><small>{player.teamName}</small></span>
+                          <em>{player.runs} runs</em>
+                        </div>
+                      ))}
+                  </article>
+
+                  <article>
+                    <header><span>BOWLING</span><h3>Wicket leaders</h3></header>
+                    {honours.players
+                      .filter((player) => player.wickets > 0)
+                      .sort((a, b) => b.wickets - a.wickets || a.economy - b.economy)
+                      .slice(0, 5)
+                      .map((player, index) => (
+                        <div key={player.key}>
+                          <b>{index + 1}</b>
+                          <span><strong>{player.playerName}</strong><small>{player.teamName}</small></span>
+                          <em>{player.wickets} wkts</em>
+                        </div>
+                      ))}
+                  </article>
+
+                  <article>
+                    <header><span>FIELDING</span><h3>Fielding leaders</h3></header>
+                    {honours.players
+                      .filter((player) => player.catches + player.stumpings + player.runOuts > 0)
+                      .sort((a, b) =>
+                        (b.catches + b.stumpings + b.runOuts) -
+                        (a.catches + a.stumpings + a.runOuts)
+                      )
+                      .slice(0, 5)
+                      .map((player, index) => (
+                        <div key={player.key}>
+                          <b>{index + 1}</b>
+                          <span><strong>{player.playerName}</strong><small>{player.teamName}</small></span>
+                          <em>{player.catches + player.stumpings + player.runOuts} dismissals</em>
+                        </div>
+                      ))}
+                  </article>
+                </div>
+
+                {honours.playerOfTournament && (
+                  <article className="public-tournament-mvp">
+                    <div>
+                      <span>RULE-BASED LEADER</span>
+                      <h3>Player of the Tournament</h3>
+                      <p>{honours.playerOfTournamentReason}</p>
+                    </div>
+                    <strong>{honours.playerOfTournament.playerName}</strong>
+                    <small>
+                      Runs + wickets×25 + catches×8 + stumpings×10 + run-outs×10
+                      + Player of the Match awards×15 − wides − no-balls×2.
+                    </small>
+                  </article>
+                )}
+
+                {officialMatchAwards.length > 0 && (
+                  <section className="public-official-match-awards">
+                    <header>
+                      <span>OFFICIAL MATCH AWARDS</span>
+                      <h3>Players of the Match</h3>
+                    </header>
+                    <div>
+                      {officialMatchAwards.map((suggestion) => (
+                        <article key={suggestion.match.id}>
+                          <span>Match {suggestion.match.match_number}</span>
+                          <strong>{suggestion.confirmedPlayer?.playerName}</strong>
+                          <small>{suggestion.confirmedPlayer?.teamName}</small>
+                          <p>{suggestion.confirmedReason}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                <section className="public-honour-awards">
+                  <header>
+                    <span>AWARD CATEGORIES</span>
+                    <h3>Honours board</h3>
+                  </header>
+                  <div>
+                    {honours.awards.map((award) => (
+                      <button
+                        type="button"
+                        key={award.id}
+                        className={award.id === selectedHonourAward?.id ? "selected" : ""}
+                        style={{ borderColor: award.id === selectedHonourAward?.id ? award.accent : undefined }}
+                        onClick={() => setSelectedHonourAwardId(award.id)}
+                      >
+                        <span style={{ background: award.accent }} />
+                        <small>{award.label}</small>
+                        <strong>{award.player?.playerName ?? award.team?.teamName}</strong>
+                        <b>{award.value}</b>
+                        <p>{award.detail}</p>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {selectedHonoursDivision && selectedHonourAward && (
+                  <details className="public-poster-download public-honour-poster">
+                    <summary>Open or download selected honour poster</summary>
+                    <TournamentAwardPoster
+                      tournament={tournament}
+                      division={selectedHonoursDivision}
+                      award={selectedHonourAward}
+                    />
+                  </details>
+                )}
+              </>
             )}
           </>
         )}

@@ -51,12 +51,12 @@ export default function PointsTable({
                 className={qualifying ? "qualifying-row" : ""}
                 style={{ "--standing-team": row.team_color } as CSSProperties}
               >
-                <td data-label="Position">
+                <td>
                   <strong className="standing-position">
                     {row.position}
                   </strong>
                 </td>
-                <td data-label="Team">
+                <td>
                   <div className="standing-team">
                     <span>
                       {logo ? (
@@ -69,13 +69,13 @@ export default function PointsTable({
                       : qualifying && <small>Q</small>}
                   </div>
                 </td>
-                <td data-label="Played">{row.played}</td>
-                <td data-label="Won">{row.won}</td>
-                <td data-label="Lost">{row.lost}</td>
-                <td data-label="Tied">{row.tied}</td>
-                <td data-label="No result">{row.no_result}</td>
-                <td data-label="Points"><b>{row.points}</b></td>
-                <td data-label="NRR" className={row.net_run_rate >= 0 ? "positive-nrr" : "negative-nrr"}>
+                <td>{row.played}</td>
+                <td>{row.won}</td>
+                <td>{row.lost}</td>
+                <td>{row.tied}</td>
+                <td>{row.no_result}</td>
+                <td><b>{row.points}</b></td>
+                <td className={row.net_run_rate >= 0 ? "positive-nrr" : "negative-nrr"}>
                   {formatNrr(row.net_run_rate)}
                 </td>
               </tr>

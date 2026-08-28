@@ -270,11 +270,13 @@ function matchAwardReason(player: PlayerTournamentStatistics | null) {
 
 export async function getTournamentAnalytics(
   tournamentId: string,
-  divisionId: string | null = null
+  divisionId: string | null = null,
+  publishedMatchesOnly = false
 ): Promise<TournamentAnalyticsSnapshot> {
   const matches = await getTournamentMatches(tournamentId);
   const relevantMatches = matches.filter(
     (match) =>
+      (!publishedMatchesOnly || match.is_published) &&
       (!divisionId || match.division_id === divisionId) &&
       ["live", "innings_break", "completed", "no_result"].includes(match.status)
   );
