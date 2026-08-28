@@ -75,6 +75,232 @@
 .public-poster-download { margin-top: 13px; padding: 13px; background: #07162e; border: 1px solid #29466c; border-radius: 13px; }
 .public-poster-download > summary { color: #b8f227; cursor: pointer; font-size: 12px; font-weight: 900; }
 .public-poster-download > .points-poster-showcase { margin-top: 18px; }
+.public-qualification-section {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid #29466c;
+}
+.public-qualification-section > header {
+  align-items: flex-end;
+}
+.public-qualification-section > header p {
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: #9fadc1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.public-qualification-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(250px, .9fr);
+  gap: 12px;
+  padding: 16px;
+  background: rgba(8, 24, 50, .92);
+  border: 1px solid #29466c;
+  border-radius: 15px;
+}
+.public-qualification-controls label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: #8fa6c6;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.public-qualification-controls select,
+.public-qualification-controls input,
+.public-qualification-controls button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 11px;
+  border: 1px solid #345379;
+  border-radius: 9px;
+  font: inherit;
+}
+.public-qualification-controls select,
+.public-qualification-controls input {
+  width: 100%;
+  color: #eef4ff;
+  background: #06142b;
+}
+.public-qualification-run-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+.public-qualification-controls button {
+  color: #07101e;
+  background: #b8f227;
+  border-color: #b8f227;
+  font-weight: 950;
+}
+.public-qualification-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+.public-qualification-team-grid > button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 13px;
+  color: #eaf2ff;
+  text-align: left;
+  background: rgba(8, 24, 50, .88);
+  border: 1px solid #29466c;
+  border-radius: 12px;
+}
+.public-qualification-team-grid > button.selected {
+  background: rgba(47, 114, 255, .17);
+  border-color: #6798e2;
+  box-shadow: inset 3px 0 #b8f227;
+}
+.public-qualification-team-grid > button > span {
+  grid-row: 1 / 3;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #07101e;
+  background: #dce8f8;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 950;
+}
+.public-qualification-team-grid strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.public-qualification-team-grid small {
+  color: #91a6c4;
+}
+.public-qualification-team-grid b,
+.public-qualification-result > header > b {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  justify-self: end;
+  padding: 6px 8px;
+  color: #07101e;
+  background: #ffd166;
+  border-radius: 999px;
+  font-size: 8px;
+  white-space: nowrap;
+}
+.public-qualification-team-grid .status-qualified,
+.public-qualification-result .status-qualified { background: #b8f227; }
+.public-qualification-team-grid .status-eliminated,
+.public-qualification-result .status-eliminated { color: white; background: #ef4056; }
+.public-qualification-result {
+  display: grid;
+  gap: 15px;
+  margin-top: 14px;
+  padding: clamp(16px, 3vw, 25px);
+  background: linear-gradient(145deg, rgba(11, 31, 66, .97), rgba(5, 16, 35, .98));
+  border: 1px solid #35577f;
+  border-radius: 17px;
+}
+.public-qualification-result > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.public-qualification-result > header span {
+  color: #b8f227;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+.public-qualification-result h3 {
+  margin: 4px 0;
+  color: white;
+  font-size: clamp(23px, 4vw, 36px);
+  text-transform: uppercase;
+}
+.public-qualification-result > header p,
+.public-qualification-result section p {
+  margin: 0;
+  color: #b7c5d9;
+  line-height: 1.55;
+}
+.public-qualification-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+}
+.public-qualification-stats > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  background: rgba(2, 10, 25, .6);
+  border: 1px solid #29466c;
+  border-radius: 11px;
+}
+.public-qualification-stats span {
+  color: #829abd;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.public-qualification-stats strong { color: #ffd166; font-size: 21px; }
+.public-qualification-result section {
+  padding: 15px;
+  background: rgba(2, 10, 25, .46);
+  border: 1px solid #29466c;
+  border-radius: 12px;
+}
+.public-qualification-result h4 {
+  margin: 0 0 10px;
+  color: white;
+  font-size: 15px;
+}
+.public-qualification-result ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 19px;
+  color: #d7e4f6;
+  line-height: 1.5;
+}
+.public-dependency-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.public-dependency-grid > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid #29466c;
+  border-radius: 10px;
+}
+.public-dependency-grid span {
+  color: #83a8df;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.public-dependency-grid strong { color: white; font-size: 12px; }
+.public-dependency-grid p { font-size: 11px; }
+.public-nrr-scenarios { display: grid; gap: 8px; }
+.public-nrr-scenarios strong { color: #ffd166; }
+.public-qualification-result section > small {
+  display: block;
+  margin-top: 9px;
+  color: #8499b8;
+  line-height: 1.45;
+}
+.public-qualification-poster > .qualification-poster-showcase {
+  margin-top: 18px;
+}
 .public-score-header { grid-template-columns: auto auto 1fr auto; }
 .public-live-hero { width: min(1320px, 100%); margin: 0 auto 14px; display: grid; grid-template-columns: 1fr 1.3fr 1fr; align-items: center; gap: 22px; padding: clamp(22px, 4vw, 42px); background: radial-gradient(circle at 50% 120%, rgba(255,105,28,.3), transparent 42%), radial-gradient(circle at 50% 0%, rgba(37,94,194,.45), transparent 50%), #06142b; border: 1px solid #31527d; border-radius: 23px; box-shadow: 0 28px 75px rgba(0,0,0,.32); }
 .public-hero-team { display: grid; justify-items: center; text-align: center; }
@@ -123,15 +349,69 @@
 .public-player-award h2 { margin: 3px 0; color: white; font-size: 28px; text-transform: uppercase; }
 .public-player-award p { margin: 0; color: #c2ccda; }
 @media (max-width: 780px) {
-  .public-score-page { padding: 12px; }
+  .public-score-page { padding: 10px; overflow-x: hidden; }
   .public-main-header,
   .public-tournament-header,
-  .public-score-header { grid-template-columns: auto 1fr; }
+  .public-score-header {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 15px;
+    margin-bottom: 18px;
+  }
   .public-main-header > a,
+  .public-tournament-header > a,
+  .public-score-header > a,
   .public-score-header > strong { grid-column: 1 / -1; }
-  .public-live-hero { grid-template-columns: 1fr 1fr; }
+  .public-tournament-header > a,
+  .public-score-header > a { justify-self: start; }
+  .public-tournament-logos { flex-wrap: wrap; }
+  .public-tournament-logos img { width: 48px; height: 48px; }
+  .public-tournament-header h1,
+  .public-score-header h1 { overflow-wrap: anywhere; font-size: clamp(24px, 9vw, 38px); }
+  .public-match-section { margin-bottom: 22px; }
+  .public-match-section > header { align-items: flex-start; }
+  .public-match-grid { grid-template-columns: 1fr; }
+  .public-match-tile { width: 100%; padding: 14px; }
+  .public-match-tile > footer { flex-direction: column; }
+  .public-match-tile footer b { text-align: left; }
+  .public-live-hero { grid-template-columns: 1fr 1fr; gap: 10px; padding: 17px 12px; border-radius: 16px; }
   .public-main-score { grid-column: 1 / -1; grid-row: 1; }
+  .public-main-score > strong { font-size: clamp(50px, 20vw, 82px); }
+  .public-hero-team > div { width: clamp(66px, 24vw, 95px); height: clamp(66px, 24vw, 95px); border-radius: 15px; }
+  .public-hero-team h2 { margin: 8px 0; font-size: 13px; }
   .public-live-players { grid-template-columns: 1fr; }
   .public-chase-strip { grid-template-columns: repeat(2, 1fr); }
   .public-chase-strip > div { border-bottom: 1px solid #284362; }
+  .public-recent-balls { align-items: flex-start; flex-direction: column; }
+  .public-player-award { grid-template-columns: 64px 1fr; padding: 15px; }
+  .public-player-award > div { width: 64px; height: 64px; }
+  .public-player-award h2 { font-size: 21px; }
+  .public-qualification-section { margin-top: 34px; padding-top: 24px; }
+  .public-qualification-section > header { align-items: flex-start; flex-direction: column; }
+  .public-qualification-controls { grid-template-columns: 1fr 1fr; padding: 13px; }
+  .public-qualification-team-grid { grid-template-columns: 1fr; }
+  .public-dependency-grid { grid-template-columns: 1fr; }
+  .public-qualification-result > header { flex-direction: column; }
+  .public-qualification-result > header > b { grid-column: auto; grid-row: auto; justify-self: start; }
+}
+
+@media (max-width: 520px) {
+  .public-score-page { padding: 8px; }
+  .public-main-header,
+  .public-tournament-header,
+  .public-score-header { border-radius: 13px; }
+  .public-main-header { grid-template-columns: 1fr; }
+  .public-tournament-header { grid-template-columns: 1fr; text-align: left; }
+  .public-match-section > header { flex-direction: column; gap: 5px; }
+  .public-match-team { grid-template-columns: 39px minmax(0, 1fr); }
+  .public-match-team > div { width: 39px; height: 39px; }
+  .public-match-team strong { min-width: 0; overflow-wrap: anywhere; }
+  .public-status { flex: 0 0 auto; }
+  .public-qualification-controls { grid-template-columns: 1fr; }
+  .public-qualification-run-input { grid-template-columns: 1fr; }
+  .public-qualification-stats { grid-template-columns: repeat(2, 1fr); }
+  .public-qualification-team-grid > button { grid-template-columns: auto minmax(0, 1fr); }
+  .public-qualification-team-grid b { grid-column: 2; grid-row: 3; justify-self: start; }
+  .public-qualification-result { padding: 13px; }
+  .public-qualification-result section { padding: 12px; }
 }

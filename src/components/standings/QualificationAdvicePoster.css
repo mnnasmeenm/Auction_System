@@ -404,3 +404,78 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 480px) {
+  .qualification-poster {
+    min-height: 0;
+    gap: 18px;
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .qualification-poster > header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .qualification-poster-logos img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .qualification-poster > header h1 {
+    overflow-wrap: anywhere;
+    font-size: 22px;
+  }
+
+  .qualification-team-hero {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .qualification-team-logo {
+    width: 70px;
+    height: 70px;
+    border-radius: 14px;
+  }
+
+  .qualification-team-hero h2 {
+    overflow-wrap: anywhere;
+    font-size: 28px;
+  }
+
+  .qualification-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qualification-stat-grid article,
+  .qualification-summary,
+  .qualification-scenarios,
+  .qualification-dependencies {
+    padding: 13px;
+  }
+
+  .qualification-stat-grid strong {
+    font-size: 21px;
+  }
+
+  .qualification-scenarios > header,
+  .qualification-dependencies > header,
+  .qualification-poster > footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .qualification-scenarios article {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .qualification-poster > footer {
+    font-size: 8px;
+  }
+
+  .qualification-poster-showcase > button {
+    width: 100%;
+  }
+}

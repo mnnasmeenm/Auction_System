@@ -415,7 +415,8 @@ function buildAdvice(
 export async function getQualificationAdvice(
   tournamentId: string,
   referenceRuns = 50,
-  goal: QualificationGoal = "qualify"
+  goal: QualificationGoal = "qualify",
+  publishedMatchesOnly = false
 ): Promise<QualificationAdviceSection[]> {
   const [sections, matches, settings] = await Promise.all([
     getTournamentStandingsSections(tournamentId),
@@ -429,12 +430,15 @@ export async function getQualificationAdvice(
     settings.no_result_points,
     settings.loss_points
   );
+  const visibleMatches = publishedMatchesOnly
+    ? matches.filter((match) => match.is_published)
+    : matches;
 
   return sections.map((section) => ({
     ...section,
     advice: buildAdvice(
       section,
-      matches,
+      visibleMatches,
       goal,
       settings.win_points,
       maximumAward,
