@@ -18,6 +18,16 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function leadershipOrder(
+  playerId: string,
+  captainId: string | null,
+  viceCaptainId: string | null
+) {
+  if (playerId === captainId) return 0;
+  if (playerId === viceCaptainId) return 1;
+  return 2;
+}
+
 export default function TeamSquadPoster({
   data
 }: {
@@ -26,6 +36,23 @@ export default function TeamSquadPoster({
   const posterRef = useRef<HTMLDivElement | null>(null);
   const [downloading, setDownloading] = useState(false);
   const { tournament, team, players } = data;
+  const orderedPlayers = [...players].sort((first, second) => {
+    const leadershipDifference =
+      leadershipOrder(
+        first.id,
+        team.captain_player_id,
+        team.vice_captain_player_id
+      ) -
+      leadershipOrder(
+        second.id,
+        team.captain_player_id,
+        team.vice_captain_player_id
+      );
+
+    return leadershipDifference !== 0
+      ? leadershipDifference
+      : first.full_name.localeCompare(second.full_name);
+  });
 
   const managers = data.managers.length > 0
     ? data.managers.slice(0, 2)
@@ -181,18 +208,18 @@ export default function TeamSquadPoster({
         <section className="poster-squad-section">
           <div className="poster-squad-heading">
             <span>MEET THE SQUAD</span>
-            <strong>{players.length} PLAYERS</strong>
+            <strong>{orderedPlayers.length} PLAYERS</strong>
           </div>
 
-          {players.length === 0 ? (
+          {orderedPlayers.length === 0 ? (
             <div className="poster-no-players">
               Add auction or manually allocated players to create this squad.
             </div>
           ) : (
             <div
-              className={`poster-player-grid poster-player-count-${players.length}`}
+              className={`poster-player-grid poster-player-count-${orderedPlayers.length}`}
             >
-              {players.map((player) => {
+              {orderedPlayers.map((player) => {
                 const playerPhotoUrl = getPlayerPhotoUrl(player.photo_path);
                 const leadership = player.id === team.captain_player_id
                   ? "C"
