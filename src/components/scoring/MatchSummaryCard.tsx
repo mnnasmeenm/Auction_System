@@ -1,4 +1,4 @@
-import { type CSSProperties, useRef, useState } from "react";
+import { type CSSProperties, useRef, useState, Fragment } from "react";
 
 import { toPng } from "html-to-image";
 
@@ -36,25 +36,34 @@ function teamScore(innings: MatchInnings[], teamId: string | null) {
   return innings.find((record) => record.batting_team_id === teamId) ?? null;
 }
 
-function bestBatter(rows: BattingScorecard[] = []) {
+function topBatters(rows: BattingScorecard[] = []) {
   return [...rows].sort((first, second) => {
     if (second.runs !== first.runs) return second.runs - first.runs;
     const firstRate = first.balls > 0 ? first.runs / first.balls : 0;
     const secondRate = second.balls > 0 ? second.runs / second.balls : 0;
     return secondRate - firstRate;
-  })[0] ?? null;
+  }).slice(0, 4);
 }
 
-function bestBowler(rows: BowlingScorecard[] = []) {
+function topBowlers(rows: BowlingScorecard[] = []) {
   return [...rows].sort((first, second) => {
+    // 1. Most Wickets
     if (second.wickets !== first.wickets) {
       return second.wickets - first.wickets;
     }
-    if (first.runs_conceded !== second.runs_conceded) {
-      return first.runs_conceded - second.runs_conceded;
+    
+    // Calculate Economy (Runs per ball)
+    const firstEconomy = first.legal_balls > 0 ? first.runs_conceded / first.legal_balls : first.runs_conceded;
+    const secondEconomy = second.legal_balls > 0 ? second.runs_conceded / second.legal_balls : second.runs_conceded;
+  
+    // 2. Best Economy
+    if (firstEconomy !== secondEconomy) {
+      return firstEconomy - secondEconomy;
     }
-    return first.legal_balls - second.legal_balls;
-  })[0] ?? null;
+    
+    // 3. Fewest Runs Conceded
+    return first.runs_conceded - second.runs_conceded;
+  }).slice(0, 4);
 }
 
 export default function MatchSummaryCard({
@@ -78,8 +87,8 @@ export default function MatchSummaryCard({
     .sort((first, second) => first.innings_number - second.innings_number)
     .map((record) => ({
       innings: record,
-      batter: bestBatter(record.batting_scorecards),
-      bowler: bestBowler(record.bowling_scorecards)
+      batters: topBatters(record.batting_scorecards),
+      bowlers: topBowlers(record.bowling_scorecards)
     }));
 
   async function downloadCard() {
@@ -147,7 +156,7 @@ export default function MatchSummaryCard({
 
         {inningsHighlights.length > 0 && (
           <section className="match-summary-performances">
-            {inningsHighlights.map(({ innings: record, batter, bowler }) => (
+            {inningsHighlights.map(({ innings: record, batters, bowlers }) => (
               <article key={record.id}>
                 <header>
                   <span>INNINGS {record.innings_number}</span>
@@ -155,23 +164,45 @@ export default function MatchSummaryCard({
                 </header>
 
                 <div>
-                  <span>BEST BATTING</span>
-                  <strong>{batter?.player_name ?? "Not recorded"}</strong>
-                  <small>
-                    {batter
-                      ? `${batter.runs} RUNS · ${batter.balls} BALLS · ${batter.fours}×4 · ${batter.sixes}×6`
-                      : "—"}
-                  </small>
+                  <span>TOP BATTING</span>
+                  {batters.length > 0 ? (
+                    batters.map((batter, idx) => (
+                      <Fragment key={idx}>
+                        <strong style={{ marginTop: idx > 0 ? '8px' : '0' }}>
+                          {batter.player_name ?? "Not recorded"}
+                        </strong>
+                        <small>
+                          {batter.runs} RUNS · {batter.balls} BALLS · {batter.fours}×4 · {batter.sixes}×6
+                        </small>
+                      </Fragment>
+                    ))
+                  ) : (
+                    <Fragment>
+                      <strong>Not recorded</strong>
+                      <small>—</small>
+                    </Fragment>
+                  )}
                 </div>
 
                 <div>
-                  <span>BEST BOWLING</span>
-                  <strong>{bowler?.player_name ?? "Not recorded"}</strong>
-                  <small>
-                    {bowler
-                      ? `${bowler.wickets}/${bowler.runs_conceded} · ${formatCricketOvers(bowler.legal_balls, record.balls_per_over)} OVERS`
-                      : "—"}
-                  </small>
+                  <span>TOP BOWLING</span>
+                  {bowlers.length > 0 ? (
+                    bowlers.map((bowler, idx) => (
+                      <Fragment key={idx}>
+                        <strong style={{ marginTop: idx > 0 ? '8px' : '0' }}>
+                          {bowler.player_name ?? "Not recorded"}
+                        </strong>
+                        <small>
+                          {bowler.wickets}/{bowler.runs_conceded} · {formatCricketOvers(bowler.legal_balls, record.balls_per_over)} OVERS
+                        </small>
+                      </Fragment>
+                    ))
+                  ) : (
+                    <Fragment>
+                      <strong>Not recorded</strong>
+                      <small>—</small>
+                    </Fragment>
+                  )}
                 </div>
               </article>
             ))}

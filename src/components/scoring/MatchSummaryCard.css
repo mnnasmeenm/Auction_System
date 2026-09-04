@@ -4,7 +4,7 @@
   --summary-second: #ff7a18;
   position: relative;
   width: min(100%, 900px);
-  aspect-ratio: 1 / 1;
+  /* aspect-ratio: 1 / 1; REMOVED THIS LINE so the card expands vertically */
   display: grid;
   grid-template-rows: auto 1fr auto auto auto;
   gap: clamp(12px, 2vw, 20px);
