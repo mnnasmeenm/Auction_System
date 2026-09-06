@@ -927,7 +927,9 @@ export default function SchedulePage() {
       setErrorMessage("Select team two or enter a placeholder.");
       return;
     }
-    if (editableMatch.teamOneId === editableMatch.teamTwoId) {
+    // FIX APPLIED HERE: Ensure teamOneId actually exists before checking for self-play
+    // so that placeholder vs placeholder (which are both "") doesn't trigger the error.
+    if (editableMatch.teamOneId && editableMatch.teamOneId === editableMatch.teamTwoId) {
       setErrorMessage("A team cannot play itself.");
       return;
     }
