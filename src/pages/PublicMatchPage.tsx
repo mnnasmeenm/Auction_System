@@ -42,10 +42,6 @@ export default function PublicMatchPage() {
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => subscribeToPublicMatch(matchId, () => void load()), [load, matchId]);
-  useEffect(() => {
-    const fallbackRefresh = window.setInterval(() => void load(), 10000);
-    return () => window.clearInterval(fallbackRefresh);
-  }, [load]);
 
   const currentInnings = useMemo(() =>
     bundle?.innings.find((innings) => innings.id === bundle.liveState?.current_innings_id) ??
