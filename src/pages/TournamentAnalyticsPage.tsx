@@ -49,6 +49,7 @@ export default function TournamentAnalyticsPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [awardOverrides, setAwardOverrides] = useState<Record<string, string>>({});
 
   const selectedDivision = useMemo(
     () => divisions.find((division) => division.id === divisionId) ?? null,
@@ -61,6 +62,48 @@ export default function TournamentAnalyticsPage() {
     ) ?? analytics.awards[0] ?? null,
     [analytics.awards, selectedAwardId]
   );
+
+  const effectiveAward = useMemo(() => {
+    if (!selectedAward) return null;
+    const overrideId = awardOverrides[selectedAward.id];
+    if (overrideId) {
+      const overridePlayer = analytics.players.find(
+        (p) => p.playerId === overrideId || p.key === overrideId
+      );
+      if (overridePlayer) {
+        let val = "AWARD WINNER";
+        let det = "Admin selected award winner";
+
+        if (selectedAward.id === "best_batsman" || selectedAward.id === "most_runs") {
+          val = `${overridePlayer.runs} RUNS`;
+          det = `${overridePlayer.innings} innings · SR ${overridePlayer.strikeRate.toFixed(1)}`;
+        } else if (selectedAward.id === "best_bowler" || selectedAward.id === "most_wickets") {
+          val = `${overridePlayer.wickets} WKTS`;
+          det = `Economy ${overridePlayer.economy.toFixed(2)} · Best ${overridePlayer.bestWickets}/${overridePlayer.bestBowlingRuns}`;
+        } else if (selectedAward.id === "emerging_player") {
+          val =
+            overridePlayer.runs > 0 && overridePlayer.wickets > 0
+              ? `${overridePlayer.runs} RUNS & ${overridePlayer.wickets} WKTS`
+              : overridePlayer.runs > 0
+                ? `${overridePlayer.runs} RUNS`
+                : `${overridePlayer.wickets} WKTS`;
+          det = "Selected by tournament committee";
+        } else if (selectedAward.id === "player_of_tournament") {
+          val = `${overridePlayer.tournamentScore.toFixed(0)} PTS`;
+          det = `${overridePlayer.runs} runs · ${overridePlayer.wickets} wkts`;
+        }
+
+        return {
+          ...selectedAward,
+          value: val,
+          detail: det,
+          player: overridePlayer,
+          team: null
+        };
+      }
+    }
+    return selectedAward;
+  }, [selectedAward, awardOverrides, analytics.players]);
 
   const selectedMatchSuggestion = useMemo(
     () => analytics.matchPlayerSuggestions.find(
@@ -301,6 +344,21 @@ export default function TournamentAnalyticsPage() {
             </article>
 
             <article>
+              <header><span>BOWLING</span><h2>Economy leaders</h2></header>
+              {analytics.players
+                .filter((player) => player.legalBalls >= 6)
+                .sort((a, b) => a.economy - b.economy || b.wickets - a.wickets)
+                .slice(0, 8)
+                .map((player, index) => (
+                  <div key={player.key}>
+                    <b>{index + 1}</b>
+                    <span><strong>{player.playerName}</strong><small>{player.teamName}</small></span>
+                    <em>{player.economy.toFixed(2)} ECON</em>
+                  </div>
+                ))}
+            </article>
+
+            <article>
               <header><span>FIELDING</span><h2>Fielding leaders</h2></header>
               {analytics.players
                 .filter((player) =>
@@ -446,11 +504,28 @@ export default function TournamentAnalyticsPage() {
               ))}
             </div>
 
-            {tournament && selectedAward && (
+            {selectedAward && (
+              <div className="analytics-award-override">
+                <label>
+                  <span>ADMIN OVERRIDE</span>
+                  <select
+                    value={awardOverrides[selectedAward.id] || ""}
+                    onChange={(e) => setAwardOverrides(prev => ({ ...prev, [selectedAward.id]: e.target.value }))}
+                  >
+                    <option value="">Default suggestion ({selectedAward.player?.playerName ?? selectedAward.team?.teamName ?? "None"})</option>
+                    {analytics.players.map((p) => (
+                      <option key={p.key} value={p.playerId ?? p.key}>{p.playerName} ({p.teamName})</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            {tournament && effectiveAward && (
               <TournamentAwardPoster
                 tournament={tournament}
                 division={selectedDivision}
-                award={selectedAward}
+                award={effectiveAward}
               />
             )}
           </section>

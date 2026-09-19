@@ -73,7 +73,10 @@ export type TournamentAwardKind =
   | "best_bowling_innings"
   | "highest_team_score"
   | "most_player_of_match"
-  | "player_of_tournament";
+  | "player_of_tournament"
+  | "best_batsman"
+  | "best_bowler"
+  | "emerging_player";
 
 export interface TournamentAward {
   id: TournamentAwardKind;
@@ -598,6 +601,10 @@ export async function getTournamentAnalytics(
     (first, second) => second.runs - first.runs || first.wickets - second.wickets
   )[0] ?? null;
 
+  const bestBatsman = mostRuns;
+  const bestBowler = mostWickets;
+  const emergingPlayer = players.find(p => p.key !== playerOfTournament?.key && (p.runs >= 30 || p.wickets >= 3)) ?? players[1] ?? players[0] ?? null;
+
   const awards: TournamentAward[] = [];
 
   if (mostRuns && mostRuns.runs > 0) awards.push(award("most_runs", "Orange Crown", "MOST RUNS", String(mostRuns.runs), `${mostRuns.innings} innings · SR ${mostRuns.strikeRate.toFixed(1)}`, "#ff8a1f", mostRuns));
@@ -612,7 +619,69 @@ export async function getTournamentAnalytics(
   if (bestBowling && bestBowling.bestWickets > 0) awards.push(award("best_bowling_innings", "Bowling Spotlight", "BEST BOWLING IN AN INNINGS", `${bestBowling.bestWickets}/${bestBowling.bestBowlingRuns}`, `${bestBowling.playerName} · ${bestBowling.teamName}`, "#8c83ff", bestBowling));
   if (highestTeamScore) awards.push(award("highest_team_score", "Team Record", "HIGHEST TEAM SCORE", `${highestTeamScore.runs}/${highestTeamScore.wickets}`, `Match ${highestTeamScore.matchNumber} vs ${highestTeamScore.opponentName}`, highestTeamScore.teamColor, null, highestTeamScore));
   if (mostPom && mostPom.playerOfMatchAwards > 0) awards.push(award("most_player_of_match", "Match Winner", "MOST PLAYER OF THE MATCH AWARDS", String(mostPom.playerOfMatchAwards), `${mostPom.playerName} · ${mostPom.teamName}`, "#f4c542", mostPom));
-  if (playerOfTournament) awards.push(award("player_of_tournament", "Tournament MVP", "PLAYER OF THE TOURNAMENT SUGGESTION", playerOfTournament.playerName, playerOfTournamentReason(playerOfTournament), "#b8f227", playerOfTournament));
+  
+  if (playerOfTournament) {
+    awards.push(
+      award(
+        "player_of_tournament",
+        "Tournament MVP",
+        "PLAYER OF THE TOURNAMENT",
+        `${playerOfTournament.tournamentScore.toFixed(0)} PTS`,
+        playerOfTournamentReason(playerOfTournament),
+        "#b8f227",
+        playerOfTournament
+      )
+    );
+  }
+
+  if (bestBatsman) {
+    awards.push(
+      award(
+        "best_batsman",
+        "Best Batsman",
+        "BEST BATSMAN",
+        `${bestBatsman.runs} RUNS`,
+        `${bestBatsman.innings} innings · SR ${bestBatsman.strikeRate.toFixed(1)} · HS ${bestBatsman.highestScore}`,
+        "#ff3366",
+        bestBatsman
+      )
+    );
+  }
+
+  if (bestBowler) {
+    awards.push(
+      award(
+        "best_bowler",
+        "Best Bowler",
+        "BEST BOWLER",
+        `${bestBowler.wickets} WKTS`,
+        `Economy ${bestBowler.economy.toFixed(2)} · Best ${bestBowler.bestWickets}/${bestBowler.bestBowlingRuns}`,
+        "#33ccff",
+        bestBowler
+      )
+    );
+  }
+
+  if (emergingPlayer) {
+    const statText =
+      emergingPlayer.runs > 0 && emergingPlayer.wickets > 0
+        ? `${emergingPlayer.runs}R · ${emergingPlayer.wickets}W`
+        : emergingPlayer.runs > 0
+          ? `${emergingPlayer.runs} RUNS`
+          : `${emergingPlayer.wickets} WKTS`;
+
+    awards.push(
+      award(
+        "emerging_player",
+        "Emerging Star",
+        "EMERGING PLAYER",
+        statText,
+        "Standout tournament performance",
+        "#a64dff",
+        emergingPlayer
+      )
+    );
+  }
 
   return {
     players: [...players].sort(

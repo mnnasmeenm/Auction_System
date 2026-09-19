@@ -112,7 +112,7 @@
 
 .analytics-leaderboards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 20px;
 }
@@ -426,6 +426,42 @@
 .analytics-award-tabs small {
   color: var(--muted, #9fb0c9);
   font-size: 9px;
+}
+
+.analytics-award-override {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(4, 14, 32, .72);
+  border: 1px dashed var(--border, #29466b);
+  border-radius: 12px;
+}
+
+.analytics-award-override label {
+  display: grid;
+  gap: 8px;
+}
+
+.analytics-award-override span {
+  color: #73a8ff;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: .13em;
+}
+
+.analytics-award-override select {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  color: var(--text-strong, #f7faff);
+  background: var(--background, #061022);
+  border: 1px solid var(--border, #29466b);
+  border-radius: 9px;
+}
+
+@media (max-width: 1100px) {
+  .analytics-leaderboards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 900px) {
